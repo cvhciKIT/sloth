@@ -8,7 +8,7 @@ class MainWindow(QMainWindow):
         QMainWindow.__init__(self, parent)
 
         vlayout = QVBoxLayout()
-        for i in range(5):
+        for i in range(8):
             button = QPushButton("TestButton %d" % i)
             button.clicked.connect(self.clickedButton)
             vlayout.addWidget(button)
