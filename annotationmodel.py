@@ -3,11 +3,6 @@ from PyQt4.QtCore import *
 from functools import partial
 import os.path
 
-class KeyValueModelItem():
-    def __init__(self, key, value=""):
-        self.key_   = key
-        self.value_ = value
-
 class ModelItem:
     def __init__(self, parent=None):
         self.parent_   = parent
@@ -16,13 +11,22 @@ class ModelItem:
     def children(self):
         return self.children_
 
-class AnnotationModelItem(ModelItem):
-    def __init__(self, ann, parent):
-        ModelItem.__init__(self, parent)
+    def parent(self):
+        return self.parent_
+
+    def rowOfChild(self, item):
+        for row, child in enumerate(self.children_):
+            if child is item:
+                return row
+        return -1
+
+    def data(self, index, role):
+        return QVariant()
 
 class RootModelItem(ModelItem):
     def __init__(self, files):
         ModelItem.__init__(self, None)
+        self.files_ = files
 
         for file in files:
             fmi = FileModelItem(file, self)
@@ -31,19 +35,72 @@ class RootModelItem(ModelItem):
 class FileModelItem(ModelItem):
     def __init__(self, file, parent):
         ModelItem.__init__(self, parent)
+        self.file_ = file
 
         for frame in file['frames']:
             fmi = FrameModelItem(frame, self)
             self.children_.append(fmi)
 
+    def filename(self):
+        return self.file_['filename']
+
+    def data(self, index, role):
+        if role == Qt.DisplayRole and index.column() == 0:
+            return self.filename()
+        return QVariant()
+
 class FrameModelItem(ModelItem):
     def __init__(self, frame, parent):
         ModelItem.__init__(self, parent)
+        self.frame_ = frame
 
         for ann in frame['annotations']:
             ami = AnnotationModelItem(ann, self)
             self.children_.append(ami)
 
+    def framenum(self):
+        return int(self.frame_.get('num', -1))
+
+    def timestamp(self):
+        return float(self.frame_.get('timestamp', -1))
+
+    def data(self, index, role):
+        if role == Qt.DisplayRole and index.column() == 0:
+            return "%d / %.3f" % (self.framenum(), self.timestamp())
+        return QVariant()
+
+class AnnotationModelItem(ModelItem):
+    def __init__(self, annotations, parent):
+        ModelItem.__init__(self, parent)
+        self.annotations_ = annotations
+
+        for key, value in annotations.iteritems():
+            self.children_.append(KeyValueModelItem(key, value, self))
+
+    def type(self):
+        return self.annotations_['type']
+
+    def data(self, index, role):
+        if role == Qt.DisplayRole:
+            if index.column() == 0:
+                return self.type()
+            else:
+                return QVariant()
+
+class KeyValueModelItem(ModelItem):
+    def __init__(self, key, value, parent):
+        ModelItem.__init__(self, parent)
+        self.key_   = key
+        self.value_ = value
+
+    def data(self, index, role):
+        if role == Qt.DisplayRole:
+            if index.column() == 0:
+                return self.key_
+            elif index.column() == 1:
+                return self.value_
+            else:
+                return QVariant()
 
 
 class AnnotationModelItemOld(object):
@@ -488,6 +545,7 @@ class AnnotationModel(QAbstractItemModel):
         return self.createIndex(row, 0, parent)
 
     def flags(self, index):
+        return Qt.ItemIsEnabled
         if not index.isValid():
             return Qt.ItemIsEnabled
         index = QModelIndex(index)  # explicitly convert from QPersistentModelIndex
@@ -765,9 +823,9 @@ if __name__ == '__main__':
 
     model = AnnotationModel(annotations)
 
-    #wnd = AnnotationTreeView()
-    #wnd.set_annotations(ann)
-    #wnd.show()
+    wnd = AnnotationTreeView()
+    wnd.setModel(model)
+    wnd.show()
 
     sys.exit(app.exec_())
 
