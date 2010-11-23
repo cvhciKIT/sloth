@@ -64,6 +64,11 @@ class FrameModelItem(ModelItem):
     def timestamp(self):
         return float(self.frame_.get('timestamp', -1))
 
+    def addAnnotation(self, ann):
+        self.frame_['annotations'].append(ann)
+        ami = AnnotationModelItem(ann, self)
+        self.children_.append(ami)
+
     def data(self, index, role):
         if role == Qt.DisplayRole and index.column() == 0:
             return "%d / %.3f" % (self.framenum(), self.timestamp())
@@ -608,66 +613,19 @@ class AnnotationModel(QAbstractItemModel):
             return True
         return False
 
-    def insertPoint(self, pos, parent, **kwargs):
-        parent = QModelIndex(parent)  # explicitly convert from QPersistentModelIndex
-        item = self.itemFromIndex(parent)
-        #TODO move this to the item class
-        assert isinstance(item, FileAnnotationModelItem)
-        position = len(item.children_)
-        assert position == len(item.data_.annotations)
-        self.beginInsertRows(parent, position, position)
-        data = Annotation(type='point', x=pos.x(), y=pos.y())
-        data.update(kwargs)
-        item.data_.annotations.append(data)
-        item.children_.append(PointAnnotationModelItem(data, self, item))
-        self.endInsertRows()
-        self.set_dirty(True)
-        return True
+    def addAnnotation(self, frameidx, ann={}, **kwargs):
+        ann.update(kwargs)
+        print "addAnnotation", ann
+        frameidx = QModelIndex(frameidx)  # explicitly convert from QPersistentModelIndex
+        item = self.itemFromIndex(frameidx)
+        assert isinstance(item, FrameModelItem)
 
-    def insertRect(self, rect, parent, **kwargs):
-        parent = QModelIndex(parent)  # explicitly convert from QPersistentModelIndex
-        item = self.itemFromIndex(parent)
-        #TODO move this to the item class
-        assert isinstance(item, FileAnnotationModelItem)
-        position = len(item.children_)
-        assert position == len(item.data_.annotations)
-        self.beginInsertRows(parent, position, position)
-        rect = rect.normalized().toRect()
-        data = Annotation(type='rect', x=rect.x(), y=rect.y(), width=rect.width(), height=rect.height())
-        data.update(kwargs)
-        item.data_.annotations.append(data)
-        item.children_.append(RectAnnotationModelItem(data, self, item))
+        next = len(item.children())
+        self.beginInsertRows(frameidx, next, next)
+        item.addAnnotation(ann)
         self.endInsertRows()
-        self.set_dirty(True)
-        return True
+        self.setDirty(True)
 
-    def insertMask(self, fname, parent, **kwargs):
-        parent = QModelIndex(parent)  # explicitly convert from QPersistentModelIndex
-        item = self.itemFromIndex(parent)
-        #TODO move this to the item class
-        assert isinstance(item, FileAnnotationModelItem)
-        position = len(item.children_)
-        assert position == len(item.data_.annotations)
-        self.beginInsertRows(parent, position, position)
-
-        data = Annotation(type='mask', filename=fname)
-        data.update(kwargs)
-        item.data_.annotations.append(data)
-        item.children_.append(MaskAnnotationModelItem(data, self, item))
-        self.endInsertRows()
-        self.set_dirty(True)
-        return True
-
-    def insertFile(self, filename):
-        parent = QModelIndex()
-        position = len(self.root_.children())
-        assert position == len(self.annotations.files)
-        self.beginInsertRows(parent, position, position)
-        file = File(filename, type='image')  # TODO determine type image vs. movie here
-        self.annotations.append(file)
-        self.root_.children_.append(FileAnnotationModelItem(file, self, self.root_))
-        self.endInsertRows()
-        self.set_dirty(True)
         return True
 
     def headerData(self, section, orientation, role):
@@ -675,22 +633,6 @@ class AnnotationModel(QAbstractItemModel):
             if section == 0: return QVariant("File/Type")
             elif section == 1: return QVariant("Value")
         return QVariant()
-
-    def baseDir(self):
-        return self.annotations.base_dir()
-
-    def writeback(self, root=None):
-        """Write back all items to disk which have been modified since
-        the last writeback (such as image masks).  This should usually be done 
-        everytime the underlying annotations are saved."""
-        # Iterate over all items and check whether they have a writeback method.
-        # Then save these items to disk.
-        if root is None:
-            root = self.root_
-        for child in root.children():
-            if hasattr(child, 'writeback'):
-                child.writeback()
-            self.writeback(child)
 
 #######################################################################################
 # proxy model
@@ -760,7 +702,13 @@ class AnnotationTreeView(QTreeView):
             parent = self.model().parent(index)
             self.model().removeRow(index.row(), parent)
 
-        ## super(...) does not work here...
+        if event.key() == ord('A'):
+            index = self.currentIndex()
+            if not index.isValid():
+                return
+            self.model().addAnnotation(index,
+                    {'type':'beer', 'alc': '5.1', 'name': 'rothaus'})
+
         ## it is important to use the keyPressEvent of QAbstractItemView, not QTreeView
         QAbstractItemView.keyPressEvent(self, event)
 
