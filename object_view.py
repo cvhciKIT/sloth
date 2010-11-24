@@ -2,39 +2,63 @@
 import sys, os
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
+from annotationscene import *
 
 class MainWindow(QMainWindow):
     def __init__(self, argv, parent=None):
         QMainWindow.__init__(self, parent)
 
         vlayout = QVBoxLayout()
-        for i in range(8):
-            button = QPushButton("TestButton %d" % i)
-            button.clicked.connect(self.clickedButton)
-            vlayout.addWidget(button)
+        buttonSelect = QPushButton("Select")
+        buttonSelect.clicked.connect(self.clickedSelect)
+        vlayout.addWidget(buttonSelect)
+        buttonPoint = QPushButton("Point")
+        buttonPoint.clicked.connect(self.clickedPoint)
+        vlayout.addWidget(buttonPoint)
+        buttonLine = QPushButton("Line")
+        buttonLine.clicked.connect(self.clickedLine)
+        vlayout.addWidget(buttonLine)
+        buttonRectangle = QPushButton("Rectangle")
+        buttonRectangle.clicked.connect(self.clickedRectangle)
+        vlayout.addWidget(buttonRectangle)
+        buttonPolygon = QPushButton("Polygon")
+        buttonPolygon.clicked.connect(self.clickedPolygon)
+        vlayout.addWidget(buttonPolygon)
+
 
         hlayout = QHBoxLayout()
-        self.redlabel = QGraphicsView()
-        self.redlabel.setStyleSheet("QLabel {background-color: red}")
+        self.view_ = QGraphicsView()        
         hlayout.addLayout(vlayout)
-        hlayout.addWidget(self.redlabel, 1)
+        hlayout.addWidget(self.view_, 1)
+
+        self.scene_ = AnnotationScene(self)
+        self.view_.setScene(self.scene_)
 
         central = QWidget()
         central.setLayout(hlayout)
         self.setCentralWidget(central)
 
-    def clickedButton(self):
-        button = self.sender()
-        print button.text()
-        self.redlabel.setText(button.text())
+    def clickedSelect(self):
+        self.scene_.setMode(SELECT)
 
+    def clickedPoint(self):
+            self.scene_.setMode(POINT)
 
+    def clickedRectangle(self):
+        self.scene_.setMode(RECTANGLE)
+
+    def clickedLine(self):
+        self.scene_.setMode(LINE)
+
+    def clickedPolygon(self):
+        self.scene_.setMode(POLYGON)
 
 
 def main():
     app = QApplication(sys.argv)
 
     wnd = MainWindow(sys.argv[1:])
+    wnd.resize(800,600)
     wnd.show()
 
     return app.exec_()
