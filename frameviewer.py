@@ -20,6 +20,7 @@ class GraphicsView(QGraphicsView):
         self.setRenderHint(QPainter.Antialiasing)
         self.setRenderHint(QPainter.TextAntialiasing)
         self.setStyleSheet("QFrame { border: 3px solid black }");
+        self.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
 
         self.active_ = False
 
@@ -70,6 +71,7 @@ class GraphicsView(QGraphicsView):
     def resizeEvent(self, event):
         if self.getScale() < self.getMinScale():
             self.setScaleAbsolute(0)
+        QGraphicsView.resizeEvent(self, event)
 
 class FrameViewer(QWidget):
     # Signals
@@ -174,6 +176,7 @@ def main():
     #viewer = SingleFrameViewer(scene)
     viewer = MultiFrameEqualViewer(scenes)
     viewer.show()
+    viewer.resize(800, 600)
 
     timer = QTimer()
     timer.setInterval(10)
