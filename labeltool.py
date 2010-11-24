@@ -5,6 +5,7 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import PyQt4.uic as uic
 import qrc_icons
+from buttonarea import *
 
 APP_NAME            = """labeltool"""
 ORGANIZATION_NAME   = """CVHCI Research Group"""
@@ -21,6 +22,10 @@ class MainWindow(QMainWindow):
 
         self.scene = QGraphicsScene(self)
         self.view.setScene(self.scene)
+
+        self.buttonarea = ButtonArea()
+        self.buttonarea.load("example_config.py")
+        self.ui.dockAnnotationTree.setWidget(self.buttonarea)
 
         ## create action group for tools
         self.toolActions = QActionGroup(self)
