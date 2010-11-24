@@ -10,6 +10,7 @@ class ButtonArea(QWidget):
         self.label_properties = {}
 
         self.properties = {}
+        self.property_buttons = []
         
         self.last_checked_label = None
         
@@ -36,11 +37,17 @@ class ButtonArea(QWidget):
         self.hlayout = QHBoxLayout()
         self.hlayout.addLayout(label_vlayout)
         self.setLayout(self.hlayout)
+        print self.hlayout.parent()
 
     def update_buttons(self):
         layout = self.hlayout.takeAt(1)
+        for button in self.property_buttons:
+            button.hide()
+            del button
 
         dynamic_hlayout = QHBoxLayout()
+
+        self.property_buttons = []
         
         if self.last_checked_label != None:
             for key in self.label_properties[self.last_checked_label].keys():
@@ -50,13 +57,12 @@ class ButtonArea(QWidget):
                 buttongroup = QButtonGroup()
                 for value in self.properties[key]:
                     button = self.create_button(value)
+                    self.property_buttons.append(button)
                     vlayout.addWidget(button)
                     buttongroup.addButton(button)
                 dynamic_hlayout.addLayout(vlayout)
 
         self.hlayout.addLayout(dynamic_hlayout)
-        self.update()
-        self.updateGeometry()
 
     def add_label(self, label_name, properties = {}):
         self.label_names.append(label_name)
