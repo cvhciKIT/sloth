@@ -15,10 +15,10 @@ class ModelItem:
         return self.parent_
 
     def rowOfChild(self, item):
-        for row, child in enumerate(self.children_):
-            if child is item:
-                return row
-        return -1
+        try:
+            return self.children_.index(item)
+        except:
+            return -1
 
     def data(self, index, role):
         return QVariant()
@@ -68,6 +68,10 @@ class FrameModelItem(ModelItem):
         self.frame_['annotations'].append(ann)
         ami = AnnotationModelItem(ann, self)
         self.children_.append(ami)
+
+    def removeAnnotation(self, pos):
+        del self.frame_['annotations'][pos]
+        del self.children_[pos]
 
     def data(self, index, role):
         if role == Qt.DisplayRole and index.column() == 0:
@@ -267,6 +271,23 @@ class AnnotationModel(QAbstractItemModel):
 
         return True
 
+    def removeAnnotation(self, annidx):
+        annidx = QModelIndex(annidx)  # explicitly convert from QPersistentModelIndex
+        item = self.itemFromIndex(annidx)
+        assert isinstance(item, AnnotationModelItem)
+
+        parent = item.parent_
+        parentidx = annidx.parent()
+        assert isinstance(parent, FrameModelItem)
+
+        pos = parent.rowOfChild(item)
+        self.beginRemoveRows(parentidx, pos, pos)
+        parent.removeAnnotation(pos)
+        self.endRemoveRows()
+        self.setDirty(True)
+
+        return True
+
     def headerData(self, section, orientation, role):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             if section == 0: return QVariant("File/Type")
@@ -347,6 +368,12 @@ class AnnotationTreeView(QTreeView):
                 return
             self.model().addAnnotation(index,
                     {'type':'beer', 'alc': '5.1', 'name': 'rothaus'})
+
+        if event.key() == ord('D'):
+            index = self.currentIndex()
+            if not index.isValid():
+                return
+            self.model().removeAnnotation(index)
 
         ## it is important to use the keyPressEvent of QAbstractItemView, not QTreeView
         QAbstractItemView.keyPressEvent(self, event)
