@@ -53,8 +53,15 @@ class GraphicsView(QGraphicsView):
         min_scale = min(min_scale_w, min_scale_h)
         return min_scale
 
+    def getMaxScale(self):
+        max_scale_w = self.scene().height() / 5.0
+        max_scale_h = self.scene().width()  / 5.0
+        max_scale = min(max_scale_w, max_scale_h)
+        return max_scale
+
     def setScaleAbsolute(self, scale):
         scale = max(scale, self.getMinScale())
+        scale = min(scale, self.getMaxScale())
         self.setTransform(QTransform.fromScale(scale, scale))
         self.scaleChanged.emit(self.getScale())
 
@@ -71,6 +78,8 @@ class GraphicsView(QGraphicsView):
     def resizeEvent(self, event):
         if self.getScale() < self.getMinScale():
             self.setScaleAbsolute(0)
+        if self.getScale() > self.getMaxScale():
+            self.setScaleAbsolute(self.getMaxScale())
         QGraphicsView.resizeEvent(self, event)
 
 class FrameViewer(QWidget):
