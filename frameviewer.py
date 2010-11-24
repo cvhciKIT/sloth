@@ -16,6 +16,7 @@ class GraphicsView(QGraphicsView):
 
     def __init__(self, parent=None):
         QGraphicsView.__init__(self, parent)
+        self.setDragMode(QGraphicsView.ScrollHandDrag)
         self.setRenderHint(QPainter.Antialiasing)
         self.setRenderHint(QPainter.TextAntialiasing)
         self.setStyleSheet("QFrame { border: 3px solid black }");
