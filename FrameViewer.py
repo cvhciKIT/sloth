@@ -1,7 +1,13 @@
 #!/usr/bin/python
 import sys, os, math
+import okapy
+import okapy.videoio
+import okapy.guiqt.utilities as ogu
 from PyQt4.QtCore import *
 from PyQt4.QtGui  import *
+
+videos = []
+scenes = []
 
 class GraphicsView(QGraphicsView):
     # Signals
@@ -133,21 +139,41 @@ class MultiFrameEqualViewer(FrameViewer):
     def getActiveSceneView(self):
         return self.scene_views[self.active_scene_view]
 
-def get_dummy_scene(filename):
+def get_dummy_scene():
     scene = QGraphicsScene()
-    scene.addPixmap(QPixmap(filename))
-    return scene
+    video = okapy.videoio.FFMPEGIndexedVideoSource("/home/mfischer/data/mika_serien/COUPLING_S1_E1.vob")
+    video.getFrame(1000)
+    video.getNextFrame()
+    img = video.getImage()
+    qimg = ogu.toQImage(img, True)
+    scene.addPixmap(QPixmap(qimg))
+    return (scene, video)
+
+def next_frame():
+    for v in videos:
+        v.getNextFrame()
+    for v, s in zip(videos, scenes):
+        img = v.getImage()
+        qimg = ogu.toQImage(img, True)
+        s.clear()
+        s.addPixmap(QPixmap(qimg))
 
 def main():
     app = QApplication(sys.argv)
 
-    scenes = []
     for i in range(4):
-        scenes.append(get_dummy_scene("/home/mfischer/data/test.jpg"))
+        (scene, video) = get_dummy_scene()
+        videos.append(video)
+        scenes.append(scene)
 
     #viewer = SingleFrameViewer(scene)
     viewer = MultiFrameEqualViewer(scenes)
     viewer.show()
+
+    timer = QTimer()
+    timer.setInterval(10)
+    timer.timeout.connect(next_frame)
+    timer.start()
 
     return app.exec_()
 
