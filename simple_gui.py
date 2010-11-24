@@ -28,9 +28,6 @@ class MainWindow(QMainWindow):
         print button.text()
         self.redlabel.setText(button.text())
 
-
-
-
 def main():
     app = QApplication(sys.argv)
 
