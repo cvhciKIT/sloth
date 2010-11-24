@@ -21,8 +21,13 @@ class GraphicsView(QGraphicsView):
         self.setRenderHint(QPainter.TextAntialiasing)
         self.setStyleSheet("QFrame { border: 3px solid black }");
 
-        self.current_scale_ = 1
         self.active_ = False
+
+    def getScale(self):
+        if self.isTransformed():
+            return self.transform().m11()
+        else:
+            return -1
 
     def isActive(self):
         return self.active_
@@ -41,22 +46,19 @@ class GraphicsView(QGraphicsView):
             self.setStyleSheet("QFrame { border: 3px solid black }");
             self.update()
 
-    def setScaleRelative(self, factor):
-        QGraphicsView.scale(self, factor, factor)
-        self.current_scale_ *= factor
-        self.scaleChanged.emit(self.current_scale_)
-        # TODO: Stop at minimum scale
+    def getMinScale(self):
+        min_scale_w = float(self.width()  - 2*self.frameWidth()) / self.scene().width()
+        min_scale_h = float(self.height() - 2*self.frameWidth()) / self.scene().height()
+        min_scale = min(min_scale_w, min_scale_h)
+        return min_scale
 
     def setScaleAbsolute(self, scale):
-        m = QMatrix()
-        m.scale(scale, scale)
-        self.current_scale_ = scale
-        self.setMatrix(m)
-        self.scaleChanged.emit(self.current_scale_)
-        # TODO: Stop at minimum scale
+        scale = max(scale, self.getMinScale())
+        self.setTransform(QTransform.fromScale(scale, scale))
+        self.scaleChanged.emit(self.getScale())
 
-    def getScale(self):
-        return self.current_scale_
+    def setScaleRelative(self, factor):
+        self.setScaleAbsolute(self.getScale() * factor)
 
     def wheelEvent(self, event):
         factor = 1.41 ** (event.delta() / 240.0)
@@ -65,7 +67,9 @@ class GraphicsView(QGraphicsView):
     def focusInEvent(self, event):
         self.focusIn.emit()
 
-    # TODO: Make window panable by CTRL-Mouse-Drag or similar
+    def resizeEvent(self, event):
+        if self.getScale() < self.getMinScale():
+            self.setScaleAbsolute(0)
 
 class FrameViewer(QWidget):
     # Signals
