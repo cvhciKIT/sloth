@@ -12,7 +12,7 @@ class GraphicsView(QGraphicsView):
         QGraphicsView.__init__(self, parent)
         self.setRenderHint(QPainter.Antialiasing)
         self.setRenderHint(QPainter.TextAntialiasing)
-        self.setFrameStyle(QFrame.NoFrame)
+        self.setStyleSheet("QFrame { border: 3px solid black }");
 
         self.current_scale_ = 1
         self.active_ = False
@@ -24,14 +24,14 @@ class GraphicsView(QGraphicsView):
         if not self.active_:
             self.active_ = True
             self.setFocus(Qt.OtherFocusReason)
-            self.setFrameStyle(QFrame.Panel)
+            self.setStyleSheet("QFrame { border: 3px solid red }");
             self.update()
 
     def deactivate(self):
         if self.active_:
             self.active_ = False
             self.clearFocus()
-            self.setFrameStyle(QFrame.NoFrame)
+            self.setStyleSheet("QFrame { border: 3px solid black }");
             self.update()
 
     def setScaleRelative(self, factor):
