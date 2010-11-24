@@ -1,0 +1,16 @@
+<RCC>
+  <qresource>
+    <file>icons/arrow_left.png</file>
+    <file>icons/arrow_right.png</file>
+    <file>icons/disk.png</file>
+    <file>icons/door_in.png</file>
+    <file>icons/door_out.png</file>
+    <file>icons/folder_table.png</file>
+    <file>icons/page_white.png</file>
+    <file>icons/page_white_text.png</file>
+    <file>icons/picture_add.png</file>
+    <file>icons/zoom_in.png</file>
+    <file>icons/zoom_out.png</file>
+    <file>icons/zoom.png</file>
+  </qresource>
+</RCC>
