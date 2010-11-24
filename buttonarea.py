@@ -8,8 +8,6 @@ class ButtonListWidget(QWidget):
         vlayout = QVBoxLayout()
         vlayout.setSpacing(0)
         vlayout.setAlignment(Qt.AlignTop)
-        #vlayout.setMargin(0)
-        #vlayout.setContentsMargins(0, 0, 0, 0)
         vlayout.addWidget(QLabel("<center><b>" + name + "</b></center>"))
         self.button_group = QButtonGroup()
         self.setLayout(vlayout)
@@ -107,11 +105,6 @@ class ButtonArea(QWidget):
 
     def load(self, config_filepath):
         execfile(config_filepath)
-        #if self.get_checked_label_button() == None:
-        #    if len(self.label_button_group.buttons()) != 0:
-        #        self.label_button_group.buttons()[0].setChecked(True)
-        #        
-        #self.last_checked_label = str(self.get_checked_label_button().text())
         self.init_button_lists()
         
 def main():
