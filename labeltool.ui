@@ -20,7 +20,7 @@
      <x>0</x>
      <y>0</y>
      <width>656</width>
-     <height>28</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -84,39 +84,8 @@
    <addaction name="actionZoom_In"/>
    <addaction name="actionZoom_Out"/>
    <addaction name="separator"/>
-   <addaction name="actionSelection"/>
-   <addaction name="actionPoint"/>
-   <addaction name="actionRectangle"/>
-   <addaction name="actionMask"/>
   </widget>
-  <widget class="QDockWidget" name="dockToolProperties">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="minimumSize">
-    <size>
-     <width>80</width>
-     <height>44</height>
-    </size>
-   </property>
-   <property name="floating">
-    <bool>false</bool>
-   </property>
-   <property name="features">
-    <set>QDockWidget::AllDockWidgetFeatures</set>
-   </property>
-   <property name="allowedAreas">
-    <set>Qt::AllDockWidgetAreas</set>
-   </property>
-   <property name="windowTitle">
-    <string>Tool Properties</string>
-   </property>
-   <attribute name="dockWidgetArea">
-    <number>1</number>
-   </attribute>
-   <widget class="QWidget" name="dockToolWidgetContents"/>
-  </widget>
-  <widget class="QDockWidget" name="dockAnnotationTree">
+  <widget class="QDockWidget" name="dockAnnotationButtons">
    <property name="enabled">
     <bool>true</bool>
    </property>
@@ -132,13 +101,13 @@
    <attribute name="dockWidgetArea">
     <number>1</number>
    </attribute>
-   <widget class="QWidget" name="dockAnnotationWidgetContents"/>
+   <widget class="QWidget" name="dockAnnotationButtonsWidgetContents"/>
   </widget>
-  <widget class="QDockWidget" name="dockBatchLabel">
+  <widget class="QDockWidget" name="dockInformation">
    <attribute name="dockWidgetArea">
     <number>2</number>
    </attribute>
-   <widget class="QWidget" name="dockBatchLabelWidgetContents"/>
+   <widget class="QWidget" name="dockInformationWidgetContents"/>
   </widget>
   <action name="actionOpen">
    <property name="icon">

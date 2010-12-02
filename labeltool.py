@@ -25,7 +25,7 @@ class MainWindow(QMainWindow):
 
         self.buttonarea = ButtonArea()
         self.buttonarea.load("example_config.py")
-        self.ui.dockAnnotationTree.setWidget(self.buttonarea)
+        self.ui.dockAnnotationButtons.setWidget(self.buttonarea)
 
         ## create action group for tools
         self.toolActions = QActionGroup(self)
