@@ -39,19 +39,19 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central)
 
     def clickedSelect(self):
-        self.scene_.setMode(SELECT)
+        self.scene_.setMode(None)
 
     def clickedPoint(self):
-            self.scene_.setMode(POINT)
+            self.scene_.setMode({'type': 'point'})
 
     def clickedRectangle(self):
-        self.scene_.setMode(RECTANGLE)
+        self.scene_.setMode({'type': 'rect'})
 
     def clickedLine(self):
         self.scene_.setMode(LINE)
 
     def clickedPolygon(self):
-        self.scene_.setMode(POLYGON)
+        self.scene_.setMode({'type': 'polygon'})
 
 
 def main():
