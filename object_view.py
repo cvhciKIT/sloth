@@ -43,8 +43,8 @@ class MainWindow(QMainWindow):
         self.scene_.setModel(model)
 
         file_index = model.index(0, 0, QModelIndex())
-        frame_index = model.index(0, 0, file_index)
-        self.scene_.setRoot(frame_index)
+        #frame_index = model.index(0, 0, file_index)
+        self.scene_.setRoot(file_index)
 
     def clickedSelect(self):
         self.scene_.setMode(None)

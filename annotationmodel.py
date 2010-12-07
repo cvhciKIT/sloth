@@ -2,8 +2,9 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from functools import partial
 import os.path
+import okapy
 
-DataRole = Qt.UserRole + 1
+DataRole, ImageRole = [Qt.UserRole + i for i in range(1,3)]
 
 class ModelItem:
     def __init__(self, parent=None):
@@ -31,7 +32,7 @@ class RootModelItem(ModelItem):
         self.files_ = files
 
         for file in files:
-            fmi = FileModelItem(file, self)
+            fmi = FileModelItem.create(file, self)
             self.children_.append(fmi)
 
 class FileModelItem(ModelItem):
@@ -39,17 +40,59 @@ class FileModelItem(ModelItem):
         ModelItem.__init__(self, parent)
         self.file_ = file
 
-        for frame in file['frames']:
-            fmi = FrameModelItem(frame, self)
-            self.children_.append(fmi)
-
     def filename(self):
         return self.file_['filename']
 
     def data(self, index, role):
         if role == Qt.DisplayRole and index.column() == 0:
-            return self.filename()
+            return os.path.basename(self.filename())
         return QVariant()
+
+    @staticmethod
+    def create(file, parent):
+        if file['type'] == 'image':
+            return ImageFileModelItem(file, parent)
+        elif file['type'] == 'video':
+            return VideoFileModelItem(file, parent)
+
+class ImageFileModelItem(FileModelItem):
+    def __init__(self, file, parent):
+        FileModelItem.__init__(self, file, parent)
+
+        for ann in file['annotations']:
+            ami = AnnotationModelItem(ann, self)
+            self.children_.append(ami)
+
+    def data(self, index, role):
+        if role == ImageRole:
+            return okapy.loadImage(self.filename())
+        return FileModelItem.data(self, index, role)
+
+class VideoFileModelItem(FileModelItem):
+    _cached_vs_filename = None
+    _cached_vs          = None
+
+    def __init__(self, file, parent):
+        FileModelItem.__init__(self, file, parent)
+
+        for frame in file['frames']:
+            fmi = FrameModelItem(frame, self)
+            self.children_.append(fmi)
+
+    def updateCachedVideoSource(self):
+        # have only one cached video source at a time for now
+        # TODO: for labeling multiple synchronized videos this should
+        # be modified, otherwise it might be awfully slow
+        VideoFileModelItem._cached_vs = okv.ImageSequence()
+        VideoFileModelItem._cached_vs.open(self.filename())
+        VideoFileModelItem._cached_vs_filename = self.filename()
+
+    def getFrame(self, frame):
+        if VideoFileModelItem._cached_vs_filename != self.filename():
+            self.updateCachedVideoSource()
+
+        VideoFileModelItem._cached_vs.getFrame(frame)
+        return VideoFileModelItem._cached_vs.getImage()
 
 class FrameModelItem(ModelItem):
     def __init__(self, frame, parent):
@@ -78,6 +121,8 @@ class FrameModelItem(ModelItem):
     def data(self, index, role):
         if role == Qt.DisplayRole and index.column() == 0:
             return "%d / %.3f" % (self.framenum(), self.timestamp())
+        elif role == ImageRole:
+            return self.parent().getFrame(self.frame_['num'])
         return QVariant()
 
 class AnnotationModelItem(ModelItem):
@@ -428,17 +473,28 @@ def someAnnotations():
 
 def defaultAnnotations():
     annotations = []
+    import os, glob
+    if os.path.exists('/cvhci/data/multimedia/bigbangtheory/still_images/s1e1/'):
+        images = glob.glob('/cvhci/data/multimedia/bigbangtheory/still_images/s1e1/*.png')
+        images.sort()
+        for fname in images:
+            file = {
+                'filename': fname,
+                'type': 'image',
+                'annotations': someAnnotations()
+            }
+            annotations.append(file)
+
     for i in range(5):
         file = {
             'filename': 'file%d.png' % i,
             'type': 'image',
-            'frames': []
+            'annotations': someAnnotations()
         }
-        file['frames'].append({'annotations': someAnnotations()})
         annotations.append(file)
     for i in range(5):
         file = {
-            'filename': 'file%d.png' % i,
+            'filename': 'file%d.avi' % i,
             'type':     'video',
             'frames': [],
         }

@@ -1,7 +1,10 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from sceneitems import *
+from annotationmodel import ImageRole
 import math
+import okapy
+from okapy.guiqt.utilities import toQImage
 
 class ItemInserter:
     def __init__(self, scene, model=None):
@@ -184,8 +187,10 @@ class AnnotationScene(QGraphicsScene):
             return
 
         assert self.root_.model() == self.model_
-        self.setSceneRect(0, 0, 640, 480)
-        self.addRect(QRectF(0, 0, 640, 480))
+        self.image_ = self.root_.data(ImageRole).toPyObject()
+        self.setSceneRect(0, 0, self.image_.shape[0], self.image_.shape[1])
+        self.pixmap_ = QPixmap(okapy.guiqt.toQImage(self.image_))
+        self.addPixmap(self.pixmap_)
 
         num_items = self.model_.rowCount(self.root_)
         self.insertItems(0, num_items)
