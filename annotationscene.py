@@ -113,16 +113,15 @@ class AnnotationScene(QGraphicsScene):
 
     def __init__(self, parent=None):
         super(AnnotationScene, self).__init__(parent)
+
+        self.model_     = None
+        self.mode_      = None
+        self.inserters_ = {}
+        self.inserter_  = None
+        self.debug_     = True
+        self.message_   = ""
+
         self.setBackgroundBrush(Qt.darkGray)
-
-        self.reset()
-        self.setSceneRect(0,0, 640, 480)
-        self.addRect(QRectF(0, 0, 640, 480), brush=Qt.white)
-
-        self.mode_         = None
-        self.inserters_    = {}
-        self.inserter_     = None
-        self.debug_ = True
 
         self.addItemInserter('point', PointItemInserter(self))
         self.addItemInserter('rect',  RectItemInserter(self))
@@ -133,8 +132,78 @@ class AnnotationScene(QGraphicsScene):
         #self.setMode({'type': 'rect'})
         self.setMode({'type': 'poly'})
 
-    def reset(self):
+        self.reset()
+        self.setSceneRect(0,0, 640, 480)
+        self.addRect(QRectF(0, 0, 640, 480), brush=Qt.white)
+
+    #
+    # getters/setters
+    #______________________________________________________________________________________________________
+    def model(self):
+        return self.model_
+
+    def setModel(self, model):
+        if model == self.model_:
+            # same model as the current one
+            # reset caches anyway, invalidate root
+            self.reset()
+            return
+
+        # disconnect old signals
+        if self.model_ is not None:
+            self.disconnect(self.model_, SIGNAL('dataChanged(QModelIndex,QModelIndex)'), self.dataChanged)
+            self.disconnect(self.model_, SIGNAL('rowsInserted(QModelIndex,int,int)'), self.rowsInserted)
+            self.disconnect(self.model_, SIGNAL('rowsAboutToBeRemoved(QModelIndex,int,int)'), self.rowsAboutToBeRemoved)
+            self.disconnect(self.model_, SIGNAL('rowsRemoved(QModelIndex,int,int)'), self.rowsRemoved)
+            self.disconnect(self.model_, SIGNAL('modelReset()'), self.reset)
+        self.model_ = model
+
+        # connect new signals
+        if self.model_ is not None:
+            self.connect(self.model_, SIGNAL('dataChanged(QModelIndex,QModelIndex)'), self.dataChanged)
+            self.connect(self.model_, SIGNAL('rowsInserted(QModelIndex,int,int)'), self.rowsInserted)
+            self.connect(self.model_, SIGNAL('rowsAboutToBeRemoved(QModelIndex,int,int)'), self.rowsAboutToBeRemoved)
+            self.connect(self.model_, SIGNAL('rowsRemoved(QModelIndex,int,int)'), self.rowsRemoved)
+            self.connect(self.model_, SIGNAL('modelReset()'), self.reset)
+
+        # reset caches, invalidate root
+        self.reset()
+
+    def root(self):
+        return self.root_
+
+    def setRoot(self, root):
+        """
+        Set the index of the model which denotes the current image to be
+        displayed by the scene.  This can be either the index to a frame in a
+        video, or to an image.
+        """
+        self.root_ = root
         self.clear()
+        if not root.isValid():
+            return
+
+        assert self.root_.model() == self.model_
+        self.setSceneRect(0, 0, 640, 480)
+        self.addRect(QRectF(0, 0, 640, 480))
+
+        num_items = self.model_.rowCount(self.root_)
+        self.insertItems(0, num_items)
+
+    def insertItems(self, first, last):
+        assert self.model_ is not None
+        assert self.root_.isValid()
+
+        for row in range(first, last+1):
+            child = self.root_.child(row, 0)
+            item = AnnotationGraphicsItem.createItem(child)
+            if item is not None:
+                #checked = (child.data(Qt.CheckStateRole).toInt()[0] == Qt.Checked)
+                #item.setVisible(checked)
+                self.addItem(item)
+
+    def mode(self):
+        return self.mode_
 
     def setMode(self, mode):
         print "setMode :", mode
@@ -150,50 +219,108 @@ class AnnotationScene(QGraphicsScene):
         self.inserter_ = self.inserters_[self.mode_['type']]
         self.inserter_.setMode(self.mode_)
 
-    def addItemInserter(self, type, inserter):
-        if type in self.inserters_:
+    #
+    # common methods
+    #______________________________________________________________________________________________________
+    def reset(self):
+        self.clear()
+        self.setRoot(QModelIndex())
+        self.clearMessage()
+
+    def addItem(self, item):
+        QGraphicsScene.addItem(self, item)
+        # TODO emit signal itemAdded
+
+    def addItemInserter(self, type, inserter, replace=False):
+        type = type.lower()
+        if type in self.inserters_ and not replace:
             raise Exception("Type %s already has an inserter" % type)
 
         self.inserters_[type] = inserter
 
     def removeItemInserter(self, type):
+        type = type.lower()
         if type in self.inserters_:
             del self.inserters_[type]
 
-    def mousePressEvent(self, event):
-        if self.debug_:
-            print "mousePressEvent", self.sceneRect().contains(event.scenePos()), event.scenePos()
-        if not self.sceneRect().contains(event.scenePos()):
-            # ignore events outside the scene rect
+    #
+    # slots for signals from the model
+    # this is the implemenation of the scene as a view of the model
+    #______________________________________________________________________________________________________
+    def dataChanged(self, indexFrom, indexTo):
+        if self.root_ != indexFrom.parent() or self.root_ != indexTo.parent():
             return
-        elif self.inserter_ is not None:
-            # insert mode
-            self.inserter_.mousePressEvent(event, None)
-        else:
-            # selection mode
-            QGraphicsScene.mousePressEvent(self, event)
 
-    def mouseReleaseEvent(self, event):
-        if self.debug_:
-            print "mouseReleaseEvent", self.sceneRect().contains(event.scenePos()), event.scenePos()
-        if self.inserter_ is not None:
-            # insert mode
-            self.inserter_.mouseReleaseEvent(event, None)
-        else:
-            # selection mode
-            QGraphicsScene.mouseReleaseEvent(self, event)
+        for row in range(indexFrom.row(), indexTo.row()+1):
+            item = self.itemFromIndex(indexFrom.sibling(row, 0))
+            if item is not None:
+                item.dataChanged()
 
-    def mouseMoveEvent(self, event):
-        if self.debug_:
-            print "mouseMoveEvent", self.sceneRect().contains(event.scenePos()), event.scenePos()
-        if self.inserter_ is not None:
-            # insert mode
-            self.inserter_.mouseMoveEvent(event, None)
-        else:
-            # selection mode
-            QGraphicsScene.mouseMoveEvent(self, event)
+    def rowsInserted(self, index, first, last):
+        if self.root_ != index:
+            return
 
-    def addItem(self, item):
-        QGraphicsScene.addItem(self, item)
-        # TODO emit signal itemAdded
+        self.insertItems(first, last)
+
+
+    def rowsAboutToBeRemoved(self, index, first, last):
+        if self.root_ != index:
+            return
+
+        for row in range(first, last+1):
+            item = self.itemFromIndex(index.child(row, 0))
+            if item is not None:
+                self.removeItem(item)
+
+    def rowsRemoved(self, index, first, last):
+        pass
+
+    def itemFromIndex(self, index):
+        index = index.model().mapToSource(index)  # TODO: solve this somehow else
+        for item in self.items():
+            # some graphics items will not have an index method,
+            # we just skip these
+            if hasattr(item, 'index') and item.index() == index:
+                return item
+        return None
+
+    #
+    # message handling and displaying
+    #______________________________________________________________________________________________________
+    def setMessage(self, message):
+        if self.message_ is not None:
+            self.clearMessage()
+
+        if message is None or message == "":
+            return
+
+        # TODO don't use text item at all, just draw the text in drawForeground
+        self.message_ = message
+        self.message_text_item_ = QGraphicsSimpleTextItem(message)
+        self.message_text_item_.setPos(20, 20)
+        self.invalidate(QRectF(), QGraphicsScene.ForegroundLayer)
+
+    def clearMessage(self):
+        if self.message_ is not None:
+            self.message_text_item_ = None
+            self.message_ = None
+            self.invalidate(QRectF(), QGraphicsScene.ForegroundLayer)
+
+    def drawForeground(self, painter, rect):
+        QGraphicsScene.drawForeground(self, painter, rect)
+
+        if self.message_ is not None:
+            assert self.message_text_item_ is not None
+
+            painter.setTransform(QTransform())
+            painter.setBrush(QColor('lightGray'))
+            painter.setPen(QPen(QBrush(QColor('black')), 2))
+
+            br = self.message_text_item_.boundingRect()
+
+            painter.drawRoundedRect(QRectF(10, 10, br.width()+20, br.height()+20), 10.0, 10.0)
+            painter.setTransform(QTransform.fromTranslate(20, 20))
+            painter.setPen(QPen(QColor('black'), 1))
+
+            self.message_text_item_.paint(painter, QStyleOptionGraphicsItem(), None)
 

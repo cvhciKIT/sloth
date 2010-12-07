@@ -3,6 +3,8 @@ from PyQt4.QtCore import *
 from functools import partial
 import os.path
 
+DataRole = Qt.UserRole + 1
+
 class ModelItem:
     def __init__(self, parent=None):
         self.parent_   = parent
@@ -79,39 +81,54 @@ class FrameModelItem(ModelItem):
         return QVariant()
 
 class AnnotationModelItem(ModelItem):
-    def __init__(self, annotations, parent):
+    def __init__(self, annotation, parent):
         ModelItem.__init__(self, parent)
-        self.annotations_ = annotations
+        self.annotation_ = annotation
+        # dummy key/value so that pyqt does not convert the dict
+        # into a QVariantMap while communicating with the Views
+        self.annotation_[None] = None
 
-        for key, value in annotations.iteritems():
-            self.children_.append(KeyValueModelItem(key, value, self))
+        for key, value in annotation.iteritems():
+            if key == None:
+                continue
+            self.children_.append(KeyValueModelItem(key, self))
 
     def type(self):
-        return self.annotations_['type']
+        return self.annotation_['type']
+
+    def setData(self, index, value, role):
+        if role == DataRole:
+            self.annotation_ = value.toPyObject()
+            #print "setData", self.annotation_
+            index.model().dataChanged.emit(index, index.sibling(index.row(), 1))
+            return True
+        return False
 
     def data(self, index, role):
-        if role == Qt.DisplayRole:
-            if index.column() == 0:
-                return self.type()
-            else:
-                return QVariant()
+        if role == Qt.DisplayRole and index.column() == 0:
+            return self.type()
+        elif role == DataRole:
+            #print "data():", self.annotation_
+            return self.annotation_
+
+        return QVariant()
+
+    def value(self, key):
+        return self.annotation_[key]
 
 class KeyValueModelItem(ModelItem):
-    def __init__(self, key, value, parent):
+    def __init__(self, key, parent):
         ModelItem.__init__(self, parent)
-        self.key_   = key
-        self.value_ = value
+        self.key_  = key
 
     def data(self, index, role):
         if role == Qt.DisplayRole:
             if index.column() == 0:
                 return self.key_
             elif index.column() == 1:
-                return self.value_
+                return self.parent().value(self.key_)
             else:
                 return QVariant()
-
-
 
 class AnnotationModel(QAbstractItemModel):
     def __init__(self, annotations, parent=None):
@@ -191,6 +208,9 @@ class AnnotationModel(QAbstractItemModel):
         row = grandparent.rowOfChild(parent)
         assert row != -1
         return self.createIndex(row, 0, parent)
+
+    def mapToSource(self, index):
+        return index
 
     def flags(self, index):
         return Qt.ItemIsEnabled
@@ -401,6 +421,9 @@ def someAnnotations():
     annotations.append({'type': 'point',
                         'x': '30',
                         'y': '30'})
+    annotations.append({'type': 'point',
+                        'x': '100',
+                        'y': '100'})
     return annotations
 
 def defaultAnnotations():
