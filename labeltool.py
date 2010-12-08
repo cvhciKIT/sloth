@@ -6,6 +6,10 @@ from PyQt4.QtCore import *
 import PyQt4.uic as uic
 import qrc_icons
 from buttonarea import *
+from annotationmodel import *
+from annotationscene import *
+from frameviewer import *
+
 
 APP_NAME            = """labeltool"""
 ORGANIZATION_NAME   = """CVHCI Research Group"""
@@ -17,15 +21,18 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__(parent)
         self.ui = uic.loadUi("labeltool.ui", self)
         self.ui.show()
-        self.view = QGraphicsView(self)
+        self.view = GraphicsView(self)
         self.setCentralWidget(self.view)
 
-        self.scene = QGraphicsScene(self)
+        self.scene = AnnotationScene(self)
         self.view.setScene(self.scene)
 
         self.buttonarea = ButtonArea()
         self.buttonarea.load("example_config.py")
         self.ui.dockAnnotationButtons.setWidget(self.buttonarea)
+
+        self.treeview = AnnotationTreeView()
+        self.ui.dockInformation.setWidget(self.treeview)
 
         ## create action group for tools
         self.toolActions = QActionGroup(self)
@@ -42,10 +49,13 @@ class MainWindow(QMainWindow):
         #self.updateStatus()
         #self.updateViews()
 
-        if len(argv) > 0:
-            self.loadInitialFile(argv[0])
-        else:
-            self.loadInitialFile()
+        self.current_index_ = None
+        self.updateViews()
+
+        #if len(argv) > 0:
+            #self.loadInitialFile(argv[0])
+        #else:
+            #self.loadInitialFile()
 
     def loadApplicationSettings(self):
         settings = QSettings()
@@ -78,8 +88,8 @@ class MainWindow(QMainWindow):
         #self.connect(self.ui.action_Add_Image, SIGNAL("triggered()"), self.addImage)
         #self.connect(self.ui.actionNext, SIGNAL("triggered()"), self.gotoNext)
         #self.connect(self.ui.actionPrevious, SIGNAL("triggered()"), self.gotoPrevious)
-        #self.connect(self.ui.actionZoom_In, SIGNAL("triggered()"), functools.partial(self.view.scale, 1.2, 1.2))
-        #self.connect(self.ui.actionZoom_Out, SIGNAL("triggered()"), functools.partial(self.view.scale, 1/1.2, 1/1.2))
+        self.ui.actionZoom_In. triggered.connect(functools.partial(self.view.setScaleRelative, 1.2))
+        self.ui.actionZoom_Out.triggered.connect(functools.partial(self.view.setScaleRelative, 1/1.2))
 
     def loadInitialFile(self, fname=None):
         if fname is not None:
@@ -167,9 +177,34 @@ class MainWindow(QMainWindow):
             return ok
         return False
 
-    ##______________________________________________________________________________
-    ## global event handling
+    def updateViews(self):
+        annotations = defaultAnnotations()
+        self.model_ = AnnotationModel(annotations)
+        self.model_.dirtyChanged.connect(self.updateModified)
 
+        self.treeview.setModel(self.model_)
+        self.scene.setModel(self.model_)
+        self.treeview.selectionModel().currentChanged.connect(self.setCurrentIndex)
+
+    def updateModified(self):
+        #self.ui.action_Add_Image.setEnabled(self.model_ is not None)
+        # TODO also disable/enable other items
+        #self.ui.actionSave.setEnabled(self.annotations.dirty())
+        #self.setWindowModified(self.annotations.dirty())
+        pass
+
+    def setCurrentIndex(self, index):
+        assert index.isValid()
+        newindex = index.model().imageIndex(index)
+        if newindex.isValid() and newindex != self.current_index_:
+            self.current_index_ = newindex
+            self.scene.setRoot(self.current_index_)  # via SIGNAL?
+            if index != self.treeview.currentIndex():
+                self.treeview.setCurrentIndex(self.current_index_)
+
+    ###
+    ### global event handling
+    ###______________________________________________________________________________
     def closeEvent(self, event):
         if self.okToContinue():
             self.saveApplicationSettings()
