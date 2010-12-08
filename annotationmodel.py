@@ -430,19 +430,6 @@ class AnnotationTreeView(QTreeView):
             parent = self.model().parent(index)
             self.model().removeRow(index.row(), parent)
 
-        if event.key() == ord('A'):
-            index = self.currentIndex()
-            if not index.isValid():
-                return
-            self.model().addAnnotation(index,
-                    {'type':'beer', 'alc': '5.1', 'name': 'rothaus'})
-
-        if event.key() == ord('D'):
-            index = self.currentIndex()
-            if not index.isValid():
-                return
-            self.model().removeAnnotation(index)
-
         ## it is important to use the keyPressEvent of QAbstractItemView, not QTreeView
         QAbstractItemView.keyPressEvent(self, event)
 
