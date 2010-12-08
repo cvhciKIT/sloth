@@ -251,6 +251,42 @@ class AnnotationScene(QGraphicsScene):
             del self.inserters_[type]
 
     #
+    # mouse event handler
+    #______________________________________________________________________________________________________
+    def mousePressEvent(self, event):
+        if self.debug_:
+            print "mousePressEvent", self.sceneRect().contains(event.scenePos()), event.scenePos()
+        if not self.sceneRect().contains(event.scenePos()):
+            # ignore events outside the scene rect
+            return
+        elif self.inserter_ is not None:
+            # insert mode
+            self.inserter_.mousePressEvent(event, self.root_)
+        else:
+            # selection mode
+            QGraphicsScene.mousePressEvent(self, event)
+
+    def mouseReleaseEvent(self, event):
+        if self.debug_:
+            print "mouseReleaseEvent", self.sceneRect().contains(event.scenePos()), event.scenePos()
+        if self.inserter_ is not None:
+            # insert mode
+            self.inserter_.mouseReleaseEvent(event, self.root_)
+        else:
+            # selection mode
+            QGraphicsScene.mouseReleaseEvent(self, event)
+
+    def mouseMoveEvent(self, event):
+        if self.debug_:
+           print "mouseMoveEvent", self.sceneRect().contains(event.scenePos()), event.scenePos()
+        if self.inserter_ is not None:
+            # insert mode
+            self.inserter_.mouseMoveEvent(event, self.root_)
+        else:
+            # selection mode
+            QGraphicsScene.mouseMoveEvent(self, event)
+
+    #
     # slots for signals from the model
     # this is the implemenation of the scene as a view of the model
     #______________________________________________________________________________________________________
