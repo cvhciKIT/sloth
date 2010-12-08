@@ -188,9 +188,11 @@ class AnnotationScene(QGraphicsScene):
 
         assert self.root_.model() == self.model_
         self.image_ = self.root_.data(ImageRole).toPyObject()
-        self.setSceneRect(0, 0, self.image_.shape[0], self.image_.shape[1])
         self.pixmap_ = QPixmap(okapy.guiqt.toQImage(self.image_))
-        self.addPixmap(self.pixmap_)
+        item = QGraphicsPixmapItem(self.pixmap_)
+        item.setZValue(-1)
+        self.setSceneRect(0, 0, self.pixmap_.width(), self.pixmap_.height())
+        self.addItem(item)
 
         num_items = self.model_.rowCount(self.root_)
         self.insertItems(0, num_items)
