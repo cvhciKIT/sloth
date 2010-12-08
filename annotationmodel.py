@@ -176,6 +176,9 @@ class KeyValueModelItem(ModelItem):
                 return QVariant()
 
 class AnnotationModel(QAbstractItemModel):
+    # signals
+    dirtyChanged = pyqtSignal(bool, name='dirtyChanged')
+
     def __init__(self, annotations, parent=None):
         QAbstractItemModel.__init__(self, parent)
         self.annotations_ = annotations
@@ -189,7 +192,7 @@ class AnnotationModel(QAbstractItemModel):
         previous = self.dirty_
         self.dirty_ = dirty
         if previous != dirty:
-            self.emit(SIGNAL("dirtyChanged()"))
+            self.dirtyChanged.emit(dirty)
 
     dirty = property(dirty, setDirty)
 
