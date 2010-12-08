@@ -63,6 +63,15 @@ class ImageFileModelItem(FileModelItem):
             ami = AnnotationModelItem(ann, self)
             self.children_.append(ami)
 
+    def addAnnotation(self, ann):
+        self.file_['annotations'].append(ann)
+        ami = AnnotationModelItem(ann, self)
+        self.children_.append(ami)
+
+    def removeAnnotation(self, pos):
+        del self.file_['annotations'][pos]
+        del self.children_[pos]
+
     def data(self, index, role):
         if role == ImageRole:
             return okapy.loadImage(self.filename())
@@ -328,22 +337,25 @@ class AnnotationModel(QAbstractItemModel):
             return True
         return False
 
-    def addAnnotation(self, frameidx, ann={}, **kwargs):
+    def addAnnotation(self, imageidx, ann={}, **kwargs):
         ann.update(kwargs)
         print "addAnnotation", ann
-        frameidx = QModelIndex(frameidx)  # explicitly convert from QPersistentModelIndex
-        item = self.itemFromIndex(frameidx)
-        assert isinstance(item, FrameModelItem)
+        imageidx = QModelIndex(imageidx)  # explicitly convert from QPersistentModelIndex
+        item = self.itemFromIndex(imageidx)
+        assert isinstance(item, FrameModelItem) or isinstance(item, ImageFileModelItem)
 
         next = len(item.children())
-        self.beginInsertRows(frameidx, next, next)
+        self.beginInsertRows(imageidx, next, next)
         item.addAnnotation(ann)
         self.endInsertRows()
         self.setDirty(True)
 
+        self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"), imageidx, imageidx)
+
         return True
 
     def removeAnnotation(self, annidx):
+        # TODO fix to work with ImageFileModelItem
         annidx = QModelIndex(annidx)  # explicitly convert from QPersistentModelIndex
         item = self.itemFromIndex(annidx)
         assert isinstance(item, AnnotationModelItem)

@@ -7,6 +7,7 @@ import okapy
 from okapy.guiqt.utilities import toQImage
 
 class ItemInserter:
+    #TODO remove model member
     def __init__(self, scene, model=None):
         self.scene_ = scene
         self.model_ = model
@@ -53,12 +54,10 @@ class RectItemInserter(ItemInserter):
 
     def mousePressEvent(self, event, index):
         pos = event.scenePos()
-        # TODO create it in the model instead
         item = QGraphicsRectItem(QRectF(pos.x(), pos.y(), 0, 0))
         self.current_item_ = item
         self.init_pos_     = pos
         self.scene().addItem(item)
-
         event.accept()
 
     def mouseMoveEvent(self, event, index):
@@ -77,6 +76,12 @@ class RectItemInserter(ItemInserter):
                self.current_item_.rect().height() > 1:
                 # TODO commit to the model
                 print "added rect:", self.current_item_
+                rect = self.current_item_.rect()
+                ann = {'type': 'rect',
+                       'x': rect.x(), 'y': rect.y(),
+                       'width': rect.width(), 'height': rect.height()}
+                index.model().addAnnotation(index, ann)
+            self.scene().removeItem(self.current_item_)
             self.current_item_ = None
             self.init_pos_ = None
 
@@ -132,12 +137,10 @@ class AnnotationScene(QGraphicsScene):
         self.addItemInserter('polygon',  PolygonItemInserter(self))
 
         #self.setMode({'type': 'point'})
-        #self.setMode({'type': 'rect'})
-        self.setMode({'type': 'poly'})
+        self.setMode({'type': 'rect'})
+        #self.setMode({'type': 'poly'})
 
         self.reset()
-        self.setSceneRect(0,0, 640, 480)
-        self.addRect(QRectF(0, 0, 640, 480), brush=Qt.white)
 
     #
     # getters/setters
