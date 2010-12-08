@@ -209,15 +209,19 @@ class AnnotationModel(QAbstractItemModel):
         child_item = parent_item.children()[row]
         return self.createIndex(row, column, child_item)
 
-    def fileIndex(self, index):
-        """return index that points to the (maybe parental) file object"""
+    def imageIndex(self, index):
+        """return index that points to the (maybe parental) image/frame object"""
         if not index.isValid():
             return QModelIndex()
+
         index = QModelIndex(index)  # explicitly convert from QPersistentModelIndex
         item = self.itemFromIndex(index)
-        if isinstance(item, FileAnnotationModelItem):
+        if isinstance(item, ImageFileModelItem) or \
+           isinstance(item, FrameModelItem):
             return index
-        return self.fileIndex(index.parent())
+
+        # try with next hierarchy up
+        return self.imageIndex(index.parent())
 
     def data(self, index, role):
         if not index.isValid():
