@@ -10,8 +10,9 @@ class ButtonListWidget(QWidget):
         vlayout.setAlignment(Qt.AlignTop)
         vlayout.addWidget(QLabel("<center><b>" + name + "</b></center>"))
         self.button_group = QButtonGroup()
+        self.button_group.setExclusive(False)
         self.setLayout(vlayout)
-        
+
     def create_button(self, button_name):
         button = QPushButton(button_name)
         button.setFlat(True)
@@ -24,10 +25,12 @@ class ButtonListWidget(QWidget):
         self.layout().addWidget(button)
         self.button_group.addButton(button)
         return button
-    
+
     def clickedButton(self):
-        button = self.get_checked_button()
-        label_name = str(button.text())
+        for button in self.button_group.buttons():
+            if button is not self.sender():
+                button.setChecked(False)
+        label_name = str(self.sender().text())
         print label_name
 
     def get_checked_button(self):
