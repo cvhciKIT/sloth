@@ -48,18 +48,21 @@ class AnnotationContainer:
         except Exception as e:
             self.annotations = []
             raise e
-
+    
+    def save(self, filename):
+        self.saveRectFormat(filename)
 
     def saveRectFormat(self, filename):
-        f = open(filname, "w")
+        f = open(filename, "w")
 
         for file in self.annotations_:
             if file['type'] == 'image':
                 rect_anns = [ann for ann in file['annotations'] if ann['type'] == 'rect']
-                f.write("%s %d", file['filename'], len(rect_anns))
+                #f.write("%s %d", file['filename'], len(rect_anns))
                 for ann in rect_anns:
-                    f.write(' %s %s %s %s', str(ann['x']), str(ann['y']), str(ann['width']), str(ann['height']))
-                f.write('\n')
+                    f.write('%s 1 %s %s %s %s\n' % (file['filename'], str(ann['x']), str(ann['y']), str(ann['width']), str(ann['height'])))
+
+        self.filename_ = filename
 
     def asDict(self):
         return self.annotations_
