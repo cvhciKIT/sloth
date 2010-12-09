@@ -116,7 +116,18 @@ class MainWindow(QMainWindow):
         self.updateViews()
 
     def saveAnnotations(self, fname):
-        print "TODO: implement file saving"
+        success = False
+        try:
+            self.anno_container.save(fname)
+            #self.model_.writeback() # write back changes that are cached in the model itself, e.g. mask updates
+            msg = "Successfully saved %s (%d files, %d annotations)" % \
+                    (fname, self.anno_container.numFiles(), self.anno_container.numAnnotations())
+            success = True
+        except Exception as e:
+            msg = "Error: Saving failed (%s)" % str(e)
+
+        self.updateStatus(msg)
+        return success
 
     def loadInitialFile(self, fname=None):
         if fname is not None:
@@ -137,7 +148,7 @@ class MainWindow(QMainWindow):
             if reply == QMessageBox.Cancel:
                 return False
             elif reply == QMessageBox.Yes:
-                self.saveAnnotations()
+                return self.fileSave()
         return True
 
     def fileNew(self):
@@ -164,33 +175,22 @@ class MainWindow(QMainWindow):
             self.loadAnnotations(fname)
 
     def fileSave(self):
-        print "TODO: implement fileSave"
-        return False
-
-        if self.annotations.filename() is None:
+        if self.anno_container.filename() is None:
             return self.fileSaveAs()
-        ok, msg = self.annotations.save()
-        self.model_.writeback() # write back changes that are cached in the model itself, e.g. mask updates
-        self.updateStatus(msg)
-        return ok
+        return self.saveAnnotations(self.anno_container.filename())
 
     def fileSaveAs(self):
         fname = '.'  # self.annotations.filename() or '.'
-        format_str = ' '.join(['*.'+fmt for fmt in self.anno_container.formats()])
+        #format_str = ' '.join(['*.'+fmt for fmt in self.anno_container.formats()])
+        format_str = ' '.join(['*.txt'])
         fname = QFileDialog.getSaveFileName(self,
                 "%s - Save Annotations" % APP_NAME, fname,
                 "%s annotation files (%s)" % (APP_NAME, format_str))
 
-        print "TODO: implement fileSaveAs"
-        return False
-
         if not fname.isEmpty():
-            if not fname.contains("."):
-                fname += ".yaml"
-            ok, msg = self.annotations.save(fname)
-            self.model_.writeback() # write back changes that are cached in the model itself, e.g. mask updates
-            self.updateStatus(msg)
-            return ok
+            #if not fname.contains("."):
+                #fname += ".yaml"
+            return self.saveAnnoations(str(fname))
         return False
 
     def gotoNext(self):
