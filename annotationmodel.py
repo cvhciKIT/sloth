@@ -378,6 +378,30 @@ class AnnotationModel(QAbstractItemModel):
             elif section == 1: return QVariant("Value")
         return QVariant()
 
+    def getNextIndex(self, index):
+        """returns index of next *image* or *frame*"""
+        if not index.isValid():
+            return QModelIndex()
+
+        assert index == self.imageIndex(index)
+        num_images = self.rowCount(index.parent())
+        if index.row() < num_images - 1:
+            return index.sibling(index.row()+1, 0)
+
+        return index
+
+    def getPreviousIndex(self, index):
+        """returns index of previous *image* or *frame*"""
+        if not index.isValid():
+            return QModelIndex()
+
+        assert index == self.imageIndex(index)
+        if index.row() > 0:
+            return index.sibling(index.row()-1, 0)
+
+        return index
+
+
 #######################################################################################
 # proxy model
 #######################################################################################
