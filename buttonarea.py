@@ -99,8 +99,8 @@ class ButtonArea(QWidget):
 
     def get_current_state(self):
         label_button = self.get_checked_label_button()
-        result = {}
         if label_button != None:
+            result = {}
             label = str(label_button.text())
             if self.label_properties.has_key(label):
                 if self.label_properties[label].has_key("type"):
@@ -112,7 +112,9 @@ class ButtonArea(QWidget):
                         checked_button = button_list.get_checked_button()
                         if checked_button != None:
                             result[button_list.name] = str(checked_button.text())
-        return result
+            return result
+
+        return None
 
     def clickedButton(self):
         button = self.sender()
@@ -140,7 +142,7 @@ class ButtonArea(QWidget):
     def load(self, config_filepath):
         execfile(config_filepath)
         self.init_button_lists()
-        
+
 def main():
     app = QApplication(sys.argv)
 

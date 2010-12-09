@@ -50,6 +50,7 @@ class MainWindow(QMainWindow):
         self.buttonarea = ButtonArea()
         self.buttonarea.load("example_config.py")
         self.ui.dockAnnotationButtons.setWidget(self.buttonarea)
+        self.connect(self.buttonarea, SIGNAL("stateChanged(state)"), self.scene.setMode)
 
         self.treeview = AnnotationTreeView()
         self.ui.dockInformation.setWidget(self.treeview)
