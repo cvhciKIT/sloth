@@ -9,6 +9,7 @@ from buttonarea import *
 from annotationmodel import *
 from annotationscene import *
 from frameviewer import *
+import annotations
 
 
 APP_NAME            = """labeltool"""
@@ -19,8 +20,27 @@ __version__         = """0.1"""
 class MainWindow(QMainWindow):
     def __init__(self, argv, parent=None):
         super(MainWindow, self).__init__(parent)
+        self.anno_container = annotations.AnnotationContainer()
+        self.current_index_ = None
+
+        self.setupGui()
+
+        self.loadApplicationSettings()
+        self.updateStatus()
+        self.updateViews()
+
+        if len(argv) > 0:
+            self.loadInitialFile(argv[0])
+        else:
+            self.loadInitialFile()
+
+    ###
+    ### GUI/Application setup
+    ###___________________________________________________________________________________________
+    def setupGui(self):
         self.ui = uic.loadUi("labeltool.ui", self)
         self.ui.show()
+
         self.view = GraphicsView(self)
         self.setCentralWidget(self.view)
 
@@ -45,35 +65,6 @@ class MainWindow(QMainWindow):
         ## connect action signals
         self.connectActions()
 
-        self.loadApplicationSettings()
-        #self.updateStatus()
-        #self.updateViews()
-
-        self.current_index_ = None
-        self.updateViews()
-
-        #if len(argv) > 0:
-            #self.loadInitialFile(argv[0])
-        #else:
-            #self.loadInitialFile()
-
-    def loadApplicationSettings(self):
-        settings = QSettings()
-        self.resize(settings.value("MainWindow/Size", QVariant(QSize(800, 600))).toSize())
-        self.move(settings.value("MainWindow/Position", QVariant(QPoint(10, 10))).toPoint())
-        self.restoreState(settings.value("MainWindow/State").toByteArray())
-
-    def saveApplicationSettings(self):
-        settings = QSettings()
-        settings.setValue("MainWindow/Size", QVariant(self.size()))
-        settings.setValue("MainWindow/Position", QVariant(self.pos()))
-        settings.setValue("MainWindow/State", QVariant(self.saveState()))
-        #if self.annotations.filename() is not None:
-            #filename = QVariant(QString(self.annotations.filename()))
-        #else:
-            #filename = QVariant()
-        #settings.setValue("LastFile", filename)
-
     def connectActions(self):
         ## File menu
         self.connect(self.ui.actionNew,     SIGNAL("triggered()"), self.fileNew)
@@ -83,33 +74,61 @@ class MainWindow(QMainWindow):
         self.connect(self.ui.actionExit,    SIGNAL("triggered()"), self.close)
 
         ## Help menu
-        self.connect(self.ui.action_About,  SIGNAL("triggered()"), self.about)
+        self.ui.action_About.triggered.connect(self.about)
 
-        #self.connect(self.ui.action_Add_Image, SIGNAL("triggered()"), self.addImage)
-        #self.connect(self.ui.actionNext, SIGNAL("triggered()"), self.gotoNext)
-        #self.connect(self.ui.actionPrevious, SIGNAL("triggered()"), self.gotoPrevious)
-        self.ui.actionZoom_In. triggered.connect(functools.partial(self.view.setScaleRelative, 1.2))
-        self.ui.actionZoom_Out.triggered.connect(functools.partial(self.view.setScaleRelative, 1/1.2))
+        ## Navigation
+        #self.ui.action_Add_Image.triggered.connect(self.addImage)
+        self.ui.actionNext.      triggered.connect(self.gotoNext)
+        self.ui.actionPrevious.  triggered.connect(self.gotoPrevious)
+        self.ui.actionZoom_In.   triggered.connect(functools.partial(self.view.setScaleRelative, 1.2))
+        self.ui.actionZoom_Out.  triggered.connect(functools.partial(self.view.setScaleRelative, 1/1.2))
+
+    def loadApplicationSettings(self):
+        settings = QSettings()
+        self.resize(settings.value("MainWindow/Size", QVariant(QSize(800, 600))).toSize())
+        self.move(settings.value("MainWindow/Position", QVariant(QPoint(10, 10))).toPoint())
+        self.restoreState(settings.value("MainWindow/State").toByteArray())
+
+    def saveApplicationSettings(self):
+        settings = QSettings()
+        settings.setValue("MainWindow/Size",     QVariant(self.size()))
+        settings.setValue("MainWindow/Position", QVariant(self.pos()))
+        settings.setValue("MainWindow/State",    QVariant(self.saveState()))
+        if self.anno_container.filename() is not None:
+            filename = QVariant(QString(self.anno_container.filename()))
+        else:
+            filename = QVariant()
+        settings.setValue("LastFile", filename)
+
+    ###
+    ### Annoation file handling
+    ###___________________________________________________________________________________________
+    def loadAnnotations(self, fname):
+        fname = str(fname) # convert from QString
+        try:
+            self.anno_container.load(fname)
+            msg = "Successfully loaded %s (%d files, %d annotations)" % \
+                    (fname, self.anno_container.numFiles(), self.anno_container.numAnnotations())
+        except Exception as e:
+            msg = "Error: Loading failed (%s)" % str(e)
+        self.updateStatus(msg)
+        self.updateViews()
+
+    def saveAnnotations(self, fname):
+        print "TODO: implement file saving"
 
     def loadInitialFile(self, fname=None):
         if fname is not None:
             if QFile.exists(fname):
-                print "TODO: implement file loading"
-                #ok, msg = self.annotations.load(fname)
-                #self.updateStatus(msg)
-                #self.updateViews()
+                self.loadAnnotations(fname)
         else:
             settings = QSettings()
             fname = settings.value("LastFile").toString()
             if (not fname.isEmpty()) and QFile.exists(fname):
-                print "TODO: implement file loading"
-                #ok, msg = self.annotations.load(fname)
-                #self.updateStatus(msg)
-                #self.updateViews()
+                self.loadAnnotations(fname)
 
     def okToContinue(self):
-        return True
-        if self.annotations.dirty():
+        if self.model_.dirty():
             reply = QMessageBox.question(self,
                     "%s - Unsaved Changes" % (APP_NAME),
                     "Save unsaved changes?",
@@ -117,35 +136,31 @@ class MainWindow(QMainWindow):
             if reply == QMessageBox.Cancel:
                 return False
             elif reply == QMessageBox.Yes:
-                print "TODO: implement file saving"
+                self.saveAnnotations()
         return True
 
     def fileNew(self):
         if not self.okToContinue():
             return
-        #self.annotations.clear()
-        #self.updateStatus()
-        #self.updateViews()
+        self.anno_container.clear()
+        self.updateStatus()
+        self.updateViews()
 
     def fileOpen(self):
-        print "TODO: implement fileOpen"
-        return False
-
         if not self.okToContinue():
             return
         path = '.'
-        if (self.annotations.filename() is not None) and \
-                (len(self.annotations.filename()) > 0):
-            path = QFileInfo(self.annotations.filename()).path()
+        if (self.anno_container.filename() is not None) and \
+                (len(self.anno_container.filename()) > 0):
+            path = QFileInfo(self.anno_container.filename()).path()
 
-        format_str = ' '.join(['*.'+fmt for fmt in self.annotations.formats()])
+        #format_str = ' '.join(['*.'+fmt for fmt in self.anno_container.formats()])
+        format_str = ' '.join(['*.txt'])
         fname = QFileDialog.getOpenFileName(self, 
                 "%s - Load Annotations" % APP_NAME, path,
                 "%s annotation files (%s)" % (APP_NAME, format_str))
         if not fname.isEmpty():
-            ok, msg = self.annotations.load(fname)
-            self.updateStatus(msg)
-            self.updateViews()
+            self.loadAnnotations(fname)
 
     def fileSave(self):
         print "TODO: implement fileSave"
@@ -160,7 +175,7 @@ class MainWindow(QMainWindow):
 
     def fileSaveAs(self):
         fname = '.'  # self.annotations.filename() or '.'
-        format_str = ' '.join(['*.'+fmt for fmt in self.annotations.formats()])
+        format_str = ' '.join(['*.'+fmt for fmt in self.anno_container.formats()])
         fname = QFileDialog.getSaveFileName(self,
                 "%s - Save Annotations" % APP_NAME, fname,
                 "%s annotation files (%s)" % (APP_NAME, format_str))
@@ -177,9 +192,33 @@ class MainWindow(QMainWindow):
             return ok
         return False
 
+    def gotoNext(self):
+        # TODO move this to the scene
+        if self.model_ is not None and self.current_index_ is not None:
+            next_index = self.model_.getNextIndex(self.current_index_)
+            self.setCurrentFileIndex(next_index)
+
+    def gotoPrevious(self):
+        # TODO move this to the scene
+        if self.model_ is not None and self.current_index_ is not None:
+            next_index = self.model_.getNextIndex(self.current_index_)
+            self.setCurrentFileIndex(next_index)
+
+    def updateStatus(self, message=''):
+        self.statusBar().showMessage(message, 5000)
+        if self.anno_container.filename() is not None:
+            self.setWindowTitle("%s - %s[*]" % \
+                (APP_NAME, QFileInfo(self.anno_container.filename()).fileName()))
+        else:
+            self.setWindowTitle("%s - Unnamed[*]" % APP_NAME)
+        self.updateModified()
+
     def updateViews(self):
-        annotations = defaultAnnotations()
-        self.model_ = AnnotationModel(annotations)
+        self.model_ = AnnotationModel(self.anno_container.asDict())
+        if self.anno_container.filename() is not None:
+            self.model_.setBasedir(os.path.dirname(self.anno_container.filename()))
+        else:
+            self.model_.setBasedir("")
         self.model_.dirtyChanged.connect(self.updateModified)
 
         self.treeview.setModel(self.model_)
@@ -187,6 +226,8 @@ class MainWindow(QMainWindow):
         self.treeview.selectionModel().currentChanged.connect(self.setCurrentIndex)
 
     def updateModified(self):
+        """update all GUI elements which depend on the state of the model,
+        e.g. whether it has been modified since the last save"""
         #self.ui.action_Add_Image.setEnabled(self.model_ is not None)
         # TODO also disable/enable other items
         #self.ui.actionSave.setEnabled(self.annotations.dirty())
@@ -198,7 +239,7 @@ class MainWindow(QMainWindow):
         newindex = index.model().imageIndex(index)
         if newindex.isValid() and newindex != self.current_index_:
             self.current_index_ = newindex
-            self.scene.setRoot(self.current_index_)  # via SIGNAL?
+            self.scene.setRoot(self.current_index_)
             if index != self.treeview.currentIndex():
                 self.treeview.setCurrentIndex(self.current_index_)
 
