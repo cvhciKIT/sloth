@@ -16,11 +16,11 @@ class GraphicsView(QGraphicsView):
 
     def __init__(self, parent=None):
         QGraphicsView.__init__(self, parent)
-        self.setDragMode(QGraphicsView.ScrollHandDrag)
+        #self.setDragMode(QGraphicsView.ScrollHandDrag)
         self.setRenderHint(QPainter.Antialiasing)
         self.setRenderHint(QPainter.TextAntialiasing)
+
         self.setStyleSheet("QFrame { border: 3px solid black }");
-        self.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
 
         self.active_ = False
 
@@ -127,6 +127,7 @@ class MultiFrameEqualViewer(FrameViewer):
         self.scene_views = []
         for scene in self.scenes:
             scene_view = GraphicsView()
+            scene_view.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
             scene_view.setScene(scene)
             scene_view.focusIn.connect(self.activateFocusedSceneView)
             self.scene_views.append(scene_view)
