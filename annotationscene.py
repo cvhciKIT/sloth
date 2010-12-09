@@ -7,16 +7,9 @@ import okapy
 from okapy.guiqt.utilities import toQImage
 
 class ItemInserter:
-    #TODO remove model member
     def __init__(self, scene, model=None):
         self.scene_ = scene
-        self.model_ = model
         self.mode_  = None
-
-    def setModel(self, model):
-        self.model_ = model
-    def model(self):
-        return self.model_
 
     def setScene(self, scene):
         self.scene_ = scene
