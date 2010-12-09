@@ -197,13 +197,13 @@ class MainWindow(QMainWindow):
         # TODO move this to the scene
         if self.model_ is not None and self.current_index_ is not None:
             next_index = self.model_.getNextIndex(self.current_index_)
-            self.setCurrentFileIndex(next_index)
+            self.setCurrentIndex(next_index)
 
     def gotoPrevious(self):
         # TODO move this to the scene
         if self.model_ is not None and self.current_index_ is not None:
             next_index = self.model_.getNextIndex(self.current_index_)
-            self.setCurrentFileIndex(next_index)
+            self.setCurrentIndex(next_index)
 
     def updateStatus(self, message=''):
         self.statusBar().showMessage(message, 5000)
