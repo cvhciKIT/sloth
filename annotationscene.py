@@ -195,6 +195,7 @@ class AnnotationScene(QGraphicsScene):
 
         num_items = self.model_.rowCount(self.root_)
         self.insertItems(0, num_items)
+        self.update()
 
     def insertItems(self, first, last):
         assert self.model_ is not None
@@ -303,8 +304,8 @@ class AnnotationScene(QGraphicsScene):
             # selection mode
             if event.key() == Qt.Key_Delete:
                 for item in self.selectedItems():
-                    index = self.model_.mapFromSource(QModelIndex(item.index()))
-                    self.model_.removeRow(index.row(), QModelIndex(index.parent()))
+                    index = item.index()
+                    index.model().removeAnnotation(index)
                 event.accept()
                 return 
 

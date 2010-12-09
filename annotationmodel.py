@@ -364,14 +364,13 @@ class AnnotationModel(QAbstractItemModel):
         return True
 
     def removeAnnotation(self, annidx):
-        # TODO fix to work with ImageFileModelItem
         annidx = QModelIndex(annidx)  # explicitly convert from QPersistentModelIndex
         item = self.itemFromIndex(annidx)
         assert isinstance(item, AnnotationModelItem)
 
         parent = item.parent_
         parentidx = annidx.parent()
-        assert isinstance(parent, FrameModelItem)
+        assert isinstance(parent, FrameModelItem) or isinstance(parent, ImageFileModelItem)
 
         pos = parent.rowOfChild(item)
         self.beginRemoveRows(parentidx, pos, pos)
