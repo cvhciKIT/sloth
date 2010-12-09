@@ -48,8 +48,8 @@ class GraphicsView(QGraphicsView):
             self.update()
 
     def getMinScale(self):
-        min_scale_w = float(self.width()  - 2*self.frameWidth()) / self.scene().width()
-        min_scale_h = float(self.height() - 2*self.frameWidth()) / self.scene().height()
+        min_scale_w = float(self.width()  - 2*self.frameWidth()) / (self.scene().width()+1)
+        min_scale_h = float(self.height() - 2*self.frameWidth()) / (self.scene().height()+1)
         min_scale = min(min_scale_w, min_scale_h)
         return min_scale
 
