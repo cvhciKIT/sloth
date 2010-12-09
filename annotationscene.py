@@ -7,9 +7,9 @@ import okapy
 from okapy.guiqt.utilities import toQImage
 
 class ItemInserter:
-    def __init__(self, scene, model=None):
+    def __init__(self, scene, mode=None):
         self.scene_ = scene
-        self.mode_  = None
+        self.mode_  = mode
 
     def setScene(self, scene):
         self.scene_ = scene
@@ -36,21 +36,21 @@ class ItemInserter:
 class PointItemInserter(ItemInserter):
     def mousePressEvent(self, event, index):
         pos = event.scenePos()
-        # TODO create it in the model instead
-        item = QGraphicsEllipseItem(QRectF(pos.x()-1, pos.y()-1, 2, 2))
-        self.scene().addItem(item)
-
+        ann = {'type': 'point',
+               'x': event.pos().x(), 'y': event.pos().y()}
+        index.model().addAnnotation(index, ann)
         event.accept()
 
 class RectItemInserter(ItemInserter):
-    def __init__(self, scene, model=None):
-        ItemInserter.__init__(self, scene, model)
+    def __init__(self, scene, mode=None):
+        ItemInserter.__init__(self, scene, mode)
         self.current_item_ = None
         self.init_pos_ = None
 
     def mousePressEvent(self, event, index):
         pos = event.scenePos()
         item = QGraphicsRectItem(QRectF(pos.x(), pos.y(), 0, 0))
+        item.setPen(Qt.red)
         self.current_item_ = item
         self.init_pos_     = pos
         self.scene().addItem(item)
@@ -59,10 +59,8 @@ class RectItemInserter(ItemInserter):
     def mouseMoveEvent(self, event, index):
         if self.current_item_ is not None:
             assert self.init_pos_ is not None
-            pos = event.scenePos()
-            rect = QRectF(self.init_pos_.x(), self.init_pos_.y(),
-                          pos.x() - self.init_pos_.x(), pos.y() - self.init_pos_.y())
-            self.current_item_.setRect(rect.normalized())
+            rect = QRectF(self.init_pos_, event.scenePos()).normalized()
+            self.current_item_.setRect(rect)
 
         event.accept()
 
@@ -70,8 +68,6 @@ class RectItemInserter(ItemInserter):
         if self.current_item_ is not None:
             if self.current_item_.rect().width() > 1 and \
                self.current_item_.rect().height() > 1:
-                # TODO commit to the model
-                print "added rect:", self.current_item_
                 rect = self.current_item_.rect()
                 ann = {'type': 'rect',
                        'x': rect.x(), 'y': rect.y(),
@@ -83,9 +79,37 @@ class RectItemInserter(ItemInserter):
 
         event.accept()
 
+class FixedRatioRectItemInserter(RectItemInserter):
+    def __init__(self, scene, mode=None):
+        RectItemInserter.__init__(self, scene, mode)
+        self.ratio_ = 1
+        if mode is not None:
+            self.ratio_ = float(mode.get('_ratio', 1))
+
+    def setMode(self, mode):
+        if mode is not None:
+            self.ratio_ = float(mode.get('_ratio', 1))
+        RectItemInserter.setMode(self, mode)
+
+    def mouseMoveEvent(self, event, index):
+        if self.current_item_ is not None:
+            new_geometry = QRectF(self.current_item_.rect().topLeft(), event.scenePos())
+            dx = new_geometry.width()
+            dy = new_geometry.height()
+            d = math.sqrt(dx*dx + dy*dy)
+            r = self.ratio_
+            k = math.sqrt(r*r+1)
+            h = d/k
+            w = d*r/k
+            new_geometry.setWidth(w)
+            new_geometry.setHeight(h)
+            self.current_item_.setRect(new_geometry.normalized())
+
+        event.accept()
+
 class PolygonItemInserter(ItemInserter):
-    def __init__(self, scene, model=None):
-        ItemInserter.__init__(self, scene, model)
+    def __init__(self, scene, mode=None):
+        ItemInserter.__init__(self, scene, mode)
         self.current_item_ = None
 
     def mousePressEvent(self, event, index):
@@ -127,15 +151,13 @@ class AnnotationScene(QGraphicsScene):
 
         self.setBackgroundBrush(Qt.darkGray)
 
-        self.addItemInserter('point', PointItemInserter(self))
-        self.addItemInserter('rect',  RectItemInserter(self))
-        self.addItemInserter('poly',  PolygonItemInserter(self))
-        self.addItemInserter('polygon',  PolygonItemInserter(self))
+        self.addItemInserter('point',      PointItemInserter(self))
+        self.addItemInserter('rect',       RectItemInserter(self))
+        self.addItemInserter('ratiorect',  FixedRatioRectItemInserter(self))
+        self.addItemInserter('poly',       PolygonItemInserter(self))
+        self.addItemInserter('polygon',    PolygonItemInserter(self))
 
-        #self.setMode({'type': 'point'})
-        self.setMode({'type': 'rect'})
-        #self.setMode({'type': 'poly'})
-
+        self.setMode(None)
         self.reset()
 
     #
