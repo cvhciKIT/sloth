@@ -43,6 +43,9 @@ class FileModelItem(ModelItem):
     def filename(self):
         return self.file_['filename']
 
+    def fullpath(self, index):
+        return os.path.join(index.model().basedir(), self.filename())
+
     def data(self, index, role):
         if role == Qt.DisplayRole and index.column() == 0:
             return os.path.basename(self.filename())
@@ -74,7 +77,7 @@ class ImageFileModelItem(FileModelItem):
 
     def data(self, index, role):
         if role == ImageRole:
-            return okapy.loadImage(self.filename())
+            return okapy.loadImage(self.fullpath(index))
         return FileModelItem.data(self, index, role)
 
 class VideoFileModelItem(FileModelItem):
@@ -93,11 +96,11 @@ class VideoFileModelItem(FileModelItem):
         # TODO: for labeling multiple synchronized videos this should
         # be modified, otherwise it might be awfully slow
         VideoFileModelItem._cached_vs = okv.ImageSequence()
-        VideoFileModelItem._cached_vs.open(self.filename())
-        VideoFileModelItem._cached_vs_filename = self.filename()
+        VideoFileModelItem._cached_vs.open(self.fullpath())
+        VideoFileModelItem._cached_vs_filename = self.fullpath()
 
     def getFrame(self, frame):
-        if VideoFileModelItem._cached_vs_filename != self.filename():
+        if VideoFileModelItem._cached_vs_filename != self.fullpath():
             self.updateCachedVideoSource()
 
         VideoFileModelItem._cached_vs.getFrame(frame)
@@ -193,6 +196,7 @@ class AnnotationModel(QAbstractItemModel):
         self.annotations_ = annotations
         self.root_        = RootModelItem(self.annotations_)
         self.dirty_       = False
+        self.basedir_     = ""
 
     def dirty(self):
         return self.dirty_
@@ -203,7 +207,12 @@ class AnnotationModel(QAbstractItemModel):
         if previous != dirty:
             self.dirtyChanged.emit(dirty)
 
-    dirty = property(dirty, setDirty)
+    def basedir(self):
+        return self.basedir_
+
+    def setBasedir(self, dir):
+        print "setBasedir", dir
+        self.basedir_ = dir
 
     def itemFromIndex(self, index):
         index = QModelIndex(index)  # explicitly convert from QPersistentModelIndex
