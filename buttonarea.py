@@ -5,6 +5,7 @@ from PyQt4.QtCore import *
 class ButtonListWidget(QWidget):
     def __init__(self, name, parent=None):
         QWidget.__init__(self, parent)
+        self.name = name
         vlayout = QVBoxLayout()
         vlayout.setSpacing(0)
         vlayout.setAlignment(Qt.AlignTop)
@@ -31,7 +32,7 @@ class ButtonListWidget(QWidget):
             if button is not self.sender():
                 button.setChecked(False)
         label_name = str(self.sender().text())
-        print label_name
+        print "sender:", label_name
 
     def get_checked_button(self):
         return self.button_group.checkedButton()
@@ -50,13 +51,15 @@ class ButtonArea(QWidget):
         self.label_button_list = ButtonListWidget("Labels")
         self.property_button_lists = {}
         
-        self.last_checked_label = None
-
         self.hlayout = QHBoxLayout()
         self.hlayout.setAlignment(Qt.AlignLeft)
         self.hlayout.addWidget(self.label_button_list)
         self.setLayout(self.hlayout)
-        
+        self.connect(self, SIGNAL('stateChanged(state)'), self.stateChanged)
+
+    def stateChanged(self, state):
+        print "stateChanged(state)", state
+
     def init_button_lists(self):
         for label_name in self.label_names:
             button = self.label_button_list.add_button(label_name)
@@ -67,16 +70,17 @@ class ButtonArea(QWidget):
                 continue
             button_list = ButtonListWidget(key)
             for value in property_values:
-                button_list.add_button(value)
+                button = button_list.add_button(value)
+                button.clicked.connect(self.clickedButton)
+
             button_list.hide()
             print key
             self.property_button_lists[key] = button_list
             self.hlayout.addWidget(button_list)
 
     def show_only_label_properties(self, label_name):
-        print "sdf", self.property_button_lists
         for name, button_list in self.property_button_lists.iteritems():
-            if name in self.label_properties[label_name].keys():
+            if self.label_properties.has_key(label_name) and name in self.label_properties[label_name].keys():
                 button_list.show()
             else:
                 button_list.hide()
@@ -93,18 +97,45 @@ class ButtonArea(QWidget):
     def get_checked_label_button(self):
         return self.label_button_list.get_checked_button()
 
+    def get_current_state(self):
+        label_button = self.get_checked_label_button()
+        result = {}
+        if label_button != None:
+            label = str(label_button.text())
+            if self.label_properties.has_key(label):
+                if self.label_properties[label].has_key("type"):
+                    result["type"] = self.label_properties[label]["type"]
+                if self.label_properties[label].has_key("class"):
+                    result["class"] = self.label_properties[label]["class"]
+                for name, button_list in self.property_button_lists.iteritems():
+                    if button_list.isVisible():
+                        checked_button = button_list.get_checked_button()
+                        if checked_button != None:
+                            result[button_list.name] = str(checked_button.text())
+        return result
+
     def clickedButton(self):
-        button = self.get_checked_label_button()
-        label_name = str(button.text())
-        print label_name
+        button = self.sender()
+        print button
+        if button.isChecked():
+            label_name = str(button.text())
+            print label_name
+        else:
+            print "None"
+        self.emit(SIGNAL("stateChanged(state)"), self.get_current_state())
 
     def clickedLabelButton(self):
         button = self.get_checked_label_button()
-        label_name = str(button.text())
-        if label_name != self.last_checked_label:
-            print "ButtonArea:", label_name, self.last_checked_label
-            self.last_checked_label = label_name
+        print button
+        if button != None:
+            label_name = str(button.text())
+            print "ButtonArea:", label_name
             self.show_only_label_properties(label_name)
+        else:
+            print "Selection Mode"
+            self.show_only_label_properties("")
+        self.emit(SIGNAL("stateChanged(state)"), self.get_current_state())
+
 
     def load(self, config_filepath):
         execfile(config_filepath)
