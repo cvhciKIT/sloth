@@ -30,6 +30,9 @@ class ItemInserter:
     def mouseMoveEvent(self, event, index):
         event.accept()
 
+    def keyPressEvent(self, event, index):
+        event.ignore()
+
 class PointItemInserter(ItemInserter):
     def mousePressEvent(self, event, index):
         pos = event.scenePos()
@@ -247,7 +250,7 @@ class AnnotationScene(QGraphicsScene):
             del self.inserters_[type]
 
     #
-    # mouse event handler
+    # mouse event handlers
     #______________________________________________________________________________________________________
     def mousePressEvent(self, event):
         if self.debug_:
@@ -281,6 +284,31 @@ class AnnotationScene(QGraphicsScene):
         else:
             # selection mode
             QGraphicsScene.mouseMoveEvent(self, event)
+
+    #
+    # key event handlers
+    #______________________________________________________________________________________________________
+    def keyPressEvent(self, event):
+        if self.debug_:
+           print "keyPressEvent", event
+
+        if self.model_ is None or not self.root_.isValid():
+            event.ignore()
+            return
+
+        if self.inserter_ is not None:
+            # insert mode
+            self.inserter_.keyPressEvent(event, self.root_)
+        else:
+            # selection mode
+            if event.key() == Qt.Key_Delete:
+                for item in self.selectedItems():
+                    index = self.model_.mapFromSource(QModelIndex(item.index()))
+                    self.model_.removeRow(index.row(), QModelIndex(index.parent()))
+                event.accept()
+                return 
+
+        event.ignore()
 
     #
     # slots for signals from the model
