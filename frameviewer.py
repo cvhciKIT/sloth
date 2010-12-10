@@ -21,14 +21,17 @@ class GraphicsView(QGraphicsView):
         self.setRenderHint(QPainter.TextAntialiasing)
 
         self.setStyleSheet("QFrame { border: 3px solid black }");
-
         self.active_ = False
+
+    def setScene(self, scene):
+        QGraphicsView.setScene(self, scene)
+        #self.setScaleAbsolute(1)
 
     def getScale(self):
         if self.isTransformed():
             return self.transform().m11()
         else:
-            return -1
+            return 1
 
     def isActive(self):
         return self.active_
@@ -48,16 +51,17 @@ class GraphicsView(QGraphicsView):
             self.update()
 
     def getMinScale(self):
-        min_scale_w = float(self.width()  - 2*self.frameWidth()) / (self.scene().width()+1)
-        min_scale_h = float(self.height() - 2*self.frameWidth()) / (self.scene().height()+1)
-        min_scale = min(min_scale_w, min_scale_h)
-        return min_scale
+        #min_scale_w = float(self.width()  - 2*self.frameWidth()) / (self.scene().width()+1)
+        #min_scale_h = float(self.height() - 2*self.frameWidth()) / (self.scene().height()+1)
+        #min_scale = min(min_scale_w, min_scale_h)
+        return 0.1
 
     def getMaxScale(self):
-        max_scale_w = self.scene().height() / 5.0
-        max_scale_h = self.scene().width()  / 5.0
-        max_scale = min(max_scale_w, max_scale_h)
-        return max_scale
+        #max_scale_w = self.scene().height() / 5.0
+        #max_scale_h = self.scene().width()  / 5.0
+        #max_scale = min(max_scale_w, max_scale_h)
+        #return max_scale
+        return 20.0
 
     def setScaleAbsolute(self, scale):
         scale = max(scale, self.getMinScale())
@@ -76,10 +80,10 @@ class GraphicsView(QGraphicsView):
         self.focusIn.emit()
 
     def resizeEvent(self, event):
-        if self.getScale() < self.getMinScale():
-            self.setScaleAbsolute(0)
-        if self.getScale() > self.getMaxScale():
-            self.setScaleAbsolute(self.getMaxScale())
+        #if self.getScale() < self.getMinScale():
+        #    self.setScaleAbsolute(0)
+        #if self.getScale() > self.getMaxScale():
+        #    self.setScaleAbsolute(self.getMaxScale())
         QGraphicsView.resizeEvent(self, event)
 
 class FrameViewer(QWidget):
