@@ -153,11 +153,31 @@ class AnnotationModelItem(ModelItem):
     def type(self):
         return self.annotation_['type']
 
-    def setData(self, index, value, role):
+    def setData(self, index, data, role):
         if role == DataRole:
-            self.annotation_ = value.toPyObject()
-            #print "setData", self.annotation_
-            index.model().dataChanged.emit(index, index.sibling(index.row(), 1))
+            print self.annotation_
+            data = data.toPyObject()
+            print data, type(data)
+            print self.annotation_
+            for key, value in data.iteritems():
+                print key, value
+                if not key in self.annotation_:
+                    print "not in annoation: ", key
+                    next = len(self.children_)
+                    index.model().beginInsertRows(index, next, next)
+                    self.children_.append(KeyValueModelItem(key, self))
+                    index.model().endInsertRows()
+                    index.model().emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"), index, index)
+                    self.annotation_[key] = data[key]
+
+            for key in self.annotation_.keys():
+                if not key in data:
+                    #TODO beginRemoveRows, delete child, etc.
+                    del self.annotation[key]
+                else:
+                    self.annotation_[key] = data[key]
+            print "new annotation:", self.annotation_
+            index.model().dataChanged.emit(index, index.sibling(index.row(), 0))
             return True
         return False
 
