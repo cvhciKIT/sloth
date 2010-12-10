@@ -53,6 +53,7 @@ class MainWindow(QMainWindow):
         self.connect(self.buttonarea, SIGNAL("stateChanged(state)"), self.scene.setMode)
 
         self.treeview = AnnotationTreeView()
+        self.treeview.setAlternatingRowColors(True)
         self.ui.dockInformation.setWidget(self.treeview)
 
         ## create action group for tools
@@ -123,6 +124,7 @@ class MainWindow(QMainWindow):
             msg = "Successfully saved %s (%d files, %d annotations)" % \
                     (fname, self.anno_container.numFiles(), self.anno_container.numAnnotations())
             success = True
+            self.model_.setDirty(False)
         except Exception as e:
             msg = "Error: Saving failed (%s)" % str(e)
 

@@ -315,6 +315,8 @@ class AnnotationModel(QAbstractItemModel):
         if role == DataRole:
             item = self.itemFromIndex(index)
             if item.setData(index, value, role):
+                self.setDirty(True)
+                # TODO check why this is needed (should be done by item.setData() anyway)
                 self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"), index, index.sibling(index.row(), 1))
             return True
 
@@ -382,7 +384,7 @@ class AnnotationModel(QAbstractItemModel):
 
     def headerData(self, section, orientation, role):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            if section == 0: return QVariant("File/Type")
+            if section == 0:   return QVariant("File/Type/Key")
             elif section == 1: return QVariant("Value")
         return QVariant()
 
