@@ -160,7 +160,6 @@ class AnnotationGraphicsRectItem(AnnotationGraphicsItem):
         painter.drawRect(self.boundingRect())
 
     def itemChange(self, change, value):
-        print change
         if change == QGraphicsItem.ItemScenePositionHasChanged:
             self.updateModel()
         return AnnotationGraphicsItem.itemChange(self, change, value)
@@ -197,7 +196,6 @@ class AnnotationGraphicsPointItem(AnnotationGraphicsItem):
         if not self._delayedDirty():
             self.data_['x'] = self.scenePos().x()
             self.data_['y'] = self.scenePos().y()
-            print "updateModel (point)", self.data_
             self.index().model().setData(self.index(), QVariant(self.data_), DataRole)
 
     def boundingRect(self):
