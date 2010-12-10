@@ -1,2 +1,1 @@
-from pointitem import *
-from lineitem import *
+from annotationitem import *

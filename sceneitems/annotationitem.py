@@ -27,9 +27,11 @@ class AnnotationGraphicsItem(QAbstractGraphicsShapeItem):
         self.setPen(QColor('yellow'))
 
         self.text_font_ = QFont()
-        self.text_font_.setPointSize(4)
-        self.text_item_ = QGraphicsSimpleTextItem()
+        self.text_font_.setPointSize(16)
+        self.text_item_ = QGraphicsSimpleTextItem(self)
         self.text_item_.setFont(self.text_font_)
+        self.text_item_.setPen(Qt.yellow)
+        self.text_item_.setBrush(Qt.yellow)
         self.setText("")
 
         self._setDelayedDirty(False)
@@ -48,6 +50,8 @@ class AnnotationGraphicsItem(QAbstractGraphicsShapeItem):
     def setText(self, text, position="upperleft"):
         # TODO use different text items for differenct positions
         self.text_item_.setText(text)
+        self.text_item_.setPos(0, 0)
+        self.text_item_.update()
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemSelectedChange:
@@ -109,6 +113,7 @@ class AnnotationGraphicsRectItem(AnnotationGraphicsItem):
         self.data_ = self.index().data(DataRole).toPyObject()
         self.rect_ = None
         self._updateRect(self._dataToRect(self.data_))
+        self._updateText()
 
     def _dataToRect(self, data):
         return QRectF(float(data['x']), float(data['y']),
@@ -126,6 +131,10 @@ class AnnotationGraphicsRectItem(AnnotationGraphicsItem):
         self.setPos(rect.topLeft())
         #self.layoutChildren()
         #self.update()
+
+    def _updateText(self):
+        if 'id' in self.data_:
+            self.setText("id: " + str(self.data_['id']))
 
     def updateModel(self):
         if not self._delayedDirty():
@@ -160,7 +169,7 @@ class AnnotationGraphicsRectItem(AnnotationGraphicsItem):
         self.data_ = self.index().data(DataRole).toPyObject()
         rect = self._dataToRect(self.data_)
         self._updateRect(rect)
-
+        self._updateText()
 
 class AnnotationGraphicsPointItem(AnnotationGraphicsItem):
     def __init__(self, index, parent=None):
