@@ -334,6 +334,7 @@ class AnnotationModel(QAbstractItemModel):
 
         if role == DataRole:
             item = self.itemFromIndex(index)
+            print "setData", value.toPyObject()
             if item.setData(index, value, role):
                 self.setDirty(True)
                 # TODO check why this is needed (should be done by item.setData() anyway)
@@ -342,31 +343,32 @@ class AnnotationModel(QAbstractItemModel):
 
         return False
 
-    def insertRows(self, position, rows=1, index=QModelIndex()):
-        index = QModelIndex(index)  # explicitly convert from QPersistentModelIndex
-        item = self.itemFromIndex(index)
-        if isinstance(item, RootAnnotationModelItem):
-            self.beginInsertRows(QModelIndex(), position, position + rows - 1)
-            for row in range(rows):
-                file = File('')
-                item.data_.files.insert(position + row, file)
-                item.children_.insert(position + row, FileAnnotationModelItem(file, item))
-            self.endInsertRows()
-            self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"), index, index)
-            self.set_dirty(True)
-            return True
-        # TODO handle inserts of rects, points etc
-
-    def removeRows(self, position, rows=1, index=QModelIndex()):
-        index = QModelIndex(index)  # explicitly convert from QPersistentModelIndex
-        item = self.itemFromIndex(index)
-        self.beginRemoveRows(index, position, position + rows - 1)
-        data_changed = item.removeRows(position, rows)
-        self.endRemoveRows()
-        if data_changed:
-            self.set_dirty(True)
-            return True
-        return False
+# TODO: remove!!
+    #def insertRows(self, position, rows=1, index=QModelIndex()):
+        #index = QModelIndex(index)  # explicitly convert from QPersistentModelIndex
+        #item = self.itemFromIndex(index)
+        ##if isinstance(item, RootAnnotationModelItem):
+            #self.beginInsertRows(QModelIndex(), position, position + rows - 1)
+            #for row in range(rows):
+                #file = File('')
+                #item.data_.files.insert(position + row, file)
+                #item.children_.insert(position + row, FileAnnotationModelItem(file, item))
+            #self.endInsertRows()
+            #self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"), index, index)
+            #self.set_dirty(True)
+            #return True
+        ## TODO handle inserts of rects, points etc
+#
+    #def removeRows(self, position, rows=1, index=QModelIndex()):
+        #index = QModelIndex(index)  # explicitly convert from QPersistentModelIndex
+        #item = self.itemFromIndex(index)
+        #self.beginRemoveRows(index, position, position + rows - 1)
+        #data_changed = item.removeRows(position, rows)
+        #self.endRemoveRows()
+        #if data_changed:
+            #self.set_dirty(True)
+            #return True
+        #return False
 
     def addAnnotation(self, imageidx, ann={}, **kwargs):
         ann.update(kwargs)
