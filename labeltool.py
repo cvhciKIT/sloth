@@ -17,6 +17,7 @@ ORGANIZATION_NAME   = """CVHCI Research Group"""
 ORGANIZATION_DOMAIN = """cvhci.anthropomatik.kit.edu"""
 __version__         = """0.1"""
 
+
 class MainWindow(QMainWindow):
     def __init__(self, argv, parent=None):
         super(MainWindow, self).__init__(parent)
@@ -48,7 +49,8 @@ class MainWindow(QMainWindow):
         self.view.setScene(self.scene)
 
         self.buttonarea = ButtonArea()
-        self.buttonarea.load("example_config.py")
+        # TODO make this configurable/settable via command line option
+        self.buttonarea.load("std_config.py")
         self.ui.dockAnnotationButtons.setWidget(self.buttonarea)
         self.connect(self.buttonarea, SIGNAL("stateChanged(state)"), self.scene.setMode)
 
