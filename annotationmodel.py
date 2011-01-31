@@ -433,6 +433,15 @@ class AnnotationModel(QAbstractItemModel):
 
         return index
 
+    def asDictList(self):
+        """return annotations as python list of dictionary"""
+        # TODO
+        annotations = []
+        if self.root_ is not None:
+            for child in self.root_.children_:
+                pass
+
+
 
 #######################################################################################
 # proxy model

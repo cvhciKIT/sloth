@@ -148,6 +148,7 @@ class AnnotationScene(QGraphicsScene):
         self.inserter_  = None
         self.debug_     = True
         self.message_   = ""
+        self.last_key_  = None
 
         self.setBackgroundBrush(Qt.darkGray)
 
@@ -222,6 +223,7 @@ class AnnotationScene(QGraphicsScene):
     def insertItems(self, first, last):
         assert self.model_ is not None
         assert self.root_.isValid()
+        print "insertItems"
 
         for row in range(first, last+1):
             child = self.root_.child(row, 0)
@@ -299,8 +301,8 @@ class AnnotationScene(QGraphicsScene):
             QGraphicsScene.mouseReleaseEvent(self, event)
 
     def mouseMoveEvent(self, event):
-        if self.debug_:
-           print "mouseMoveEvent", self.sceneRect().contains(event.scenePos()), event.scenePos()
+        #if self.debug_:
+        #   print "mouseMoveEvent", self.sceneRect().contains(event.scenePos()), event.scenePos()
         if self.inserter_ is not None:
             # insert mode
             self.inserter_.mouseMoveEvent(event, self.root_)
@@ -329,7 +331,21 @@ class AnnotationScene(QGraphicsScene):
                     index = item.index()
                     index.model().removeAnnotation(index)
                 event.accept()
-                return 
+                return
+
+            if ord('0') <= event.key() <= ord('9'):
+                if self.last_key_ is None:
+                    self.last_key_ = event.key()
+                else:
+                    id = chr(self.last_key_) + chr(event.key())
+                    print "id=", id
+                    for item in self.selectedItems():
+                        index = item.index()
+                        data = dict(index.data(DataRole).toPyObject().iteritems())
+                        if data['type'] == 'rect':
+                            data['id'] = id
+                        index.model().setData(index, QVariant(data), DataRole)
+                    self.last_key_ = None
 
         event.ignore()
 
