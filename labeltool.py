@@ -40,22 +40,22 @@ class MainWindow(QMainWindow):
     ###___________________________________________________________________________________________
     def setupGui(self):
         self.ui = uic.loadUi("labeltool.ui", self)
-        self.ui.show()
-
-        self.view = GraphicsView(self)
-        self.setCentralWidget(self.view)
 
         self.scene = AnnotationScene(self)
+        self.view = GraphicsView(self)
+        self.view.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
         self.view.setScene(self.scene)
+        self.setCentralWidget(self.view)
 
         self.buttonarea = ButtonArea()
         # TODO make this configurable/settable via command line option
         self.buttonarea.load("std_config.py")
         self.ui.dockAnnotationButtons.setWidget(self.buttonarea)
-        self.connect(self.buttonarea, SIGNAL("stateChanged(state)"), self.scene.setMode)
+        self.buttonarea.stateChanged.connect(self.scene.setMode)
 
         self.treeview = AnnotationTreeView()
         self.treeview.setAlternatingRowColors(True)
+        self.treeview.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
         self.ui.dockInformation.setWidget(self.treeview)
 
         ## create action group for tools
@@ -65,6 +65,8 @@ class MainWindow(QMainWindow):
                        self.ui.actionRectangle,
                        self.ui.actionMask):
             self.toolActions.addAction(action)
+
+        self.ui.show()
 
         ## connect action signals
         self.connectActions()
