@@ -3,6 +3,8 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
 class ButtonListWidget(QWidget):
+    selectionChanged = pyqtSignal(object)
+
     def __init__(self, name, parent=None):
         QWidget.__init__(self, parent)
         self.name = name
@@ -12,6 +14,7 @@ class ButtonListWidget(QWidget):
         vlayout.addWidget(QLabel("<center><b>" + name + "</b></center>"))
         self.button_group = QButtonGroup()
         self.button_group.setExclusive(False)
+        self.buttons = {}
         self.setLayout(vlayout)
 
     def create_button(self, button_name):
@@ -23,22 +26,44 @@ class ButtonListWidget(QWidget):
 
     def add_button(self, button_name):
         button = self.create_button(button_name)
+        self.buttons[button_name] = button
         self.layout().addWidget(button)
         self.button_group.addButton(button)
         return button
 
-    def clickedButton(self):
+    def get_button(self, button_name):
+        return self.buttons[button_name]
+
+    def toggleChecked(self, button_name, apply=True):
+        selection = None
+
         for button in self.button_group.buttons():
-            if button is not self.sender():
+            if button.text() != button_name:
                 button.setChecked(False)
-        label_name = str(self.sender().text())
-        print "sender:", label_name
+            else:
+                if apply:
+                    button.setChecked(not button.isChecked())
+                if button.isChecked():
+                    selection = button_name
+
+        self.selectionChanged.emit(selection)
+
+    def clickedButton(self):
+        button_name = str(self.sender().text())
+        self.toggleChecked(button_name, False)
+
+        #for button in self.button_group.buttons():
+            #if button is not self.sender():
+                #button.setChecked(False)
+        #print "sender:", label_name
 
     def get_checked_button(self):
         return self.button_group.checkedButton()
 
 
 class ButtonArea(QWidget):
+    stateChanged = pyqtSignal(object)
+
     def __init__(self, parent=None):
         QWidget.__init__(self, parent)
 
@@ -50,20 +75,22 @@ class ButtonArea(QWidget):
 
         self.label_button_list = ButtonListWidget("Labels")
         self.property_button_lists = {}
-        
+
+        self.hotkeys = []
+
         self.hlayout = QHBoxLayout()
         self.hlayout.setAlignment(Qt.AlignLeft)
         self.hlayout.addWidget(self.label_button_list)
         self.setLayout(self.hlayout)
-        self.connect(self, SIGNAL('stateChanged(state)'), self.stateChanged)
+        self.stateChanged.connect(self.stateHasChanged)
 
-    def stateChanged(self, state):
-        print "stateChanged(state)", state
+    def stateHasChanged(self, state):
+        print "stateChanged(object)", state
 
     def init_button_lists(self):
         for label_name in self.label_names:
             button = self.label_button_list.add_button(label_name)
-            button.clicked.connect(self.clickedLabelButton)
+        self.label_button_list.selectionChanged.connect(self.clickedLabelButton)
 
         for key, property_values in self.properties.iteritems():
             if key in ["type", "class"]:
@@ -71,12 +98,22 @@ class ButtonArea(QWidget):
             button_list = ButtonListWidget(key)
             for value in property_values:
                 button = button_list.add_button(value)
-                button.clicked.connect(self.clickedButton)
+                #button.clicked.connect(self.clickedButton)
+            button_list.selectionChanged.connect(self.clickedButton)
 
             button_list.hide()
             print key
             self.property_button_lists[key] = button_list
             self.hlayout.addWidget(button_list)
+
+        for choice, name, hotkey in self.hotkeys:
+            if choice == "" or choice is None:
+                button = self.label_button_list.get_button(name)
+                shortcut = QShortcut(QKeySequence(hotkey), button, button.click)
+            else:
+                button = self.property_button_lists[choice].get_button(name)
+                shortcut = QShortcut(QKeySequence(hotkey), button, button.click)
+            button.setToolTip("[" + str(hotkey) + "]")
 
     def show_only_label_properties(self, label_name):
         for name, button_list in self.property_button_lists.iteritems():
@@ -84,7 +121,7 @@ class ButtonArea(QWidget):
                 button_list.show()
             else:
                 button_list.hide()
-    
+
     def add_label(self, label_name, properties = {}):
         self.label_names.append(label_name)
         self.label_properties[label_name] = properties
@@ -96,6 +133,9 @@ class ButtonArea(QWidget):
 
     def get_checked_label_button(self):
         return self.label_button_list.get_checked_button()
+
+    def add_hotkey(self, choice, name, hotkey):
+        self.hotkeys.append((choice, name, hotkey))
 
     def get_current_state(self):
         label_button = self.get_checked_label_button()
@@ -116,27 +156,20 @@ class ButtonArea(QWidget):
 
         return None
 
-    def clickedButton(self):
-        button = self.sender()
-        print button
-        if button.isChecked():
-            label_name = str(button.text())
-            print label_name
-        else:
-            print "None"
-        self.emit(SIGNAL("stateChanged(state)"), self.get_current_state())
+    def clickedButton(self, newselection):
+        print "selectionChanged:", newselection
+        self.stateChanged.emit(self.get_current_state())
 
-    def clickedLabelButton(self):
-        button = self.get_checked_label_button()
-        print button
-        if button != None:
-            label_name = str(button.text())
+    def clickedLabelButton(self, label_name):
+        #button = self.get_checked_label_button()
+        #print button
+        if label_name != None:
             print "ButtonArea:", label_name
             self.show_only_label_properties(label_name)
         else:
             print "Selection Mode"
             self.show_only_label_properties("")
-        self.emit(SIGNAL("stateChanged(state)"), self.get_current_state())
+        self.stateChanged.emit(self.get_current_state())
 
 
     def load(self, config_filepath):

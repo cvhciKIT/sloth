@@ -20,3 +20,6 @@ self.add_label("Left Hand", {"type": "rect",
                              "obj_type": obj_type_choice})
 self.add_label("Right Hand", {"type": "rect",
                               "class": "right_hand"})
+
+self.add_hotkey("",   "Head",   "h")
+self.add_hotkey("id", "Martin", "CTRL+m")
