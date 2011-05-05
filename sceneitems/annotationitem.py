@@ -356,9 +356,11 @@ class AnnotationGraphicsItemFactory:
 
 # register common item types
 ItemFactory = AnnotationGraphicsItemFactory()
-ItemFactory.register('rect',     AnnotationGraphicsRectItem,  RectItemInserter)
-ItemFactory.register('point',    AnnotationGraphicsPointItem, PointItemInserter)
-ItemFactory.register('polygon',  AnnotationGraphicsRectItem,  PolygonItemInserter)
+ItemFactory.register('rect',       AnnotationGraphicsRectItem,  RectItemInserter)
+ItemFactory.register('ratiorect',  None,                        FixedRatioRectItemInserter)
+ItemFactory.register('point',      AnnotationGraphicsPointItem, PointItemInserter)
+ItemFactory.register('polygon',    AnnotationGraphicsRectItem,  PolygonItemInserter)
+ItemFactory.register('poly',       AnnotationGraphicsRectItem,  PolygonItemInserter)
 
 ### testing
 import pytest

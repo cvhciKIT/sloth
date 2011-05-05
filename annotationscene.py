@@ -15,19 +15,12 @@ class AnnotationScene(QGraphicsScene):
 
         self.model_     = None
         self.mode_      = None
-        self.inserters_ = {}
         self.inserter_  = None
         self.debug_     = True
         self.message_   = ""
         self.last_key_  = None
 
         self.setBackgroundBrush(Qt.darkGray)
-
-        self.addItemInserter('point',      PointItemInserter(self))
-        self.addItemInserter('rect',       RectItemInserter(self))
-        self.addItemInserter('ratiorect',  FixedRatioRectItemInserter(self))
-        self.addItemInserter('poly',       PolygonItemInserter(self))
-        self.addItemInserter('polygon',    PolygonItemInserter(self))
 
         self.setMode(None)
         self.reset()
@@ -115,10 +108,11 @@ class AnnotationScene(QGraphicsScene):
             self.inserter_ = None
             return
 
-        if not self.mode_['type'] in self.inserters_:
+        inserter = ItemFactory.createItemInserter(self.mode_['type'], self)
+        if inserter is None:
             raise InvalidArgumentException("Invalid mode")
 
-        self.inserter_ = self.inserters_[self.mode_['type']]
+        self.inserter_ = inserter
         self.inserter_.setMode(self.mode_)
 
     #
@@ -132,18 +126,6 @@ class AnnotationScene(QGraphicsScene):
     def addItem(self, item):
         QGraphicsScene.addItem(self, item)
         # TODO emit signal itemAdded
-
-    def addItemInserter(self, type, inserter, replace=False):
-        type = type.lower()
-        if type in self.inserters_ and not replace:
-            raise Exception("Type %s already has an inserter" % type)
-
-        self.inserters_[type] = inserter
-
-    def removeItemInserter(self, type):
-        type = type.lower()
-        if type in self.inserters_:
-            del self.inserters_[type]
 
     #
     # mouse event handlers
