@@ -4,7 +4,7 @@ from functools import partial
 import os.path
 import okapy
 
-DataRole, ImageRole = [Qt.UserRole + i for i in range(1,3)]
+TypeRole, DataRole, ImageRole = [Qt.UserRole + i + 1 for i in range(3)]
 
 class ModelItem:
     def __init__(self, parent=None):
@@ -183,6 +183,8 @@ class AnnotationModelItem(ModelItem):
 
     def data(self, index, role):
         if role == Qt.DisplayRole and index.column() == 0:
+            return self.type()
+        elif role == TypeRole:
             return self.type()
         elif role == DataRole:
             #print "data():", self.annotation_
