@@ -1,5 +1,6 @@
 from PyQt4.QtGui import *
 from PyQt4.Qt import *
+import math
 from annotationmodel import DataRole
 
 class ControlItem(QGraphicsItem):
