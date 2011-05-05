@@ -212,7 +212,7 @@ class PointItemInserter(ItemInserter):
     def mousePressEvent(self, event, index):
         pos = event.scenePos()
         ann = {'type': 'point',
-               'x': event.pos().x(), 'y': event.pos().y()}
+               'x': pos.x(), 'y': pos.y()}
         index.model().addAnnotation(index, ann)
         event.accept()
 
