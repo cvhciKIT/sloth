@@ -96,12 +96,12 @@ class AnnotationScene(QGraphicsScene):
         assert self.root_.isValid()
         print "insertItems"
 
+        # create a graphics item for each model index
         for row in range(first, last+1):
-            child = self.root_.child(row, 0)
-            item = AnnotationGraphicsItem.createItem(child)
+            child = self.root_.child(row, 0) # get index
+            _type = str(child.data(TypeRole).toPyObject()) # get type from index
+            item = ItemFactory.createItem(_type, child)    # create graphics item from factory
             if item is not None:
-                #checked = (child.data(Qt.CheckStateRole).toInt()[0] == Qt.Checked)
-                #item.setVisible(checked)
                 self.addItem(item)
 
     def mode(self):

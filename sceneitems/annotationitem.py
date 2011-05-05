@@ -48,7 +48,7 @@ class AnnotationGraphicsItem(QAbstractGraphicsShapeItem):
         return self.index_
 
     def setText(self, text, position="upperleft"):
-        # TODO use different text items for differenct positions
+        # TODO use different text items for different positions
         self.text_item_.setText(text)
         self.text_item_.setPos(0, 0)
         self.text_item_.update()
@@ -67,44 +67,6 @@ class AnnotationGraphicsItem(QAbstractGraphicsShapeItem):
         #for corner in self.corner_items_:
         #    corner.setVisible(self.controls_enabled_ and self.controls_visible_)
     
-    #
-    # factory methods for creating the graphics items
-    #_________________________________________________________________________________
-    _item_types = {}
-    
-    @staticmethod
-    def addItemType(type, constructor, replace=False):
-        type = type.lower()
-        if type in AnnotationGraphicsItem._item_types and not replace:
-            raise Exception("Type %s already has an constructor" % type)
-
-        AnnotationGraphicsItem._item_types[type.lower()] = constructor
-
-    @staticmethod
-    def removeItemType(type_str):
-        type = type.lower()
-        if type in AnnotationGraphicsItem._item_types:
-            del AnnotationGraphicsItem._item_types[type]
-    
-    @staticmethod
-    def createItem(index):
-        """
-        Create an AnnotationGraphicsItem based on the type of the annotation.
-
-        E.g. 
-            type == rect  --> AnnotationGraphicsRectItem
-            type == point --> AnnotationGraphicsPointItem
-        """
-        annotation = index.data(DataRole).toPyObject()
-        print "createItem:", index.row(), index.column(), annotation
-
-        if annotation is not None and 'type' in annotation:
-            type = annotation['type']
-            if type in AnnotationGraphicsItem._item_types:
-                return AnnotationGraphicsItem._item_types[type](index)
-
-        return None
-
 
 class AnnotationGraphicsRectItem(AnnotationGraphicsItem):
     def __init__(self, index, parent=None):
@@ -393,6 +355,9 @@ class AnnotationGraphicsItemFactory:
         return self.inserters_[_type](*args, **kwargs)
 
 # register common item types
-AnnotationGraphicsItem.addItemType('rect',  AnnotationGraphicsRectItem)
-AnnotationGraphicsItem.addItemType('point', AnnotationGraphicsPointItem)
+ItemFactory = AnnotationGraphicsItemFactory()
+ItemFactory.register('rect',     AnnotationGraphicsRectItem,  RectItemInserter)
+ItemFactory.register('point',    AnnotationGraphicsPointItem, PointItemInserter)
+ItemFactory.register('polygon',  AnnotationGraphicsRectItem,  PolygonItemInserter)
+
 
