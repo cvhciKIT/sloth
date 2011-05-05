@@ -345,14 +345,20 @@ class AnnotationGraphicsItemFactory:
 
         if _type not in self.items_:
             return None
-        return self.items_[_type](*args, **kwargs)
+        item = self.items_[_type]
+        if item is None:
+            return None
+        return item(*args, **kwargs)
 
     def createItemInserter(self, _type, *args, **kwargs):
         _type = _type.lower()
 
         if _type not in self.inserters_:
             return None
-        return self.inserters_[_type](*args, **kwargs)
+        inserter = self.inserters_[_type]
+        if inserter is None:
+            return None
+        return inserter(*args, **kwargs)
 
 # register common item types
 ItemFactory = AnnotationGraphicsItemFactory()
