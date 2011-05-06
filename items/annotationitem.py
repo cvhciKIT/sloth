@@ -67,7 +67,6 @@ class AnnotationGraphicsItem(QAbstractGraphicsShapeItem):
         print "Controls visible:", visible
         #for corner in self.corner_items_:
         #    corner.setVisible(self.controls_enabled_ and self.controls_visible_)
-    
 
 class AnnotationGraphicsRectItem(AnnotationGraphicsItem):
     def __init__(self, index, parent=None):
@@ -310,12 +309,16 @@ class PolygonItemInserter(ItemInserter):
 
         event.accept()
 
-class AnnotationGraphicsItemFactory:
-    def __init__(self):
-        self.items_     = {}
-        self.inserters_ = {}
+class Factory:
+    def __init__(self, items=None):
+        self.items_ = {}
 
-    def register(self, _type, item, inserter, replace=False):
+        print items
+        if items is not None:
+            for _type, item in items:
+                self.register(_type, item, replace=True)
+
+    def register(self, _type, item, replace=False):
         _type = _type.lower()
 
         if _type in self.items_ and not replace:
@@ -324,24 +327,15 @@ class AnnotationGraphicsItemFactory:
         else:
             self.items_[_type] = item
 
-        if _type in self.inserters_ and not replace:
-            raise Exception("Type %s already has an inserter: %s" % \
-                             (_type, str(self.inserters_[_type])))
-        else:
-            self.inserters_[_type] = inserter
-
     def clear(self, _type=None):
         if _type is None:
             self.items_     = {}
-            self.inserters_ = {}
         else:
             _type = _type.lower()
             if _type in self.items_:
                 del self.items_[_type]
-            if _type in self.inserters_:
-                del self.inserters_[_type]
 
-    def createItem(self, _type, *args, **kwargs):
+    def create(self, _type, *args, **kwargs):
         _type = _type.lower()
 
         if _type not in self.items_:
@@ -351,99 +345,57 @@ class AnnotationGraphicsItemFactory:
             return None
         return item(*args, **kwargs)
 
-    def createItemInserter(self, _type, *args, **kwargs):
-        _type = _type.lower()
-
-        if _type not in self.inserters_:
-            return None
-        inserter = self.inserters_[_type]
-        if inserter is None:
-            return None
-        return inserter(*args, **kwargs)
-
-# register common item types
-ItemFactory = AnnotationGraphicsItemFactory()
-ItemFactory.register('rect',       AnnotationGraphicsRectItem,  RectItemInserter)
-ItemFactory.register('ratiorect',  None,                        FixedRatioRectItemInserter)
-ItemFactory.register('point',      AnnotationGraphicsPointItem, PointItemInserter)
-ItemFactory.register('polygon',    AnnotationGraphicsRectItem,  PolygonItemInserter)
-ItemFactory.register('poly',       AnnotationGraphicsRectItem,  PolygonItemInserter)
-
 ### testing
 import pytest
 class MockupRectItem:    pass
 class MockupPointItem:   pass
 class MockupPolygonItem: pass
-class MockupRectItemInserter:    pass
-class MockupPointItemInserter:   pass
-class MockupPolygonItemInserter: pass
 
 def _create_factory():
-    itemfactory = AnnotationGraphicsItemFactory()
-    itemfactory.register('rect',     MockupRectItem,  MockupRectItemInserter)
-    itemfactory.register('point',    MockupPointItem, MockupPointItemInserter)
-    itemfactory.register('polygon',  MockupPolygonItem,  MockupPolygonItemInserter)
+    itemfactory = Factory((('point',   MockupPointItem),
+                           ('polygon', MockupPolygonItem)))
+    itemfactory.register('rect', MockupRectItem)
+
     return itemfactory
 
 def test_register():
     itemfactory = _create_factory()
 
-    item = itemfactory.createItem('rect')
+    item = itemfactory.create('rect')
     assert isinstance(item, MockupRectItem)
-    item = itemfactory.createItem('point')
+    item = itemfactory.create('point')
     assert isinstance(item, MockupPointItem)
-    item = itemfactory.createItem('polygon')
+    item = itemfactory.create('polygon')
     assert isinstance(item, MockupPolygonItem)
-    item = itemfactory.createItem('polygon2')
+    item = itemfactory.create('polygon2')
     assert item is None
-
-    inserter = itemfactory.createItemInserter('rect')
-    assert isinstance(inserter, MockupRectItemInserter)
-    inserter = itemfactory.createItemInserter('point')
-    assert isinstance(inserter, MockupPointItemInserter)
-    inserter = itemfactory.createItemInserter('polygon')
-    assert isinstance(inserter, MockupPolygonItemInserter)
-    inserter = itemfactory.createItemInserter('polygon2')
-    assert inserter is None
 
 def test_register_fail():
     itemfactory = _create_factory()
     with pytest.raises(Exception):
-        itemfactory.register('rect', MockupRectItem, MockupRectItemInserter)
-    with pytest.raises(Exception):
-        itemfactory.register('polygon', MockupPolygonItem)
+        itemfactory.register('rect', MockupRectItem)
 
 def test_register_replace():
     itemfactory = _create_factory()
 
-    itemfactory.register('rect', MockupPolygonItem, MockupPolygonItemInserter, replace=True)
-    item = itemfactory.createItem('rect')
+    itemfactory.register('rect', MockupPolygonItem, replace=True)
+    item = itemfactory.create('rect')
     assert isinstance(item, MockupPolygonItem)
-    inserter = itemfactory.createItemInserter('rect')
-    assert isinstance(inserter, MockupPolygonItemInserter)
-
-    itemfactory.register('rect', MockupRectItem, MockupRectItemInserter, replace=True)
-    item = itemfactory.createItem('rect')
-    assert isinstance(item, MockupRectItem)
-    inserter = itemfactory.createItemInserter('rect')
-    assert isinstance(inserter, MockupRectItemInserter)
 
 def test_clear():
     itemfactory = _create_factory()
 
-    item = itemfactory.createItem('rect')
+    item = itemfactory.create('rect')
     assert isinstance(item, MockupRectItem)
     itemfactory.clear('rect')
-    item = itemfactory.createItem('rect')
+    item = itemfactory.create('rect')
     assert item is None
-    inserter = itemfactory.createItemInserter('rect')
-    assert inserter is None
 
-    item = itemfactory.createItem('point')
+    item = itemfactory.create('point')
     assert isinstance(item, MockupPointItem)
-    item = itemfactory.createItem('polygon')
+    item = itemfactory.create('polygon')
     assert isinstance(item, MockupPolygonItem)
     itemfactory.clear()
-    assert itemfactory.createItem('point') is None
-    assert itemfactory.createItem('polygon') is None
+    assert itemfactory.create('point') is None
+    assert itemfactory.create('polygon') is None
 
