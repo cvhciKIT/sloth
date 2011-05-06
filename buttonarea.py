@@ -64,7 +64,7 @@ class ButtonListWidget(QWidget):
 class ButtonArea(QWidget):
     stateChanged = pyqtSignal(object)
 
-    def __init__(self, parent=None):
+    def __init__(self, labels=None, hotkeys=None, parent=None):
         QWidget.__init__(self, parent)
 
         self.label_names = []
@@ -83,6 +83,14 @@ class ButtonArea(QWidget):
         self.hlayout.addWidget(self.label_button_list)
         self.setLayout(self.hlayout)
         self.stateChanged.connect(self.stateHasChanged)
+
+        if labels is not None:
+            for name, prop in labels:
+                self.add_label(name, prop)
+        if hotkeys is not None:
+            for choice, name, hotkey in hotkeys:
+                self.add_hotkey(choice, name, hotkey)
+        self.init_button_lists()
 
     def stateHasChanged(self, state):
         print "stateChanged(object)", state
@@ -171,16 +179,12 @@ class ButtonArea(QWidget):
             self.show_only_label_properties("")
         self.stateChanged.emit(self.get_current_state())
 
-
-    def load(self, config_filepath):
-        execfile(config_filepath)
-        self.init_button_lists()
-
 def main():
-    app = QApplication(sys.argv)
+    from conf import config
+    config.update("example_config")
 
-    ba = ButtonArea()
-    ba.load("example_config.py")
+    app = QApplication(sys.argv)
+    ba = ButtonArea(config.LABELS, config.HOTKEYS)
     ba.show()
 
     return app.exec_()

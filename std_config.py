@@ -1,10 +1,48 @@
+from items import AnnotationGraphicsRectItem as RectItem 
+from items import RectItemInserter
+from bboxitem import *
+
 RATIOS = ["0.5", "1", "2"]
 
-self.add_label("Rect",    {"type": "rect"})
-self.add_label("FixedRatioRect",    {"type": "ratiorect", "_ratio": RATIOS})
-self.add_label("Point",   {"type": "point"})
-self.add_label("Polygon", {"type": "polygon"})
+LABELS = (
+    ("Rect",              {"type" : "rect"}),
+    ("FixedRatioRect",    {"type": "ratiorect", "_ratio": RATIOS}),
+    ("Point",             {"type": "point"}),
+    ("Polygon",           {"type": "polygon"}),
+    ("BodyBBox",          {"type": "bodybbox"}),
+)
 
-self.add_hotkey("", "Rect",    "r")
-self.add_hotkey("", "Point",   "p")
-self.add_hotkey("", "Polygon", "o")
+HOTKEYS = (
+    ("", "Rect",     "r"),
+    ("", "Point",    "p"),
+    ("", "Polygon",  "o"),
+    ("", "BodyBBox", "b")
+)
+
+ITEMS = (
+    ("rect",     RectItem),
+    ("bodybbox", BodyBoundingboxItem),
+)
+
+INSERTERS = (
+    ("rect",     RectItemInserter),
+    ("bodybbox", BodyBoundingboxItemInserter),
+)
+
+LOADERS = (
+)
+
+PLUGINS = (
+)
+
+#labeltool.buttonarea.add_label("Rect",     {"type": "rect"})
+#labeltool.buttonarea.add_label("FixedRatioRect",    {"type": "ratiorect", "_ratio": RATIOS})
+#labeltool.buttonarea.add_label("Point",    {"type": "point"})
+#labeltool.buttonarea.add_label("Polygon",  {"type": "polygon"})
+#labeltool.buttonarea.add_label("BodyBBox", {"type": "bodybbox"})
+#
+#Labeltool.buttonarea.add_hotkey("", "Rect",     "r")
+#Labeltool.buttonarea.add_hotkey("", "Point",    "p")
+#Labeltool.buttonarea.add_hotkey("", "Polygon",  "o")
+#Labeltool.buttonarea.add_hotkey("", "BodyBBox", "b")
+

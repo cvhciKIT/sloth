@@ -1,6 +1,6 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
-from sceneitems import *
+from items import *
 from annotationmodel import TypeRole, ImageRole
 import math
 import okapy
@@ -10,7 +10,7 @@ class AnnotationScene(QGraphicsScene):
 
     # TODO signal itemadded
 
-    def __init__(self, parent=None):
+    def __init__(self, items=None, inserters=None, parent=None):
         super(AnnotationScene, self).__init__(parent)
 
         self.model_     = None
@@ -19,6 +19,9 @@ class AnnotationScene(QGraphicsScene):
         self.debug_     = True
         self.message_   = ""
         self.last_key_  = None
+
+        self.itemfactory_     = Factory(items)
+        self.inserterfactory_ = Factory(inserters)
 
         self.setBackgroundBrush(Qt.darkGray)
 
@@ -93,7 +96,7 @@ class AnnotationScene(QGraphicsScene):
         for row in range(first, last+1):
             child = self.root_.child(row, 0) # get index
             _type = str(child.data(TypeRole).toPyObject()) # get type from index
-            item = ItemFactory.createItem(_type, child)    # create graphics item from factory
+            item = self.itemfactory_.create(_type, child)    # create graphics item from factory
             if item is not None:
                 self.addItem(item)
 
@@ -108,7 +111,7 @@ class AnnotationScene(QGraphicsScene):
             self.inserter_ = None
             return
 
-        inserter = ItemFactory.createItemInserter(self.mode_['type'], self)
+        inserter = self.inserterfactory_.create(self.mode_['type'], self)
         if inserter is None:
             raise InvalidArgumentException("Invalid mode")
 

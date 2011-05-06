@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import sys, os
-import functools
+import functools, importlib
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import PyQt4.uic as uic
@@ -9,18 +9,28 @@ from buttonarea import *
 from annotationmodel import *
 from annotationscene import *
 from frameviewer import *
+from loaders import *
+from optparse import OptionParser
 import annotations
-
+from conf import config
 
 APP_NAME            = """labeltool"""
 ORGANIZATION_NAME   = """CVHCI Research Group"""
 ORGANIZATION_DOMAIN = """cvhci.anthropomatik.kit.edu"""
 __version__         = """0.1"""
 
-
 class MainWindow(QMainWindow):
     def __init__(self, argv, parent=None):
         super(MainWindow, self).__init__(parent)
+
+        # parse command line options
+        options, args = self.parseCommandLineOptions(argv)
+        if options.config != "":
+            # load config
+            config.update(options.config)
+
+        self.loaders_ = []
+
         self.anno_container = annotations.AnnotationContainer()
         self.current_index_ = None
 
@@ -30,10 +40,19 @@ class MainWindow(QMainWindow):
         self.updateStatus()
         self.updateViews()
 
-        if len(argv) > 0:
-            self.loadInitialFile(argv[0])
+        if len(args) > 0:
+            self.loadInitialFile(args[0])
         else:
             self.loadInitialFile()
+
+    def parseCommandLineOptions(self, argv):
+        usage   = "Usage: %prog [-c config.py] [annotation_file]"
+        version = "%prog " + __version__
+
+        parser = OptionParser(usage=usage, version=version)
+        parser.add_option("-c", "--config",  action="store", type="string", default="",   help="Configuration file.")
+
+        return parser.parse_args(argv)
 
     ###
     ### GUI/Application setup
@@ -41,15 +60,13 @@ class MainWindow(QMainWindow):
     def setupGui(self):
         self.ui = uic.loadUi("labeltool.ui", self)
 
-        self.scene = AnnotationScene(self)
+        self.scene = AnnotationScene(items=config.ITEMS, inserters=config.INSERTERS)
         self.view = GraphicsView(self)
         self.view.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
         self.view.setScene(self.scene)
         self.setCentralWidget(self.view)
 
-        self.buttonarea = ButtonArea()
-        # TODO make this configurable/settable via command line option
-        self.buttonarea.load("std_config.py")
+        self.buttonarea = ButtonArea(config.LABELS, config.HOTKEYS)
         self.ui.dockAnnotationButtons.setWidget(self.buttonarea)
         self.buttonarea.stateChanged.connect(self.scene.setMode)
 
@@ -57,14 +74,6 @@ class MainWindow(QMainWindow):
         self.treeview.setAlternatingRowColors(True)
         self.treeview.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
         self.ui.dockInformation.setWidget(self.treeview)
-
-        ## create action group for tools
-        self.toolActions = QActionGroup(self)
-        for action in (self.ui.actionSelection,
-                       self.ui.actionPoint,
-                       self.ui.actionRectangle,
-                       self.ui.actionMask):
-            self.toolActions.addAction(action)
 
         self.ui.show()
 
@@ -105,6 +114,7 @@ class MainWindow(QMainWindow):
         else:
             filename = QVariant()
         settings.setValue("LastFile", filename)
+
 
     ###
     ### Annoation file handling
