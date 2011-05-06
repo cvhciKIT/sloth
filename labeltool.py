@@ -9,7 +9,6 @@ from buttonarea import *
 from annotationmodel import *
 from annotationscene import *
 from frameviewer import *
-from loaders import *
 from optparse import OptionParser
 import annotations
 from conf import config
@@ -29,9 +28,7 @@ class MainWindow(QMainWindow):
             # load config
             config.update(options.config)
 
-        self.loaders_ = []
-
-        self.anno_container = annotations.AnnotationContainer()
+        self.anno_container = annotations.AnnotationContainer(config.LOADERS)
         self.current_index_ = None
 
         self.setupGui()
@@ -125,7 +122,7 @@ class MainWindow(QMainWindow):
             self.anno_container.load(fname)
             msg = "Successfully loaded %s (%d files, %d annotations)" % \
                     (fname, self.anno_container.numFiles(), self.anno_container.numAnnotations())
-        except Exception as e:
+        except Exception, e:
             msg = "Error: Loading failed (%s)" % str(e)
         self.updateStatus(msg)
         self.updateViews()

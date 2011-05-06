@@ -233,7 +233,7 @@ class AnnotationModel(QAbstractItemModel):
         return self.basedir_
 
     def setBasedir(self, dir):
-        print "setBasedir", dir
+        print "setBasedir: \"" + dir + "\"" 
         self.basedir_ = dir
 
     def itemFromIndex(self, index):

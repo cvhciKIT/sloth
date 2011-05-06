@@ -1,9 +1,9 @@
 import os
-import glob
 
 class AnnotationContainer:
-    def __init__(self):
+    def __init__(self, loaders):
         self.clear()
+        self.loaders_ = dict(loaders)
 
     def filename(self):
         return self.filename_
@@ -13,69 +13,17 @@ class AnnotationContainer:
         self.filename_    = None
 
     def load(self, filename):
-        self.loadRectFormat(filename)
+        ext = os.path.splitext(filename)[1]
+        if ext.startswith('.'):
+            ext = ext[1:]
 
-    def loadRectFormat(self, filename):
-        self.annotations_ = []
+        loader = self.loaders_[ext]()
+        self.annotations_ = loader.load(filename)
         self.filename_ = filename
-        filename_helper = {}
 
-        try:
-            f = open(filename)
-            basedir = ""
-            for line in f:
-                s = line.split()
-                image_fname = s[0]
-                if basedir == "":
-                    basedir = os.path.dirname(image_fname)
-                else:
-                    assert basedir == os.path.dirname(image_fname)
-                num_rects = int(s[1])
-                assert num_rects == 0 or num_rects == 1
-                if image_fname in filename_helper:
-                    rects = filename_helper[image_fname]['annotations']
-                else:
-                    rects = []
-
-                for i in range(0, 4*num_rects, 4):
-                    rects.append({
-                        'type': 'rect',
-                        'x': s[i+2],
-                        'y': s[i+3],
-                        'width':  s[i+4],
-                        'height': s[i+5]
-                        })
-                    if len(s) > i+6:
-                        rects[-1]['id'] = s[i+6]
-
-                if image_fname not in filename_helper:
-                    annotation = {
-                            'type':     'image',
-                            'filename': image_fname,
-                            'annotations': rects
-                            }
-                    self.annotations_.append(annotation)
-                    filename_helper[image_fname] = annotation
-        except Exception as e:
-            self.annotations_ = []
-            raise e
-
-        basedir1 = basedir
-        basedir = os.path.join(os.path.dirname(filename), basedir)
-        images = glob.glob(os.path.join(basedir, "*.png"))
-        for fname in images:
-            fname = os.path.join(basedir1, os.path.basename(fname))
-            if fname not in filename_helper:
-                print fname, "not in filename_helper"
-                annotation = {
-                        'type':     'image',
-                        'filename': fname,
-                        'annotations': []
-                        }
-                self.annotations_.append(annotation)
-    
     def save(self, filename):
-        self.saveRectFormat(filename)
+        pass
+        #self.saveRectFormat(filename)
 
     def saveRectFormat(self, filename):
         f = open(filename, "w")

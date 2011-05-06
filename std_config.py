@@ -1,5 +1,6 @@
 from items import AnnotationGraphicsRectItem as RectItem 
-from items import RectItemInserter
+from items import RectItemInserter, AnnotationGraphicsPointItem
+from loaders import FeretLoader, RectIdLoader
 from bboxitem import *
 
 RATIOS = ["0.5", "1", "2"]
@@ -21,6 +22,7 @@ HOTKEYS = (
 
 ITEMS = (
     ("rect",     RectItem),
+    ("point",    AnnotationGraphicsPointItem),
     ("bodybbox", BodyBoundingboxItem),
 )
 
@@ -30,6 +32,7 @@ INSERTERS = (
 )
 
 LOADERS = (
+    ('txt', RectIdLoader),
 )
 
 PLUGINS = (

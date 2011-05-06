@@ -90,7 +90,6 @@ class AnnotationScene(QGraphicsScene):
     def insertItems(self, first, last):
         assert self.model_ is not None
         assert self.root_.isValid()
-        print "insertItems"
 
         # create a graphics item for each model index
         for row in range(first, last+1):
