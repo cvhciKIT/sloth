@@ -1,5 +1,8 @@
 #!/usr/bin/python
 import sys, os
+INSTALLDIR=os.path.dirname(__file__)
+sys.path.append(INSTALLDIR)
+
 import functools, importlib
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -55,7 +58,7 @@ class MainWindow(QMainWindow):
     ### GUI/Application setup
     ###___________________________________________________________________________________________
     def setupGui(self):
-        self.ui = uic.loadUi("labeltool.ui", self)
+        self.ui = uic.loadUi(os.path.join(INSTALLDIR,"labeltool.ui"), self)
 
         self.scene = AnnotationScene(items=config.ITEMS, inserters=config.INSERTERS)
         self.view = GraphicsView(self)
