@@ -1,3 +1,8 @@
+.. image:: _static/sloth.gif
+    :width: 350px
+    :align: right
+    :alt: sloth
+
 ========================================
 Welcome to the label tool documentation!
 ========================================

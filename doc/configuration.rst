@@ -14,17 +14,53 @@ This is a list of all available settings.
 LABELS
 ------
 
+Default::
+
+    (
+     ("Rect",    {"type": "rect"}),
+     ("Point",   {"type": "point"}),
+     ("Polygon", {"type": "polygon"}),
+    )
+
+List of labels.   This will be used to construct the button area from which the user can select to be created
+labels.  The second tuple entry is expected to be a python dictionary, which contains at least the key `type`.
+All other keys are optional, but are directly used for the newly created label.  A value can also be a list.
+In this case, the button area displays another list of options for the key as defined in the list.  Example::
+
+    (
+     ("Rect",    {"type": "rect", "class": "head", "id": ["Martin", "Mika", "Boris"]}),
+    )
+
+Note two things here.  First, the comma at the end of the first tuple is mandatory.  Otherwise the outer tuple
+will not be recognized as one (it will be only parentheses around an object, which will alone not be translated
+into a tuple object.  Second, the key `head` does not contain a list as value.  That means, that this key-value
+pair will be used directly as such in a newly created label.  For the key `id` the user can choose from the
+given list, and only the chosen value will be used for the newly created label.
+
 .. _ITEMS:
 
 ITEMS
 -----
+
+Default::
+
+    {
+     "rect":    'items.RectItem',
+     "point":   'items.PointItem',
+     "polygon": 'items.PolygonItem',
+    }
+
+Mapping from `type` to the visualization item.  The values need to be python callables that create
+a new visualization item. They don't neccessarily need to be subclasses of `AnnotationGraphicsItem`.
+Nevertheless, the constructor of any subclass of `AnnotationGraphicItem` is of course a python callable
+that creates a new visualization item.
 
 .. _HOTKEYS:
 
 HOTKEYS
 -------
 
-Default:: `()` (Empty tuple)
+Default:: ``()`` (Empty tuple)
 
 Hold a list of hotkeys for the label inserting.  Example::
 
