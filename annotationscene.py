@@ -1,3 +1,4 @@
+"""Dies ist das AnnotationScene module"""
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from items import *
@@ -7,6 +8,7 @@ import okapy
 from okapy.guiqt.utilities import toQImage
 
 class AnnotationScene(QGraphicsScene):
+    """Dies ist ein Test"""
 
     # TODO signal itemadded
 

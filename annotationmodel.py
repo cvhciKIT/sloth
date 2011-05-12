@@ -1,3 +1,6 @@
+"""
+The annotationmodel module contains the classes for the AnnotationModel.
+"""
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from functools import partial
