@@ -4,13 +4,15 @@ LABELS = (
 HOTKEYS = (
 )
 
-ITEMS = (
-    ("rect",  "items.RectItem",  "items.RectItemInserter"),
-    ("point", "items.PointItem", "items.PointItemInserter")
-)
+ITEMS = {
+    "rect":  "items.RectItem",
+    "point": "items.PointItem",
+}
 
-INSERTERS = (
-)
+INSERTERS = {
+    "rect":  "items.RectItemInserter",
+    "point": "items.PointItemInserter",
+}
 
 LOADERS = (
 )

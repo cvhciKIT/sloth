@@ -2,7 +2,7 @@ from PyQt4.QtGui import *
 from PyQt4.Qt import *
 from annotationitem import *
 
-class AnnotationGraphicsLineItem(AnnotationGraphicsItem):
+class LineItem(AnnotationGraphicsItem):
 
     def __init__(self, pos, endPoint, parent=None):
         AnnotationGraphicsItem.__init__(self, False, parent)
