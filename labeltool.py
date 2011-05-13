@@ -9,11 +9,11 @@ from PyQt4.QtCore import *
 import PyQt4.uic as uic
 import qrc_icons
 from buttonarea import *
-from annotationmodel import *
+from annotations.model import *
+from annotations.container import AnnotationContainerFactory, AnnotationContainer
 from annotationscene import *
 from frameviewer import *
 from optparse import OptionParser
-import annotations
 from conf import config
 
 APP_NAME            = """labeltool"""
@@ -31,7 +31,8 @@ class MainWindow(QMainWindow):
             # load config
             config.update(options.config)
 
-        self.anno_container = annotations.AnnotationContainer(config.LOADERS)
+        self.container_factory_ = AnnotationContainerFactory(config.CONTAINERS)
+        self.container_ = AnnotationContainer()
         self.current_index_ = None
 
         self.setupGui()
@@ -109,8 +110,8 @@ class MainWindow(QMainWindow):
         settings.setValue("MainWindow/Size",     QVariant(self.size()))
         settings.setValue("MainWindow/Position", QVariant(self.pos()))
         settings.setValue("MainWindow/State",    QVariant(self.saveState()))
-        if self.anno_container.filename() is not None:
-            filename = QVariant(QString(self.anno_container.filename()))
+        if self.container_.filename() is not None:
+            filename = QVariant(QString(self.container_.filename()))
         else:
             filename = QVariant()
         settings.setValue("LastFile", filename)
@@ -122,9 +123,10 @@ class MainWindow(QMainWindow):
     def loadAnnotations(self, fname):
         fname = str(fname) # convert from QString
         try:
-            self.anno_container.load(fname)
+            self.container_ = self.container_factory_.create(fname)
+            self.container_.load(fname)
             msg = "Successfully loaded %s (%d files, %d annotations)" % \
-                    (fname, self.anno_container.numFiles(), self.anno_container.numAnnotations())
+                    (fname, self.container_.numFiles(), self.container_.numAnnotations())
         except Exception, e:
             msg = "Error: Loading failed (%s)" % str(e)
         self.updateStatus(msg)
@@ -133,10 +135,17 @@ class MainWindow(QMainWindow):
     def saveAnnotations(self, fname):
         success = False
         try:
-            self.anno_container.save(fname)
+            # create new container if the filename is different
+            if fname != self.container_.filename():
+                # TODO: skip if it is the same class
+                newcontainer = self.container_factory_.create(fname)
+                newcontainer.setAnnotations(self.container_.annotations())
+                self.container_ = newcontainer
+
+            self.container_.save(fname)
             #self.model_.writeback() # write back changes that are cached in the model itself, e.g. mask updates
             msg = "Successfully saved %s (%d files, %d annotations)" % \
-                    (fname, self.anno_container.numFiles(), self.anno_container.numAnnotations())
+                    (fname, self.container_.numFiles(), self.container_.numAnnotations())
             success = True
             self.model_.setDirty(False)
         except Exception as e:
@@ -170,7 +179,7 @@ class MainWindow(QMainWindow):
     def fileNew(self):
         if not self.okToContinue():
             return
-        self.anno_container.clear()
+        self.container_.clear()
         self.updateStatus()
         self.updateViews()
 
@@ -178,11 +187,11 @@ class MainWindow(QMainWindow):
         if not self.okToContinue():
             return
         path = '.'
-        if (self.anno_container.filename() is not None) and \
-                (len(self.anno_container.filename()) > 0):
-            path = QFileInfo(self.anno_container.filename()).path()
+        if (self.container_.filename() is not None) and \
+                (len(self.container_.filename()) > 0):
+            path = QFileInfo(self.container_.filename()).path()
 
-        #format_str = ' '.join(['*.'+fmt for fmt in self.anno_container.formats()])
+        # TODO: compile a list from all the patterns in self.container_factory_
         format_str = ' '.join(['*.txt'])
         fname = QFileDialog.getOpenFileName(self, 
                 "%s - Load Annotations" % APP_NAME, path,
@@ -191,21 +200,18 @@ class MainWindow(QMainWindow):
             self.loadAnnotations(fname)
 
     def fileSave(self):
-        if self.anno_container.filename() is None:
+        if self.container_.filename() is None:
             return self.fileSaveAs()
-        return self.saveAnnotations(self.anno_container.filename())
+        return self.saveAnnotations(self.container_.filename())
 
     def fileSaveAs(self):
         fname = '.'  # self.annotations.filename() or '.'
-        #format_str = ' '.join(['*.'+fmt for fmt in self.anno_container.formats()])
         format_str = ' '.join(['*.txt'])
         fname = QFileDialog.getSaveFileName(self,
                 "%s - Save Annotations" % APP_NAME, fname,
                 "%s annotation files (%s)" % (APP_NAME, format_str))
 
         if not fname.isEmpty():
-            #if not fname.contains("."):
-                #fname += ".yaml"
             return self.saveAnnoations(str(fname))
         return False
 
@@ -223,17 +229,17 @@ class MainWindow(QMainWindow):
 
     def updateStatus(self, message=''):
         self.statusBar().showMessage(message, 5000)
-        if self.anno_container.filename() is not None:
+        if self.container_.filename() is not None:
             self.setWindowTitle("%s - %s[*]" % \
-                (APP_NAME, QFileInfo(self.anno_container.filename()).fileName()))
+                (APP_NAME, QFileInfo(self.container_.filename()).fileName()))
         else:
             self.setWindowTitle("%s - Unnamed[*]" % APP_NAME)
         self.updateModified()
 
     def updateViews(self):
-        self.model_ = AnnotationModel(self.anno_container.asDict())
-        if self.anno_container.filename() is not None:
-            self.model_.setBasedir(os.path.dirname(self.anno_container.filename()))
+        self.model_ = AnnotationModel(self.container_.annotations())
+        if self.container_.filename() is not None:
+            self.model_.setBasedir(os.path.dirname(self.container_.filename()))
         else:
             self.model_.setBasedir("")
         self.model_.dirtyChanged.connect(self.updateModified)

@@ -2,7 +2,7 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from items import *
-from annotationmodel import TypeRole, ImageRole
+from annotations.model import TypeRole, ImageRole
 import math
 import okapy
 from okapy.guiqt.utilities import toQImage

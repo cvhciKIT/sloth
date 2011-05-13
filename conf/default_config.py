@@ -5,16 +5,16 @@ HOTKEYS = (
 )
 
 ITEMS = {
-    "rect":  "items.RectItem",
-    "point": "items.PointItem",
+    'rect':  'items.RectItem',
+    'point': 'items.PointItem',
 }
 
 INSERTERS = {
-    "rect":  "items.RectItemInserter",
-    "point": "items.PointItemInserter",
+    'rect':  'items.RectItemInserter',
+    'point': 'items.PointItemInserter',
 }
 
-LOADERS = (
+CONTAINERS = (
 )
 
 PLUGINS = (
