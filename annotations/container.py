@@ -1,6 +1,10 @@
 import os
 import fnmatch
 from core.exceptions import ImproperlyConfigured
+try:
+    import cPickle as pickle
+except:
+    import pickle
 
 class AnnotationContainerFactory:
     def __init__(self, containers):
@@ -94,4 +98,19 @@ class AnnotationContainer:
                 for frame in file['frames']:
                     num += len(frame['annotations'])
         return num
+
+class PickleContainer(AnnotationContainer):
+    """
+    Simple container which just pickles the annotations to disk.
+    """
+
+    def load(self, fname):
+        f = open(fname, "rb")
+        self.annotations_ = pickle.load(f)
+        self.filename_ = fname
+
+    def save(self, fname):
+        f = open(fname, "wb")
+        pickle.dump(self.annotations(), f)
+        self.filename_ = fname
 
