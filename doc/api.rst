@@ -7,7 +7,7 @@ API
 annotationmodel
 ===============
 
-.. automodule:: annotationmodel
+.. automodule:: annotations.model
 .. autoclass:: AnnotationModel
     :members:
     :undoc-members:
@@ -36,6 +36,11 @@ annotationmodel
     :members:
     :undoc-members:
 
+annotation.container
+====================
+.. automodule:: annotations.container
+.. autoclass:: AnnotationContainer
+    :members:
 
 annotationscene
 ===============

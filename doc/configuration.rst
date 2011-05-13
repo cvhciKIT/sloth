@@ -90,32 +90,26 @@ Defines a mapping of which inserter should be used for interactively inserting a
 into the image.  The default inserters allow to draw the respective shape.  Read more 
 about how to write your own inserter in :ref:`Inserters`.
 
-.. _LOADERS:
+.. _CONTAINERS:
 
-LOADERS
--------
+CONTAINERS
+----------
 
 Default::
 
     {
-     'txt':    'loaders.SimpleOneLinerTextLoader',
-     'yaml':   'loaders.YamlLoader',
-     'pickle': 'loaders.PickleLoader',
+     '*.txt':    'annotations.container.SimpleOneLinerTextContainer',
+     '*.yaml':   'annotations.container.YamlContainer',
+     '*.pickle': 'annotations.container.PickleContainer',
     }
 
-Defines a mapping of which loader should be used for loading a label file with the given extension.
-This can of course also be a user defined loader.  You can also define the class directly (instead
+Defines a mapping of which container should be used for loading a label file matching the given filename pattern.
+This can of course also be a user defined container.  You can also define the class directly (instead
 of a module path)::
 
     {
-     'foo':   MyFooLoader
+     '*.foo':   MyFooContainer
     }
-
-.. todo::
-
-   What is a better name for LOADERS?  SERIALIZERS?  Because this class should take care of
-   writing the labels to the file as well.
-
 
 .. _PLUGINS:
 

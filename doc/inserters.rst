@@ -1,3 +1,5 @@
+.. highlight:: python
+
 =========
 Inserters
 =========

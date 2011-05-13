@@ -31,6 +31,7 @@ Contents
    configuration
    items
    inserters
+   containers
    api
 
 
