@@ -1,6 +1,6 @@
 from PyQt4.QtGui import *
 from PyQt4.Qt import *
-from annotationmodel import DataRole
+from annotations.model import DataRole
 
 class ControlItem(QGraphicsItem):
     def __init__(self, parent=None):

@@ -1,3 +1,6 @@
+import exceptions
+import importlib
+
 class Factory:
     """
     A generic factory for both items and inserters.
@@ -19,14 +22,35 @@ class Factory:
             for _type, item in items.iteritems():
                 self.register(_type, item, replace=True)
 
+    def import_callable(self, module_path_name):
+        """
+        Import the callable given by ``module_path_name``.
+        """
+        try:
+            module_path, name = module_path_name.rsplit('.', 1)
+        except ValueError:
+            raise exceptions.ImproperlyConfigured('%s is not a valid module path' % module_path_name)
+        try:
+            mod = importlib.import_module(module_path)
+        except ImportError, e:
+            raise exceptions.ImproperlyConfigured('Error importing module %s: "%s"' % (module_path, e))
+        try:
+            item_callable = getattr(mod, name)
+        except AttributeError:
+            raise exceptions.ImproperlyConfigured('Module "%s" does not define a "%s" callable' % (module_path, name))
+
+        return item_callable
+
     def register(self, _type, item, replace=False):
         """
         Register a new type-item mapping.
 
         Parameters
         ==========
-
-
+        _type: string
+            Type of the item.
+        item: python callable or string
+            Reference to the callable which creates the new object.
         """
         _type = _type.lower()
 
@@ -34,6 +58,8 @@ class Factory:
             raise Exception("Type %s already has an item: %s" % \
                              (_type, str(self.items_[_type])))
         else:
+            if type(item) == str:
+                item = self.import_callable(item)
             self.items_[_type] = item
 
     def clear(self, _type=None):
@@ -55,7 +81,7 @@ class Factory:
 
     def create(self, _type, *args, **kwargs):
         """
-        Create a new objectt.
+        Create a new object.
 
         Parameters
         ==========
