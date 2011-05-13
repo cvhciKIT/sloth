@@ -212,7 +212,7 @@ class MainWindow(QMainWindow):
                 "%s annotation files (%s)" % (APP_NAME, format_str))
 
         if not fname.isEmpty():
-            return self.saveAnnoations(str(fname))
+            return self.saveAnnotations(str(fname))
         return False
 
     def gotoNext(self):
