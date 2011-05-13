@@ -29,6 +29,9 @@ class ItemInserter:
     def keyPressEvent(self, event, index):
         event.ignore()
 
+    def allowOutOfSceneEvents(self):
+        return False
+
 class PointItemInserter(ItemInserter):
     def mousePressEvent(self, event, index):
         pos = event.scenePos()

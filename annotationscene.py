@@ -137,10 +137,11 @@ class AnnotationScene(QGraphicsScene):
     def mousePressEvent(self, event):
         if self.debug_:
             print "mousePressEvent", self.sceneRect().contains(event.scenePos()), event.scenePos()
-        if not self.sceneRect().contains(event.scenePos()):
-            # ignore events outside the scene rect
-            return
-        elif self.inserter_ is not None:
+        if self.inserter_ is not None:
+            if not self.sceneRect().contains(event.scenePos()) and \
+               not self.inserter_.allowOutOfSceneEvents():
+                # ignore events outside the scene rect
+                return
             # insert mode
             self.inserter_.mousePressEvent(event, self.root_)
         else:
