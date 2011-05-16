@@ -14,8 +14,12 @@ class ModelItem:
         self.parent_   = parent
         self.children_ = []
 
-    def children(self):
-        return self.children_
+    def children(self, index=None):
+        if index is None:
+            return self.children_
+        else:
+            # return tuple child, index of the child
+            return [(child, index.child(row, 0)) for row, child in enumerate(self.children_)]
 
     def parent(self):
         return self.parent_
@@ -52,7 +56,7 @@ class FileModelItem(ModelItem):
     def data(self, index, role):
         if role == Qt.DisplayRole and index.column() == 0:
             return os.path.basename(self.filename())
-        return QVariant()
+        return ModelItem.data(self, index, role)
 
     @staticmethod
     def create(file, parent):
@@ -81,6 +85,8 @@ class ImageFileModelItem(FileModelItem):
     def data(self, index, role):
         if role == ImageRole:
             return okapy.loadImage(self.fullpath(index))
+        elif role == DataRole:
+            return self.file_
         return FileModelItem.data(self, index, role)
 
 class VideoFileModelItem(FileModelItem):
@@ -165,7 +171,7 @@ class AnnotationModelItem(ModelItem):
             for key, value in data.iteritems():
                 print key, value
                 if not key in self.annotation_:
-                    print "not in annoation: ", key
+                    print "not in annotation: ", key
                     next = len(self.children_)
                     index.model().beginInsertRows(index, next, next)
                     self.children_.append(KeyValueModelItem(key, self))
@@ -194,6 +200,10 @@ class AnnotationModelItem(ModelItem):
             return self.annotation_
 
         return QVariant()
+
+    def setValue(self, key, value, index):
+        self.annotation_[key] = value
+        index.model().dataChanged.emit(index, index.sibling(index.row(), 0))
 
     def value(self, key):
         return self.annotation_[key]
