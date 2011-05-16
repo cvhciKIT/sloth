@@ -171,6 +171,28 @@ class AnnotationScene(QGraphicsScene):
     #
     # key event handlers
     #______________________________________________________________________________________________________
+    def selectNextItem(self):
+        self.inserter_ = None
+
+        if len(self.selectedItems()) == 0:
+            for item in self.items():
+                if (item.flags() & QGraphicsItem.ItemIsSelectable):
+                    item.setSelected(True)
+                    break
+        else:
+            selected_item = self.selectedItems()[0]
+            idx = -1
+            found = False
+            for i, item in enumerate(self.items() + self.items()):
+                if item is selected_item:
+                    found = True
+                if found and item is not selected_item:
+                    if (item.flags() & QGraphicsItem.ItemIsSelectable):
+                        item.setSelected(True)
+                        break
+            selected_item.setSelected(False)
+
+
     def keyPressEvent(self, event):
         if self.debug_:
            print "keyPressEvent", event
@@ -189,23 +211,7 @@ class AnnotationScene(QGraphicsScene):
                     index = item.index()
                     index.model().removeAnnotation(index)
                 event.accept()
-                return
 
-            if ord('0') <= event.key() <= ord('9'):
-                if self.last_key_ is None:
-                    self.last_key_ = event.key()
-                else:
-                    id = chr(self.last_key_) + chr(event.key())
-                    print "id=", id
-                    for item in self.selectedItems():
-                        index = item.index()
-                        data = dict(index.data(DataRole).toPyObject().iteritems())
-                        if data['type'] == 'rect':
-                            data['id'] = id
-                        index.model().setData(index, QVariant(data), DataRole)
-                    self.last_key_ = None
-
-        event.ignore()
 
     #
     # slots for signals from the model
