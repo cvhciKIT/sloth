@@ -14,7 +14,43 @@ class ControlItem(QGraphicsItem):
         color.setAlpha(200)
         painter.fillRect(self.boundingRect(), color)
 
+class BaseItem(QAbstractGraphicsShapeItem):
+    """
+    New base class for items.
+    """
+    def __init__(self, index, data=None, parent=None):
+        QAbstractGraphicsShapeItem.__init__(self, parent)
+
+        # store index and label data
+        self.index_ = index
+        if data is None:
+            data = self.index().data(DataRole).toPyObject()
+        self.data_ = data
+
+    def annotation(self):
+        return self.data_
+
+    def index(self):
+        return self.index_
+
+    def updateModel(self, data=None):
+        self.index().model().setData(self.index(), QVariant(self.data_), DataRole)
+
+    def paint(self, painter, option, widget=None):
+        pass
+
+    def boundingRect(self):
+        return QRectF(0, 0, 0, 0)
+
+    def setColor(self, color):
+        self.setPen(color)
+        self.setBrush(color)
+
+
 class AnnotationGraphicsItem(QAbstractGraphicsShapeItem):
+    """
+    Old base class for items.  Use BaseItem now!
+    """
     def __init__(self, index, parent=None):
         QAbstractGraphicsShapeItem.__init__(self, parent)
 
