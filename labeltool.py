@@ -46,6 +46,9 @@ class MainWindow(QMainWindow):
         else:
             self.loadInitialFile()
 
+        self.loadPlugins(config.PLUGINS)
+        self.initShortcuts()
+
     def parseCommandLineOptions(self, argv):
         usage   = "Usage: %prog [-c config.py] [annotation_file]"
         version = "%prog " + __version__
@@ -54,6 +57,26 @@ class MainWindow(QMainWindow):
         parser.add_option("-c", "--config",  action="store", type="string", default="",   help="Configuration file.")
 
         return parser.parse_args(argv)
+
+    def loadPlugins(self, plugins):
+        # TODO clean up, make configurable
+        self.plugins_ = []
+        for plugin in plugins:
+            p = plugin(self)
+            self.plugins_.append(p)
+            action = p.action()
+            self.ui.menuPlugins.addAction(action)
+
+    def initShortcuts(self):
+        # TODO clean up, make configurable
+        self.shortcuts = []
+
+        selectNextItem = QAction("Select next item", self)
+        selectNextItem.setShortcut(QKeySequence("Tab"))
+        selectNextItem.setEnabled(True)
+        selectNextItem.triggered.connect(self.scene.selectNextItem)
+        self.ui.menuPlugins.addAction(selectNextItem)
+        self.shortcuts.append(selectNextItem)
 
     ###
     ### GUI/Application setup
