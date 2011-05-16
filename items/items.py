@@ -24,7 +24,7 @@ class AnnotationGraphicsItem(QAbstractGraphicsShapeItem):
                       QGraphicsItem.ItemIsMovable | \
                       QGraphicsItem.ItemSendsGeometryChanges | \
                       QGraphicsItem.ItemSendsScenePositionChanges)
-        self.setPen(QColor('yellow'))
+        self.setColor(Qt.yellow)
 
         self.text_font_ = QFont()
         self.text_font_.setPointSize(16)
@@ -35,6 +35,10 @@ class AnnotationGraphicsItem(QAbstractGraphicsShapeItem):
         self.setText("")
 
         self._setDelayedDirty(False)
+
+    def setColor(self, color):
+        self.setPen(color)
+        self.setBrush(color)
 
     def _delayedDirty(self):
         return self.delayed_dirty_
