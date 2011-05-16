@@ -212,6 +212,17 @@ class AnnotationScene(QGraphicsScene):
                     index.model().removeAnnotation(index)
                 event.accept()
 
+            elif event.key() == Qt.Key_Escape:
+                # deselect all selected items
+                for item in self.selectedItems():
+                    item.setSelected(False)
+
+            elif len(self.selectedItems()) > 0:
+                for item in self.selectedItems():
+                    item.keyPressEvent(event)
+
+        QGraphicsScene.keyPressEvent(self, event)
+        #event.ignore()
 
     #
     # slots for signals from the model
