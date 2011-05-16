@@ -72,7 +72,6 @@ class MainWindow(QMainWindow):
         self.buttonarea.stateChanged.connect(self.scene.setMode)
 
         self.treeview = AnnotationTreeView()
-        self.treeview.setAlternatingRowColors(True)
         self.treeview.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
         self.ui.dockInformation.setWidget(self.treeview)
 
