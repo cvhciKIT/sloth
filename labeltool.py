@@ -256,6 +256,9 @@ class MainWindow(QMainWindow):
         #self.setWindowModified(self.annotations.dirty())
         pass
 
+    def currentIndex(self):
+        return self.current_index_
+
     def setCurrentIndex(self, index):
         assert index.isValid()
         newindex = index.model().imageIndex(index)
