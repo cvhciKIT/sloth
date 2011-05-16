@@ -463,9 +463,16 @@ class AnnotationTreeView(QTreeView):
         super(AnnotationTreeView, self).__init__(parent)
 
         self.setUniformRowHeights(True)
+        self.setSelectionMode(QTreeView.SingleSelection)
         self.setSelectionBehavior(QTreeView.SelectItems)
+        self.setAllColumnsShowFocus(True)
+        self.setAlternatingRowColors(True)
         self.setEditTriggers(QAbstractItemView.SelectedClicked)
         self.setSortingEnabled(True)
+        self.setStyleSheet("""
+            QTreeView { selection-color: blue; show-decoration-selected: 1; }
+            QTreeView::item:alternate { background-color: #EEEEEE; }
+        """)
 
         self.connect(self, SIGNAL("expanded(QModelIndex)"), self.expanded)
 
@@ -497,8 +504,6 @@ class AnnotationTreeView(QTreeView):
         self.resizeColumns()
 #        self.setCurrentIndex(index.child(end, 0))
 
-    def selectionModel(self):
-        return QAbstractItemView.selectionModel(self)
 
 def someAnnotations():
     annotations = []
