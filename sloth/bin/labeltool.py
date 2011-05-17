@@ -1,18 +1,18 @@
 #!/usr/bin/python
 import sys, os
-INSTALLDIR=os.path.dirname(__file__)
+INSTALLDIR=os.path.join(os.path.dirname(__file__), '../gui')
 sys.path.append(INSTALLDIR)
 
 import functools, importlib
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import PyQt4.uic as uic
-import qrc_icons
-from buttonarea import *
+from gui import qrc_icons
+from gui.buttonarea import *
 from annotations.model import *
 from annotations.container import AnnotationContainerFactory, AnnotationContainer
-from annotationscene import *
-from frameviewer import *
+from gui.annotationscene import *
+from gui.frameviewer import *
 from optparse import OptionParser
 from conf import config
 
@@ -82,7 +82,7 @@ class MainWindow(QMainWindow):
     ### GUI/Application setup
     ###___________________________________________________________________________________________
     def setupGui(self):
-        self.ui = uic.loadUi(os.path.join(INSTALLDIR,"labeltool.ui"), self)
+        self.ui = uic.loadUi(os.path.join(INSTALLDIR, "labeltool.ui"), self)
 
         self.scene = AnnotationScene(items=config.ITEMS, inserters=config.INSERTERS)
         self.view = GraphicsView(self)
