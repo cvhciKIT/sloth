@@ -20,6 +20,13 @@ how to configure the label tool using the standard components provided in the pa
 and finally how to go further and write specific visualization items and label format
 loaders to deal with specific labeling needs.
 
+Feedback
+========
+
+*Please* provide feedback to me on this document and the label tool!  I won't be able
+to incorporate your required features if you do not talk to me.  Also, use the bug tracker
+at https://github.com/baeuml/sloth/issues.  Of course, similarly welcome are patches!
+
 Contents
 ========
 
