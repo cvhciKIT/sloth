@@ -17,7 +17,7 @@ from optparse import OptionParser
 from conf import config
 
 APP_NAME            = """labeltool"""
-ORGANIZATION_NAME   = """CVHCI Research Group"""
+ORGANIZATION_NAME   = """CV:HCI Research Group"""
 ORGANIZATION_DOMAIN = """cvhci.anthropomatik.kit.edu"""
 __version__         = """0.1"""
 
