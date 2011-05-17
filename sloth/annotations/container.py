@@ -1,6 +1,6 @@
 import os
 import fnmatch
-from core.exceptions import ImproperlyConfigured, NotImplementedException
+from sloth.core.exceptions import ImproperlyConfigured, NotImplementedException
 try:
     import cPickle as pickle
 except:

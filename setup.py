@@ -38,6 +38,8 @@ for dirpath, dirnames, filenames in os.walk(sloth_dir):
         if dirname.startswith('.'): del dirnames[i]
     if '__init__.py' in filenames:
         packages.append('.'.join(fullsplit(dirpath)))
+        if 'labeltool.ui' in filenames:
+            data_files.append([dirpath, [os.path.join(dirpath, 'labeltool.ui')]])
     elif filenames:
         data_files.append([dirpath, [os.path.join(dirpath, f) for f in filenames]])
 

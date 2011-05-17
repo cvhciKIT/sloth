@@ -1,4 +1,4 @@
-import exceptions
+from sloth.core import exceptions
 import importlib
 
 class Factory:

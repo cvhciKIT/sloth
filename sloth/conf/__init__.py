@@ -1,4 +1,4 @@
-from conf import default_config
+from sloth.conf import default_config
 import importlib
 
 class Config:

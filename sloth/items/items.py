@@ -1,6 +1,6 @@
 from PyQt4.QtGui import *
 from PyQt4.Qt import *
-from annotations.model import DataRole
+from sloth.annotations.model import DataRole
 
 class ControlItem(QGraphicsItem):
     def __init__(self, parent=None):

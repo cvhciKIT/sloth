@@ -4,17 +4,17 @@ INSTALLDIR=os.path.join(os.path.dirname(__file__), '../gui')
 sys.path.append(INSTALLDIR)
 
 import functools, importlib
+from optparse import OptionParser
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import PyQt4.uic as uic
-from gui import qrc_icons
-from gui.buttonarea import *
-from annotations.model import *
-from annotations.container import AnnotationContainerFactory, AnnotationContainer
-from gui.annotationscene import *
-from gui.frameviewer import *
-from optparse import OptionParser
-from conf import config
+from sloth.gui import qrc_icons
+from sloth.gui.buttonarea import *
+from sloth.annotations.model import *
+from sloth.annotations.container import AnnotationContainerFactory, AnnotationContainer
+from sloth.gui.annotationscene import *
+from sloth.gui.frameviewer import *
+from sloth.conf import config
 
 APP_NAME            = """labeltool"""
 ORGANIZATION_NAME   = """CV:HCI Research Group"""

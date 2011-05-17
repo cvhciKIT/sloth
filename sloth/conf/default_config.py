@@ -5,13 +5,13 @@ HOTKEYS = (
 )
 
 ITEMS = {
-    'rect':  'items.RectItem',
-    'point': 'items.PointItem',
+    'rect':  'sloth.items.RectItem',
+    'point': 'sloth.items.PointItem',
 }
 
 INSERTERS = {
-    'rect':  'items.RectItemInserter',
-    'point': 'items.PointItemInserter',
+    'rect':  'sloth.items.RectItemInserter',
+    'point': 'sloth.items.PointItemInserter',
 }
 
 CONTAINERS = (
