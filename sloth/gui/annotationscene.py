@@ -172,7 +172,13 @@ class AnnotationScene(QGraphicsScene):
     # key event handlers
     #______________________________________________________________________________________________________
     def selectNextItem(self):
+        # disable inserting
+        # TODO: forward this to the ButtonArea
         self.inserter_ = None
+
+        # set focus to the view, so that subsequent keyboard events are forwarded to the scene
+        if len(self.views()) > 0:
+            self.views()[0].setFocus(True)
 
         if len(self.selectedItems()) == 0:
             for item in self.items():
