@@ -1,6 +1,6 @@
 import os
 import fnmatch
-from core.exceptions import ImproperlyConfigured
+from core.exceptions import ImproperlyConfigured, NotImplementedException
 try:
     import cPickle as pickle
 except:
@@ -113,4 +113,38 @@ class PickleContainer(AnnotationContainer):
         f = open(fname, "wb")
         pickle.dump(self.annotations(), f)
         self.filename_ = fname
+
+class FeretContainer(AnnotationContainer):
+    """
+    Container for Feret labels.
+    """
+
+    def load(self, filename):
+        self.basedir_ = os.path.dirname(filename)
+        f = open(filename)
+
+        annotations = []
+        for line in f:
+            s = line.split()
+            fileitem = {
+                'filename': os.path.join(self.basedir_, s[0]+".bmp"),
+                'type': 'image',
+            }
+            fileitem['annotations'] = [
+                {'type': 'point', 'class': 'left_eye',  'x': int(s[1]), 'y': int(s[2])},
+                {'type': 'point', 'class': 'right_eye', 'x': int(s[3]), 'y': int(s[4])},
+                {'type': 'point', 'class': 'mouth',     'x': int(s[5]), 'y': int(s[6])}
+            ]
+            annotations.append(fileitem)
+
+        self.annotations_ = annotations
+        self.filename_    = filename
+
+
+    def save(self, filename):
+        # TODO make sure the image paths are relative to the label file's directory
+        raise NotImplemented("FeretContainer.save() is not implemented yet.")
+
+
+
 
