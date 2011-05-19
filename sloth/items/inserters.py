@@ -78,6 +78,9 @@ class RectItemInserter(ItemInserter):
 
         event.accept()
 
+    def allowOutOfSceneEvents(self):
+        return True
+
 class FixedRatioRectItemInserter(RectItemInserter):
     def __init__(self, scene, mode=None):
         RectItemInserter.__init__(self, scene, mode)
