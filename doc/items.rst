@@ -46,6 +46,14 @@ created rectangles, maybe even different kinds for different label types::
         "head" : GreenRectItem,
     }
 
+items.RectItem
+==============
+
+Usage:
+
+  * Can be moved by Left/Right/Up/Down keys.  If Shift is pressed, step is increased.  If Control is pressed,
+    width and height are modified instead of position.
+
 Write your own visualization item
 =================================
 

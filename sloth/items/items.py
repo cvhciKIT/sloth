@@ -171,6 +171,23 @@ class RectItem(AnnotationGraphicsItem):
         self._updateRect(rect)
         self._updateText()
 
+    def keyPressEvent(self, event):
+        step = 1
+        if event.modifiers() & Qt.ShiftModifier:
+            step = 5
+        ds = { Qt.Key_Left:  (-step, 0),
+               Qt.Key_Right: (step, 0),
+               Qt.Key_Up:    (0, -step),
+               Qt.Key_Down:  (0, step),
+             }.get(event.key(), None)
+        if ds is not None:
+            if event.modifiers() & Qt.ControlModifier:
+                rect = self.rect_.adjusted(*((0, 0) + ds))
+            else:
+                rect = self.rect_.adjusted(*(ds + ds))
+            self._updateRect(rect)
+            event.accept()
+
 class PointItem(AnnotationGraphicsItem):
     def __init__(self, index, parent=None):
         AnnotationGraphicsItem.__init__(self, index, parent)
