@@ -48,7 +48,8 @@ setup(name='sloth',
       description='The Sloth Labeling Tool',
       author='CV:HCI Research Group',
       url='http://cvhci.anthropomatik.kit.edu',
+      requires=['importlib', 'okapy'],
       packages=packages,
       data_files=data_files,
-      scripts=['sloth/bin/labeltool.py']
+      scripts=['sloth/bin/sloth']
 )

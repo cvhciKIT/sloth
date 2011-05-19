@@ -1,8 +1,5 @@
 #!/usr/bin/python
 import sys, os
-INSTALLDIR=os.path.join(os.path.dirname(__file__), '../gui')
-sys.path.append(INSTALLDIR)
-
 import functools, importlib
 from optparse import OptionParser
 from PyQt4.QtGui import *
@@ -15,11 +12,9 @@ from sloth.annotations.container import AnnotationContainerFactory, AnnotationCo
 from sloth.gui.annotationscene import *
 from sloth.gui.frameviewer import *
 from sloth.conf import config
+from sloth import APP_NAME, ORGANIZATION_NAME, ORGANIZATION_DOMAIN, VERSION
 
-APP_NAME            = """labeltool"""
-ORGANIZATION_NAME   = """CV:HCI Research Group"""
-ORGANIZATION_DOMAIN = """cvhci.anthropomatik.kit.edu"""
-__version__         = """0.1"""
+GUIDIR=os.path.join(os.path.dirname(__file__))
 
 class MainWindow(QMainWindow):
     def __init__(self, argv, parent=None):
@@ -51,7 +46,7 @@ class MainWindow(QMainWindow):
 
     def parseCommandLineOptions(self, argv):
         usage   = "Usage: %prog [-c config.py] [annotation_file]"
-        version = "%prog " + __version__
+        version = "%prog " + VERSION
 
         parser = OptionParser(usage=usage, version=version)
         parser.add_option("-c", "--config",  action="store", type="string", default="",   help="Configuration file.")
@@ -82,7 +77,7 @@ class MainWindow(QMainWindow):
     ### GUI/Application setup
     ###___________________________________________________________________________________________
     def setupGui(self):
-        self.ui = uic.loadUi(os.path.join(INSTALLDIR, "labeltool.ui"), self)
+        self.ui = uic.loadUi(os.path.join(GUIDIR, "labeltool.ui"), self)
 
         self.scene = AnnotationScene(items=config.ITEMS, inserters=config.INSERTERS)
         self.view = GraphicsView(self)
@@ -308,17 +303,4 @@ class MainWindow(QMainWindow):
              <p>For more details, visit our homepage: <a href="%s">%s</a>"""
               % (APP_NAME, __version__, ORGANIZATION_DOMAIN, ORGANIZATION_DOMAIN))
 
-def main():
-    app = QApplication(sys.argv)
-    app.setOrganizationName(ORGANIZATION_NAME)
-    app.setOrganizationDomain(ORGANIZATION_DOMAIN)
-    app.setApplicationName(APP_NAME)
-
-    wnd = MainWindow(sys.argv[1:])
-    wnd.show()
-
-    return app.exec_()
-
-if __name__ == '__main__':
-    sys.exit(main())
 
