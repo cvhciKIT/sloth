@@ -6,6 +6,14 @@ try:
     import cPickle as pickle
 except:
     import pickle
+try:
+    import json
+except:
+    pass
+try:
+    import yaml
+except:
+    pass
 
 class AnnotationContainerFactory:
     def __init__(self, containers):
@@ -117,6 +125,36 @@ class PickleContainer(AnnotationContainer):
     def save(self, fname):
         f = open(fname, "wb")
         pickle.dump(self.annotations(), f)
+        self.filename_ = fname
+
+class JSONContainer(AnnotationContainer):
+    """
+    Simple container which writes the annotations to disk in JSON format.
+    """
+
+    def load(self, fname):
+        f = open(fname, "r")
+        self.annotations_ = json.load(f)
+        self.filename_ = fname
+
+    def save(self, fname):
+        f = open(fname, "w")
+        json.dump(self.annotations(), f, indent=4)
+        self.filename_ = fname
+
+class YAMLContainer(AnnotationContainer):
+    """
+    Simple container which writes the annotations to disk in YAML format.
+    """
+
+    def load(self, fname):
+        f = open(fname, "r")
+        self.annotations_ = yaml.load(f)
+        self.filename_ = fname
+
+    def save(self, fname):
+        f = open(fname, "w")
+        yaml.dump(self.annotations(), f, indent=4)
         self.filename_ = fname
 
 class FeretContainer(AnnotationContainer):
