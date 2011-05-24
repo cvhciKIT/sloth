@@ -15,8 +15,8 @@ INSERTERS = {
 }
 
 CONTAINERS = (
-    ('*.json': 'sloth.annotations.container.JSONContainer'),
-    ('*.yaml': 'sloth.annotations.container.YAMLContainer'),
+    ('*.json', 'sloth.annotations.container.JSONContainer'),
+    ('*.yaml', 'sloth.annotations.container.YAMLContainer'),
 )
 
 PLUGINS = (
