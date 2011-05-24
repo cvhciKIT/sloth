@@ -209,7 +209,7 @@ class MainWindow(QMainWindow):
             path = QFileInfo(self.container_.filename()).path()
 
         # TODO: compile a list from all the patterns in self.container_factory_
-        format_str = ' '.join(['*.txt'])
+        format_str = ' '.join(['*'])
         fname = QFileDialog.getOpenFileName(self, 
                 "%s - Load Annotations" % APP_NAME, path,
                 "%s annotation files (%s)" % (APP_NAME, format_str))
