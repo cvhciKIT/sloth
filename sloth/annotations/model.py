@@ -6,11 +6,13 @@ from PyQt4.QtCore import *
 from functools import partial
 import os.path
 import okapy
+import okapy.videoio as okv
 
 TypeRole, DataRole, ImageRole = [Qt.UserRole + i + 1 for i in range(3)]
 
 class ModelItem:
-    def __init__(self, parent=None):
+    def __init__(self, model, parent=None):
+        self.model_    = model
         self.parent_   = parent
         self.children_ = []
 
@@ -20,6 +22,9 @@ class ModelItem:
         else:
             # return tuple child, index of the child
             return [(child, index.child(row, 0)) for row, child in enumerate(self.children_)]
+
+    def model(self):
+        return self.model_
 
     def parent(self):
         return self.parent_
@@ -34,24 +39,24 @@ class ModelItem:
         return QVariant()
 
 class RootModelItem(ModelItem):
-    def __init__(self, files):
-        ModelItem.__init__(self, None)
+    def __init__(self, model, files):
+        ModelItem.__init__(self, model, None)
         self.files_ = files
 
         for file in files:
-            fmi = FileModelItem.create(file, self)
+            fmi = FileModelItem.create(self.model(), file, self)
             self.children_.append(fmi)
 
 class FileModelItem(ModelItem):
-    def __init__(self, file, parent):
-        ModelItem.__init__(self, parent)
+    def __init__(self, model, file, parent):
+        ModelItem.__init__(self, model, parent)
         self.file_ = file
 
     def filename(self):
         return self.file_['filename']
 
-    def fullpath(self, index):
-        return os.path.join(index.model().basedir(), self.filename())
+    def fullpath(self):
+        return os.path.join(self.model().basedir(), self.filename())
 
     def data(self, index, role):
         if role == Qt.DisplayRole and index.column() == 0:
@@ -59,15 +64,15 @@ class FileModelItem(ModelItem):
         return ModelItem.data(self, index, role)
 
     @staticmethod
-    def create(file, parent):
+    def create(model, file, parent):
         if file['type'] == 'image':
-            return ImageFileModelItem(file, parent)
+            return ImageFileModelItem(model, file, parent)
         elif file['type'] == 'video':
-            return VideoFileModelItem(file, parent)
+            return VideoFileModelItem(model, file, parent)
 
 class ImageFileModelItem(FileModelItem):
-    def __init__(self, file, parent):
-        FileModelItem.__init__(self, file, parent)
+    def __init__(self, model, file, parent):
+        FileModelItem.__init__(self, model, file, parent)
 
         for ann in file['annotations']:
             ami = AnnotationModelItem(ann, self)
@@ -84,7 +89,7 @@ class ImageFileModelItem(FileModelItem):
 
     def data(self, index, role):
         if role == ImageRole:
-            return okapy.loadImage(self.fullpath(index))
+            return okapy.loadImage(self.fullpath())
         elif role == DataRole:
             return self.file_
         return FileModelItem.data(self, index, role)
@@ -93,19 +98,18 @@ class VideoFileModelItem(FileModelItem):
     _cached_vs_filename = None
     _cached_vs          = None
 
-    def __init__(self, file, parent):
-        FileModelItem.__init__(self, file, parent)
+    def __init__(self, model, file, parent):
+        FileModelItem.__init__(self, model, file, parent)
 
         for frame in file['frames']:
-            fmi = FrameModelItem(frame, self)
+            fmi = FrameModelItem(self.model(), frame, self)
             self.children_.append(fmi)
 
     def updateCachedVideoSource(self):
         # have only one cached video source at a time for now
         # TODO: for labeling multiple synchronized videos this should
         # be modified, otherwise it might be awfully slow
-        VideoFileModelItem._cached_vs = okv.ImageSequence()
-        VideoFileModelItem._cached_vs.open(self.fullpath())
+        VideoFileModelItem._cached_vs = okv.FFMPEGIndexedVideoSource(self.fullpath())
         VideoFileModelItem._cached_vs_filename = self.fullpath()
 
     def getFrame(self, frame):
@@ -116,8 +120,8 @@ class VideoFileModelItem(FileModelItem):
         return VideoFileModelItem._cached_vs.getImage()
 
 class FrameModelItem(ModelItem):
-    def __init__(self, frame, parent):
-        ModelItem.__init__(self, parent)
+    def __init__(self, model, frame, parent):
+        ModelItem.__init__(self, model, parent)
         self.frame_ = frame
 
         for ann in frame['annotations']:
@@ -147,8 +151,8 @@ class FrameModelItem(ModelItem):
         return QVariant()
 
 class AnnotationModelItem(ModelItem):
-    def __init__(self, annotation, parent):
-        ModelItem.__init__(self, parent)
+    def __init__(self, model, annotation, parent):
+        ModelItem.__init__(self, model, parent)
         self.annotation_ = annotation
         # dummy key/value so that pyqt does not convert the dict
         # into a QVariantMap while communicating with the Views
@@ -209,8 +213,8 @@ class AnnotationModelItem(ModelItem):
         return self.annotation_[key]
 
 class KeyValueModelItem(ModelItem):
-    def __init__(self, key, parent):
-        ModelItem.__init__(self, parent)
+    def __init__(self, model, key, parent):
+        ModelItem.__init__(self, model, parent)
         self.key_  = key
 
     def data(self, index, role):
@@ -229,7 +233,7 @@ class AnnotationModel(QAbstractItemModel):
     def __init__(self, annotations, parent=None):
         QAbstractItemModel.__init__(self, parent)
         self.annotations_ = annotations
-        self.root_        = RootModelItem(self.annotations_)
+        self.root_        = RootModelItem(self, self.annotations_)
         self.dirty_       = False
         self.basedir_     = ""
 

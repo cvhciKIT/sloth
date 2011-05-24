@@ -94,7 +94,7 @@ class AnnotationContainer:
         for file in self.annotations_:
             if file['type'] == 'image':
                 num += len(file['annotations'])
-            elif file['type'] == video:
+            elif file['type'] == 'video':
                 for frame in file['frames']:
                     num += len(frame['annotations'])
         return num
