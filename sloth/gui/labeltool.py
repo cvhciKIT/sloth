@@ -11,6 +11,7 @@ from sloth.annotations.model import *
 from sloth.annotations.container import AnnotationContainerFactory, AnnotationContainer
 from sloth.gui.annotationscene import *
 from sloth.gui.frameviewer import *
+from sloth.gui.controlbuttons import *
 from sloth.conf import config
 from sloth import APP_NAME, ORGANIZATION_NAME, ORGANIZATION_DOMAIN, VERSION
 
@@ -83,7 +84,16 @@ class MainWindow(QMainWindow):
         self.view = GraphicsView(self)
         self.view.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
         self.view.setScene(self.scene)
-        self.setCentralWidget(self.view)
+        self.central_widget = QWidget()
+        self.central_layout = QVBoxLayout()
+        self.controls = ControlButtonWidget()
+        self.controls.back_button.clicked.connect(self.gotoPrevious)
+        self.controls.forward_button.clicked.connect(self.gotoNext)
+
+        self.central_layout.addWidget(self.controls)
+        self.central_layout.addWidget(self.view)
+        self.central_widget.setLayout(self.central_layout)
+        self.setCentralWidget(self.central_widget)
 
         self.buttonarea = ButtonArea(config.LABELS, config.HOTKEYS)
         self.ui.dockAnnotationButtons.setWidget(self.buttonarea)
@@ -283,6 +293,11 @@ class MainWindow(QMainWindow):
         if newindex.isValid() and newindex != self.current_index_:
             self.current_index_ = newindex
             self.scene.setRoot(self.current_index_)
+            item = index.model().itemFromIndex(self.current_index_)
+            if isinstance(item, FrameModelItem):
+                self.controls.setFrameNumAndTimestamp(item.framenum(), item.timestamp())
+            elif isinstance(item, ImageFileModelItem):
+                self.controls.setFilename(item.filename())
             if index != self.treeview.currentIndex():
                 self.treeview.setCurrentIndex(self.current_index_)
 
