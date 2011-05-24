@@ -1,6 +1,7 @@
 import os
 import fnmatch
 from sloth.core.exceptions import ImproperlyConfigured, NotImplementedException
+from sloth.core.utils import import_callable
 try:
     import cPickle as pickle
 except:
@@ -18,7 +19,11 @@ class AnnotationContainerFactory:
             The mapping between file pattern and container class responsible
             for loading/saving.
         """
-        self.containers_ = containers
+        self.containers_ = []
+        for pattern, item in containers:
+            if type(item) == str:
+                item = import_callable(item)
+            self.containers_.append((pattern, item))
 
     def create(self, filename, *args, **kwargs):
         """
@@ -71,7 +76,7 @@ class AnnotationContainer:
         implementation this will try to load the image from a path
         relative to the label files directory.
         """
-        pass
+        return okapy.loadImage(filename)
 
     def loadVideo(self, filename):
         """

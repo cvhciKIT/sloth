@@ -1,5 +1,5 @@
 from sloth.core import exceptions
-import importlib
+from sloth.core.utils import import_callable
 
 class Factory:
     """
@@ -22,25 +22,6 @@ class Factory:
             for _type, item in items.iteritems():
                 self.register(_type, item, replace=True)
 
-    def import_callable(self, module_path_name):
-        """
-        Import the callable given by ``module_path_name``.
-        """
-        try:
-            module_path, name = module_path_name.rsplit('.', 1)
-        except ValueError:
-            raise exceptions.ImproperlyConfigured('%s is not a valid module path' % module_path_name)
-        try:
-            mod = importlib.import_module(module_path)
-        except ImportError, e:
-            raise exceptions.ImproperlyConfigured('Error importing module %s: "%s"' % (module_path, e))
-        try:
-            item_callable = getattr(mod, name)
-        except AttributeError:
-            raise exceptions.ImproperlyConfigured('Module "%s" does not define a "%s" callable' % (module_path, name))
-
-        return item_callable
-
     def register(self, _type, item, replace=False):
         """
         Register a new type-item mapping.
@@ -59,7 +40,7 @@ class Factory:
                              (_type, str(self.items_[_type])))
         else:
             if type(item) == str:
-                item = self.import_callable(item)
+                item = import_callable(item)
             self.items_[_type] = item
 
     def clear(self, _type=None):
