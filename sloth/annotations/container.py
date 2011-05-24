@@ -154,7 +154,7 @@ class YAMLContainer(AnnotationContainer):
 
     def save(self, fname):
         f = open(fname, "w")
-        yaml.dump(self.annotations(), f, indent=4)
+        yaml.dump(self.annotations(), f)
         self.filename_ = fname
 
 class FeretContainer(AnnotationContainer):
