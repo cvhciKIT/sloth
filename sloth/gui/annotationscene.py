@@ -90,8 +90,10 @@ class AnnotationScene(QGraphicsScene):
         self.update()
 
     def insertItems(self, first, last):
+        if not self.root_.isValid():
+            return
+
         assert self.model_ is not None
-        assert self.root_.isValid()
 
         # create a graphics item for each model index
         for row in range(first, last+1):
@@ -235,6 +237,9 @@ class AnnotationScene(QGraphicsScene):
     # this is the implemenation of the scene as a view of the model
     #______________________________________________________________________________________________________
     def dataChanged(self, indexFrom, indexTo):
+        if not self.root_.isValid():
+            return
+
         if self.root_ != indexFrom.parent() or self.root_ != indexTo.parent():
             return
 

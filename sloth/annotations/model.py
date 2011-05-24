@@ -47,6 +47,15 @@ class RootModelItem(ModelItem):
             fmi = FileModelItem.create(self.model(), file, self)
             self.children_.append(fmi)
 
+    def addFile(self, file):
+        fmi = FileModelItem.create(self.model(), file, self)
+        next = len(self.children_)
+        index = self.model().index(0, 0, QModelIndex())
+        self.model().beginInsertRows(index, next, next)
+        self.children_.append(fmi)
+        self.model().endInsertRows()
+        self.model().emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"), index, index)
+
 class FileModelItem(ModelItem):
     def __init__(self, model, file, parent):
         ModelItem.__init__(self, model, parent)

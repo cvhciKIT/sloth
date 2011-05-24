@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import sys, os
 import functools, importlib
+import fnmatch
 from optparse import OptionParser
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -14,6 +15,8 @@ from sloth.gui.frameviewer import *
 from sloth.gui.controlbuttons import *
 from sloth.conf import config
 from sloth import APP_NAME, ORGANIZATION_NAME, ORGANIZATION_DOMAIN, VERSION
+
+import okapy.videoio as okv
 
 GUIDIR=os.path.join(os.path.dirname(__file__))
 
@@ -120,7 +123,7 @@ class MainWindow(QMainWindow):
         self.ui.action_About.triggered.connect(self.about)
 
         ## Navigation
-        #self.ui.action_Add_Image.triggered.connect(self.addImage)
+        self.ui.action_Add_Image.triggered.connect(self.addMediaFile)
         self.ui.actionNext.      triggered.connect(self.gotoNext)
         self.ui.actionPrevious.  triggered.connect(self.gotoPrevious)
         self.ui.actionZoom_In.   triggered.connect(functools.partial(self.view.setScaleRelative, 1.2))
@@ -300,6 +303,60 @@ class MainWindow(QMainWindow):
                 self.controls.setFilename(os.path.basename(item.filename()))
             if index != self.treeview.currentIndex():
                 self.treeview.setCurrentIndex(self.current_index_)
+
+    def addImageFile(self, fname):
+        fileitem = {
+                'filename': fname,
+                'type': 'image',
+                'annotations': [ ],
+            }
+        self.model_.root_.addFile(fileitem)
+
+    def addVideoFile(self, fname):
+        fileitem = {
+                'filename': fname,
+                'type': 'video',
+                'frames': [ ],
+            }
+
+        # FIXME: OKAPI should provide a method to get all timestamps at once
+        # FIXME: Some dialog should be displayed, telling the user that the
+        # video is being loaded/indexed and that this might take a while
+        video = okv.FFMPEGIndexedVideoSource(fname)
+        i = 0
+        while video.getNextFrame():
+            ts = video.getTimestamp()
+            frame = { 'annotations': [],
+                      'num': i,
+                      'timestamp': ts,
+                    }
+            fileitem['frames'].append(frame)
+            i += 1
+
+        self.model_.root_.addFile(fileitem)
+
+    def addMediaFile(self):
+        path = '.'
+        if (self.container_.filename() is not None) and \
+                (len(self.container_.filename()) > 0):
+            path = QFileInfo(self.container_.filename()).path()
+
+        image_types = [ '*.jpg', '*.bmp', '*.png', '*.pgm', '*.ppm', '*.ppm', '*.tif', '*.gif' ]
+        video_types = [ '*.mp4', '*.mpg', '*.mpeg', '*.avi', '*.mov', '*.vob' ]
+        format_str = ' '.join(image_types + video_types)
+        fname = QFileDialog.getOpenFileName(self, "%s - Add Media File" % APP_NAME, path, "Media files (%s)" % (format_str, ))
+
+        if fname.isEmpty():
+            return
+
+        fname = str(fname)
+
+        for pattern in image_types:
+            if fnmatch.fnmatch(fname, pattern):
+                return self.addImageFile(fname)
+
+        return self.addVideoFile(fname)
+
 
     ###
     ### global event handling
