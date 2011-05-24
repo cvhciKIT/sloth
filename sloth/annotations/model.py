@@ -75,12 +75,12 @@ class ImageFileModelItem(FileModelItem):
         FileModelItem.__init__(self, model, file, parent)
 
         for ann in file['annotations']:
-            ami = AnnotationModelItem(ann, self)
+            ami = AnnotationModelItem(model, ann, self)
             self.children_.append(ami)
 
     def addAnnotation(self, ann):
         self.file_['annotations'].append(ann)
-        ami = AnnotationModelItem(ann, self)
+        ami = AnnotationModelItem(model, ann, self)
         self.children_.append(ami)
 
     def removeAnnotation(self, pos):
@@ -161,7 +161,7 @@ class AnnotationModelItem(ModelItem):
         for key, value in annotation.iteritems():
             if key == None:
                 continue
-            self.children_.append(KeyValueModelItem(key, self))
+            self.children_.append(KeyValueModelItem(model, key, self))
 
     def type(self):
         return self.annotation_['type']
