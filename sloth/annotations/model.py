@@ -50,7 +50,7 @@ class RootModelItem(ModelItem):
     def addFile(self, file):
         fmi = FileModelItem.create(self.model(), file, self)
         next = len(self.children_)
-        index = self.model().index(0, 0, QModelIndex())
+        index = QModelIndex()
         self.model().beginInsertRows(index, next, next)
         self.children_.append(fmi)
         self.files_.append(file)
