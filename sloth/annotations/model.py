@@ -53,6 +53,7 @@ class RootModelItem(ModelItem):
         index = self.model().index(0, 0, QModelIndex())
         self.model().beginInsertRows(index, next, next)
         self.children_.append(fmi)
+        self.files_.append(file)
         self.model().endInsertRows()
         self.model().emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"), index, index)
 
