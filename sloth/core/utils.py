@@ -1,5 +1,5 @@
 from sloth.core import exceptions
-import importlib
+from sloth.utils import importlib
 
 def import_callable(module_path_name):
     """
