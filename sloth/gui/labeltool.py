@@ -297,7 +297,7 @@ class MainWindow(QMainWindow):
             if isinstance(item, FrameModelItem):
                 self.controls.setFrameNumAndTimestamp(item.framenum(), item.timestamp())
             elif isinstance(item, ImageFileModelItem):
-                self.controls.setFilename(item.filename())
+                self.controls.setFilename(os.path.basename(item.filename()))
             if index != self.treeview.currentIndex():
                 self.treeview.setCurrentIndex(self.current_index_)
 
