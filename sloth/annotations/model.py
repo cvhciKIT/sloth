@@ -85,12 +85,12 @@ class ImageFileModelItem(FileModelItem):
         FileModelItem.__init__(self, model, file, parent)
 
         for ann in file['annotations']:
-            ami = AnnotationModelItem(model, ann, self)
+            ami = AnnotationModelItem(self.model(), ann, self)
             self.children_.append(ami)
 
     def addAnnotation(self, ann):
         self.file_['annotations'].append(ann)
-        ami = AnnotationModelItem(model, ann, self)
+        ami = AnnotationModelItem(self.model(), ann, self)
         self.children_.append(ami)
 
     def removeAnnotation(self, pos):
@@ -196,7 +196,7 @@ class AnnotationModelItem(ModelItem):
             for key in self.annotation_.keys():
                 if not key in data:
                     #TODO beginRemoveRows, delete child, etc.
-                    del self.annotation[key]
+                    del self.annotation_[key]
                 else:
                     self.annotation_[key] = data[key]
             print "new annotation:", self.annotation_
