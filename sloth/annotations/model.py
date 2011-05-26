@@ -93,6 +93,18 @@ class ImageFileModelItem(FileModelItem):
         ami = AnnotationModelItem(self.model(), ann, self)
         self.children_.append(ami)
 
+    def updateAnnotation(self, index, ann):
+        child_found = False
+        for child in self.children_:
+            if child.type() == ann['type']:
+                if (child.has_key('id') and ann.has_key('id') and child.value('id') == ann['id']) or (not child.has_key('id') and not ann.has_key('id')):
+                    ann[None] = None
+                    child.setData(index, QVariant(ann), DataRole)
+                    child_found = True
+                    break
+        if not child_found:
+            raise Exception("No ImageFileModelItem found that could be updated!")
+
     def removeAnnotation(self, pos):
         del self.file_['annotations'][pos]
         del self.children_[pos]
@@ -148,6 +160,18 @@ class FrameModelItem(ModelItem):
         self.frame_['annotations'].append(ann)
         ami = AnnotationModelItem(ann, self)
         self.children_.append(ami)
+
+    def updateAnnotation(self, index, ann):
+        child_found = False
+        for child in self.children_:
+            if child.type() == ann['type']:
+                if (child.has_key('id') and ann.has_key('id') and child.value('id') == ann['id']) or (not child.has_key('id') and not ann.has_key('id')):
+                    ann[None] = None
+                    child.setData(index, QVariant(ann), DataRole)
+                    child_found = True
+                    break
+        if not child_found:
+            raise Exception("No FrameModelItem found that could be updated!")
 
     def removeAnnotation(self, pos):
         del self.frame_['annotations'][pos]
@@ -221,6 +245,9 @@ class AnnotationModelItem(ModelItem):
 
     def value(self, key):
         return self.annotation_[key]
+
+    def has_key(self, key):
+        return self.annotation_.has_key(key)
 
 class KeyValueModelItem(ModelItem):
     def __init__(self, model, key, parent):
@@ -383,6 +410,20 @@ class AnnotationModel(QAbstractItemModel):
         self.beginInsertRows(imageidx, next, next)
         item.addAnnotation(ann)
         self.endInsertRows()
+        self.setDirty(True)
+
+        self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"), imageidx, imageidx)
+
+        return True
+
+    def updateAnnotation(self, imageidx, ann={}, **kwargs):
+        ann.update(kwargs)
+        print "updateAnnotation", ann
+        imageidx = QModelIndex(imageidx)  # explicitly convert from QPersistentModelIndex
+        item = self.itemFromIndex(imageidx)
+        assert isinstance(item, FrameModelItem) or isinstance(item, ImageFileModelItem)
+
+        item.updateAnnotation(imageidx, ann)
         self.setDirty(True)
 
         self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"), imageidx, imageidx)
