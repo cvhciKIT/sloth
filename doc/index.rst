@@ -34,6 +34,7 @@ Contents
    :maxdepth: 2
 
    concepts
+   installation
    first_steps
    configuration
    items
