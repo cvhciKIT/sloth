@@ -13,9 +13,9 @@ class ItemInserter:
         return self.scene_
 
     def setMode(self, mode):
-        self.mode_  = mode
+        self.mode_ = mode
     def mode(self):
-        return self.mode
+        return self.mode_
 
     def mousePressEvent(self, event, index):
         event.accept()
@@ -71,6 +71,7 @@ class RectItemInserter(ItemInserter):
                 ann = {'type': 'rect',
                        'x': rect.x(), 'y': rect.y(),
                        'width': rect.width(), 'height': rect.height()}
+                ann.update(self.mode())
                 index.model().addAnnotation(index, ann)
             self.scene().removeItem(self.current_item_)
             self.current_item_ = None
