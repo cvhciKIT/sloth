@@ -466,6 +466,7 @@ class AnnotationModel(QAbstractItemModel):
         return index
 
     def getPreviousIndex(self, index):
+        # TODO bool parameter to disable wrap around
         """returns index of previous *image* or *frame*"""
         if not index.isValid():
             return QModelIndex()
