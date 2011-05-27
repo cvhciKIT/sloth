@@ -108,9 +108,10 @@ Representation is not storage
 In the sections above we introduced the labels as sets of key-value pairs with a textual representation.
 The storage on disk of the labels however can be very different.
 The label tool does not have *the one* in which way to store the labels.  Again,
-there are some default formats with which the label tool can deal out of the box (one of
-which will be a yaml file, which resembles the textual representation above).  However,
-you are free to define your own loading and saving routines for your labels (see :doc:`Containers`). This
-allows you for example to support legacy third-party label formats without the need of converting 
-them to yaml first.
+there are some default formats with which the label tool can deal out of the
+box (among others yaml and json, which resemble the textual representation
+above).  However, you are free to define your own loading and saving routines
+for your labels (see :doc:`Containers`). This allows you for example to support
+legacy third-party label formats without the need of converting them to yaml
+first.
 
