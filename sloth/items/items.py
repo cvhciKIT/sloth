@@ -16,14 +16,29 @@ class ControlItem(QGraphicsItem):
 
 class BaseItem(QAbstractGraphicsShapeItem):
     """
-    New base class for items.
+    Base class for visualization items.
     """
-    def __init__(self, index, data=None, parent=None):
+
+    def __init__(self, index=None, data=None, parent=None):
+        """
+        Creates a visualization item.
+
+        Parameters
+        ==========
+        index :
+        data :
+        parent :
+        """
         QAbstractGraphicsShapeItem.__init__(self, parent)
+        self.setFlags(QGraphicsItem.ItemIsSelectable | \
+                      QGraphicsItem.ItemIsMovable | \
+                      QGraphicsItem.ItemSendsGeometryChanges | \
+                      QGraphicsItem.ItemSendsScenePositionChanges)
+        self.setColor(Qt.yellow)
 
         # store index and label data
         self.index_ = index
-        if data is None:
+        if data is None and index is not None:
             data = self.index().data(DataRole).toPyObject()
         self.data_ = data
 
@@ -34,7 +49,8 @@ class BaseItem(QAbstractGraphicsShapeItem):
         return self.index_
 
     def updateModel(self, data=None):
-        self.index().model().setData(self.index(), QVariant(self.data_), DataRole)
+        if data is not None:
+            self.index().model().setData(self.index(), QVariant(self.data_), DataRole)
 
     def paint(self, painter, option, widget=None):
         pass
@@ -45,6 +61,165 @@ class BaseItem(QAbstractGraphicsShapeItem):
     def setColor(self, color):
         self.setPen(color)
         self.setBrush(color)
+        self.update()
+
+    def itemChange(self, change, value):
+        if change == QGraphicsItem.ItemPositionHasChanged:
+            self.updateModel()
+        return QAbstractGraphicsShapeItem.itemChange(self, change, value)
+
+class PointItem(BaseItem):
+    """
+    Visualization item for points.
+    """
+
+    def __init__(self, index=None, data=None, parent=None):
+        BaseItem.__init__(self, index, data, parent)
+
+        self.radius_ = 2
+        self.point_ = None
+        self.updatePoint()
+
+    def setRadius(self, radius):
+        self.radius_ = radius
+        self.update()
+
+    def radius(self):
+        return self.radius_
+
+    def __call__(self, index=None, data=None, parent=None):
+        pointitem = PointItem(index, data, parent)
+        pointitem.setPen(self.pen())
+        pointitem.setBrush(self.brush())
+        pointitem.setRadius(self.radius_)
+        return pointitem
+
+    def updateModel(self):
+        self.data_['x'] = self.scenePos().x()
+        self.data_['y'] = self.scenePos().y()
+        self.index().model().setData(self.index(), QVariant(self.data_), DataRole)
+
+    def updatePoint(self):
+        if self.data_ is None:
+            return
+
+        point = QPointF(float(self.data_['x']),
+                        float(self.data_['y']))
+        if point == self.point_:
+            return
+
+        self.point_ = point
+        self.prepareGeometryChange()
+        self.setPos(self.point_)
+
+    def boundingRect(self):
+        r = self.radius_
+        return QRectF(-r, -r, 2*r, 2*r)
+
+    def paint(self, painter, option, widget=None):
+        pen = self.pen()
+        if self.isSelected():
+            pen.setStyle(Qt.DashLine)
+        painter.setPen(pen)
+        painter.drawEllipse(self.boundingRect())
+
+    def dataChanged(self):
+        self.data_ = self.index().data(DataRole).toPyObject()
+        self.updatePoint()
+
+    def keyPressEvent(self, event):
+        step = 1
+        if event.modifiers() & Qt.ShiftModifier:
+            step = 5
+        ds = { Qt.Key_Left:  (-step, 0),
+               Qt.Key_Right: (step, 0),
+               Qt.Key_Up:    (0, -step),
+               Qt.Key_Down:  (0, step),
+             }.get(event.key(), None)
+        if ds is not None:
+            self.moveBy(*ds)
+            event.accept()
+
+class RectItem(BaseItem):
+    def __init__(self, index=None, data=None, parent=None):
+        BaseItem.__init__(self, index, data, parent)
+
+        self.rect_ = None
+        self._updateRect(self._dataToRect(self.data_))
+        self._updateText()
+
+    def __call__(self, index=None, data=None, parent=None):
+        item = RectItem(index, data, parent)
+        item.setPen(self.pen())
+        item.setBrush(self.brush())
+        return item
+
+    def _dataToRect(self, data):
+        if data is None:
+            return QRectF()
+        return QRectF(float(data['x']), float(data['y']),
+                      float(data.get('width',  data.get('w'))),
+                      float(data.get('height', data.get('h'))))
+
+    def _updateRect(self, rect):
+        if not rect.isValid():
+            return
+        if rect == self.rect_:
+            return
+
+        self.rect_ = rect
+        self.prepareGeometryChange()
+        self.setPos(rect.topLeft())
+
+    def _updateText(self):
+        if self.data_ is None:
+            return
+        if 'id' in self.data_:
+            self.setText("id: " + str(self.data_['id']))
+
+    def updateModel(self):
+        self.rect_ = QRectF(self.scenePos(), self.rect_.size())
+        self.data_['x'] = self.rect_.topLeft().x()
+        self.data_['y'] = self.rect_.topLeft().y()
+        if 'width'  in self.data_: self.data_['width']  = float(self.rect_.width())
+        if 'w'      in self.data_: self.data_['w']      = float(self.rect_.width())
+        if 'height' in self.data_: self.data_['height'] = float(self.rect_.height())
+        if 'h'      in self.data_: self.data_['h']      = float(self.rect_.height())
+
+        self.index().model().setData(self.index(), QVariant(self.data_), DataRole)
+
+    def boundingRect(self):
+        return QRectF(QPointF(0, 0), self.rect_.size())
+
+    def paint(self, painter, option, widget = None):
+        pen = self.pen()
+        if self.isSelected():
+            pen.setStyle(Qt.DashLine)
+        painter.setPen(pen)
+        painter.drawRect(self.boundingRect())
+
+    def dataChanged(self):
+        self.data_ = self.index().data(DataRole).toPyObject()
+        rect = self._dataToRect(self.data_)
+        self._updateRect(rect)
+        self._updateText()
+
+    def keyPressEvent(self, event):
+        step = 1
+        if event.modifiers() & Qt.ShiftModifier:
+            step = 5
+        ds = { Qt.Key_Left:  (-step, 0),
+               Qt.Key_Right: (step, 0),
+               Qt.Key_Up:    (0, -step),
+               Qt.Key_Down:  (0, step),
+             }.get(event.key(), None)
+        if ds is not None:
+            if event.modifiers() & Qt.ControlModifier:
+                rect = self.rect_.adjusted(*((0, 0) + ds))
+            else:
+                rect = self.rect_.adjusted(*(ds + ds))
+            self._updateRect(rect)
+            event.accept()
 
 
 class AnnotationGraphicsItem(QAbstractGraphicsShapeItem):
@@ -107,7 +282,7 @@ class AnnotationGraphicsItem(QAbstractGraphicsShapeItem):
         #for corner in self.corner_items_:
         #    corner.setVisible(self.controls_enabled_ and self.controls_visible_)
 
-class RectItem(AnnotationGraphicsItem):
+class OldRectItem(AnnotationGraphicsItem):
     def __init__(self, index, parent=None):
         AnnotationGraphicsItem.__init__(self, index, parent)
 
@@ -188,7 +363,7 @@ class RectItem(AnnotationGraphicsItem):
             self._updateRect(rect)
             event.accept()
 
-class PointItem(AnnotationGraphicsItem):
+class OldPointItem(AnnotationGraphicsItem):
     def __init__(self, index, parent=None):
         AnnotationGraphicsItem.__init__(self, index, parent)
 
