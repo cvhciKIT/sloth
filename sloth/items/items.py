@@ -2,17 +2,6 @@ from PyQt4.QtGui import *
 from PyQt4.Qt import *
 from sloth.annotations.model import DataRole
 
-class ControlItem(QGraphicsItem):
-    def __init__(self, parent=None):
-        QGraphicsItem.__init__(self, parent)
-
-        # always have the same size
-        self.setFlags(QGraphicsItem.ItemIgnoresTransformations)
-
-    def paint(self, painter, option, widget = None):
-        color = QColor('black')
-        color.setAlpha(200)
-        painter.fillRect(self.boundingRect(), color)
 
 class BaseItem(QAbstractGraphicsShapeItem):
     """
@@ -50,7 +39,8 @@ class BaseItem(QAbstractGraphicsShapeItem):
 
     def updateModel(self, data=None):
         if data is not None:
-            self.index().model().setData(self.index(), QVariant(self.data_), DataRole)
+            model = self.index().model()
+            model.setData(self.index(), QVariant(self.data_), DataRole)
 
     def paint(self, painter, option, widget=None):
         pass
@@ -67,6 +57,7 @@ class BaseItem(QAbstractGraphicsShapeItem):
         if change == QGraphicsItem.ItemPositionHasChanged:
             self.updateModel()
         return QAbstractGraphicsShapeItem.itemChange(self, change, value)
+
 
 class PointItem(BaseItem):
     """
@@ -97,7 +88,8 @@ class PointItem(BaseItem):
     def updateModel(self):
         self.data_['x'] = self.scenePos().x()
         self.data_['y'] = self.scenePos().y()
-        self.index().model().setData(self.index(), QVariant(self.data_), DataRole)
+        model = self.index().model()
+        model.setData(self.index(), QVariant(self.data_), DataRole)
 
     def updatePoint(self):
         if self.data_ is None:
@@ -114,7 +106,7 @@ class PointItem(BaseItem):
 
     def boundingRect(self):
         r = self.radius_
-        return QRectF(-r, -r, 2*r, 2*r)
+        return QRectF(-r, -r, 2 * r, 2 * r)
 
     def paint(self, painter, option, widget=None):
         pen = self.pen()
@@ -131,14 +123,15 @@ class PointItem(BaseItem):
         step = 1
         if event.modifiers() & Qt.ShiftModifier:
             step = 5
-        ds = { Qt.Key_Left:  (-step, 0),
-               Qt.Key_Right: (step, 0),
-               Qt.Key_Up:    (0, -step),
-               Qt.Key_Down:  (0, step),
+        ds = {Qt.Key_Left:  (-step, 0),
+              Qt.Key_Right: (step, 0),
+              Qt.Key_Up:    (0, -step),
+              Qt.Key_Down:  (0, step)
              }.get(event.key(), None)
         if ds is not None:
             self.moveBy(*ds)
             event.accept()
+
 
 class RectItem(BaseItem):
     def __init__(self, index=None, data=None, parent=None):
@@ -181,12 +174,17 @@ class RectItem(BaseItem):
         self.rect_ = QRectF(self.scenePos(), self.rect_.size())
         self.data_['x'] = self.rect_.topLeft().x()
         self.data_['y'] = self.rect_.topLeft().y()
-        if 'width'  in self.data_: self.data_['width']  = float(self.rect_.width())
-        if 'w'      in self.data_: self.data_['w']      = float(self.rect_.width())
-        if 'height' in self.data_: self.data_['height'] = float(self.rect_.height())
-        if 'h'      in self.data_: self.data_['h']      = float(self.rect_.height())
+        if 'width' in self.data_:
+            self.data_['width'] = float(self.rect_.width())
+        if 'w' in self.data_:
+            self.data_['w'] = float(self.rect_.width())
+        if 'height' in self.data_:
+            self.data_['height'] = float(self.rect_.height())
+        if 'h' in self.data_:
+            self.data_['h'] = float(self.rect_.height())
 
-        self.index().model().setData(self.index(), QVariant(self.data_), DataRole)
+        model = self.index().model()
+        model.setData(self.index(), QVariant(self.data_), DataRole)
 
     def boundingRect(self):
         return QRectF(QPointF(0, 0), self.rect_.size())
@@ -220,6 +218,19 @@ class RectItem(BaseItem):
                 rect = self.rect_.adjusted(*(ds + ds))
             self._updateRect(rect)
             event.accept()
+
+
+class ControlItem(QGraphicsItem):
+    def __init__(self, parent=None):
+        QGraphicsItem.__init__(self, parent)
+
+        # always have the same size
+        self.setFlags(QGraphicsItem.ItemIgnoresTransformations)
+
+    def paint(self, painter, option, widget = None):
+        color = QColor('black')
+        color.setAlpha(200)
+        painter.fillRect(self.boundingRect(), color)
 
 
 class AnnotationGraphicsItem(QAbstractGraphicsShapeItem):
@@ -281,6 +292,7 @@ class AnnotationGraphicsItem(QAbstractGraphicsShapeItem):
         print "Controls visible:", visible
         #for corner in self.corner_items_:
         #    corner.setVisible(self.controls_enabled_ and self.controls_visible_)
+
 
 class OldRectItem(AnnotationGraphicsItem):
     def __init__(self, index, parent=None):
@@ -363,6 +375,7 @@ class OldRectItem(AnnotationGraphicsItem):
             self._updateRect(rect)
             event.accept()
 
+
 class OldPointItem(AnnotationGraphicsItem):
     def __init__(self, index, parent=None):
         AnnotationGraphicsItem.__init__(self, index, parent)
@@ -410,6 +423,7 @@ class OldPointItem(AnnotationGraphicsItem):
     def dataChanged(self):
         self.data_ = self.index().data(DataRole).toPyObject()
         self.updatePoint()
+
 
 class LineItem(AnnotationGraphicsItem):
     def __init__(self, pos, endPoint, parent=None):
