@@ -25,8 +25,10 @@ class BaseItem(QAbstractGraphicsShapeItem):
                       QGraphicsItem.ItemSendsScenePositionChanges)
         self.setColor(Qt.yellow)
 
-        # store index and label data
-        self.index_ = index
+        # Store index and label data.
+        # The index needs to be persistent in order to be still
+        # correct when other items were deleted etc.
+        self.index_ = QPersistentModelIndex(index)
         if data is None and index is not None:
             data = self.index().data(DataRole).toPyObject()
         self.data_ = data
