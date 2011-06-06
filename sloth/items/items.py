@@ -31,11 +31,67 @@ class BaseItem(QAbstractGraphicsShapeItem):
             data = self.index().data(DataRole).toPyObject()
         self.data_ = data
 
+        # initialize members
+        self.text_ = ""
+        self.text_bg_brush_ = None
+
     def annotation(self):
+        """
+        Returns the annotation of this items.
+        """
         return self.data_
 
     def index(self):
+        """
+        Returns the index of this item.
+        """
         return self.index_
+
+    def setText(self, text=""):
+        """
+        Sets a text to be displayed on this item.
+        """
+        self.text_ = text
+
+    def text(self):
+        return self.text_
+
+    def setTextBackgroundBrush(self, brush=None):
+        """
+        Sets the brush to be used to fill the background region
+        behind the text. Set to None to not draw a background 
+        (leave transparent).
+        """
+        self.text_bg_brush_ = brush
+
+    def textBackgroundBrush(self):
+        """
+        Returns the background brush for the text region.
+        """
+        return self.text_bg_brush_
+
+    def setAutoTextKeys(self, keys=[]):
+        """
+        Sets the keys for which the values from the annotations
+        are displayed automatically as text.
+        """
+        self.auto_text_keys_ = keys
+
+    def autoTextKeys(self):
+        """
+        Returns the list of keys for which the values from
+        the annotations are displayed as text automatically.
+        """
+        return self.auto_text_keys_
+
+    def _compile_text(self):
+        text_lines = []
+        if self.text_ != "" and self.text_ is not None:
+            text_lines.append(self.text_)
+        for key in self.auto_text_keys_:
+            text_lines.append("%s: %s" % \
+                    (key, self.annotation().get(key, "")))
+        return '\n'.join(text_lines)
 
     def updateModel(self, data=None):
         if data is not None:
@@ -43,7 +99,20 @@ class BaseItem(QAbstractGraphicsShapeItem):
             model.setData(self.index(), QVariant(self.data_), DataRole)
 
     def paint(self, painter, option, widget=None):
-        pass
+        painter.save()
+        painter.setPen(self.pen())
+
+        # display the text for this item
+        text = self._compile_text()
+        rect = painter.boundingRect(QRect(5, 5, 1000, 1000), Qt.AlignTop | Qt.AlignLeft, text)
+
+        # fill background region behind text
+        if self.text_bg_brush_ is not None:
+            bg_rect = rect.adjusted(-3, -3, 3, 3)
+            painter.fillRect(bg_rect, self.text_bg_brush_)
+
+        painter.drawText(rect, Qt.AlignTop | Qt.AlignLeft, text)
+        painter.restore()
 
     def boundingRect(self):
         return QRectF(0, 0, 0, 0)
@@ -109,6 +178,8 @@ class PointItem(BaseItem):
         return QRectF(-r, -r, 2 * r, 2 * r)
 
     def paint(self, painter, option, widget=None):
+        BaseItem.paint(self, painter, option, widget)
+
         pen = self.pen()
         if self.isSelected():
             pen.setStyle(Qt.DashLine)
@@ -139,7 +210,6 @@ class RectItem(BaseItem):
 
         self.rect_ = None
         self._updateRect(self._dataToRect(self.data_))
-        self._updateText()
 
     def __call__(self, index=None, data=None, parent=None):
         item = RectItem(index, data, parent)
@@ -164,12 +234,6 @@ class RectItem(BaseItem):
         self.prepareGeometryChange()
         self.setPos(rect.topLeft())
 
-    def _updateText(self):
-        if self.data_ is None:
-            return
-        if 'id' in self.data_:
-            self.setText("id: " + str(self.data_['id']))
-
     def updateModel(self):
         self.rect_ = QRectF(self.scenePos(), self.rect_.size())
         self.data_['x'] = self.rect_.topLeft().x()
@@ -190,6 +254,8 @@ class RectItem(BaseItem):
         return QRectF(QPointF(0, 0), self.rect_.size())
 
     def paint(self, painter, option, widget = None):
+        BaseItem.paint(self, painter, option, widget)
+
         pen = self.pen()
         if self.isSelected():
             pen.setStyle(Qt.DashLine)
@@ -200,7 +266,6 @@ class RectItem(BaseItem):
         self.data_ = self.index().data(DataRole).toPyObject()
         rect = self._dataToRect(self.data_)
         self._updateRect(rect)
-        self._updateText()
 
     def keyPressEvent(self, event):
         step = 1
