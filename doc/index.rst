@@ -40,7 +40,7 @@ Contents
    items
    inserters
    containers
-   api
+   api/index
 
 
 TODOs

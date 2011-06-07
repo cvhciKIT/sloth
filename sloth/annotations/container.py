@@ -70,7 +70,7 @@ class AnnotationContainer:
 
     def load(self, filename):
         """
-        Load the annotations.  Must be implemented in the subclass.
+        Load the annotations.
         """
         self.annotations_ = self.parseFromFile(filename)
         self.filename_ = filename
@@ -87,7 +87,7 @@ class AnnotationContainer:
 
     def save(self, filename):
         """
-        Save the annotations.  Must be implemented in the subclass.
+        Save the annotations.
         """
         self.serializeToFile(filename)
         self.filename_ = filename
@@ -103,11 +103,14 @@ class AnnotationContainer:
         )
 
     def setAnnotations(self, annotations):
+        """
+        Set the current annotations. Expects a list of python dictionaries.
+        """
         self.annotations_ = annotations
 
     def annotations(self):
         """
-        Returns the current annotations as python dictionary.
+        Returns the current annotations as list of python dictionaries.
         """
         return self.annotations_
 
@@ -164,10 +167,16 @@ class PickleContainer(AnnotationContainer):
     """
 
     def parseFromFile(self, fname):
+        """
+        Overwritten to read pickle files.
+        """
         f = open(fname, "rb")
         return pickle.load(f)
 
     def serializeToFile(self, fname):
+        """
+        Overwritten to write pickle files.
+        """
         # TODO make all image filenames relative to the label file
         f = open(fname, "wb")
         pickle.dump(self.annotations(), f)
@@ -179,10 +188,16 @@ class JsonContainer(AnnotationContainer):
     """
 
     def parseFromFile(self, fname):
+        """
+        Overwritten to read JSON files.
+        """
         f = open(fname, "r")
         return json.load(f)
 
     def serializeToFile(self, fname):
+        """
+        Overwritten to write JSON files.
+        """
         # TODO make all image filenames relative to the label file
         f = open(fname, "w")
         json.dump(self.annotations(), f, indent=4)
@@ -194,10 +209,16 @@ class YamlContainer(AnnotationContainer):
     """
 
     def parseFromFile(self, fname):
+        """
+        Overwritten to read YAML files.
+        """
         f = open(fname, "r")
         return yaml.load(f)
 
     def serializeToFile(self, fname):
+        """
+        Overwritten to write YAML files.
+        """
         # TODO make all image filenames relative to the label file
         f = open(fname, "w")
         yaml.dump(self.annotations(), f)
@@ -209,7 +230,9 @@ class FeretContainer(AnnotationContainer):
     """
 
     def parseFromFile(self, filename):
-        self.basedir_ = os.path.dirname(filename)
+        """
+        Overwritten to read Feret label files.
+        """
         f = open(filename)
 
         annotations = []
@@ -232,6 +255,9 @@ class FeretContainer(AnnotationContainer):
         return annotations
 
     def serializeToFile(self, filename):
+        """
+        Not implemented yet.
+        """
         # TODO make sure the image paths are
         # relative to the label file's directory
         raise NotImplemented(
