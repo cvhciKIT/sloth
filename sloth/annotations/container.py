@@ -224,6 +224,31 @@ class YamlContainer(AnnotationContainer):
         yaml.dump(self.annotations(), f)
 
 
+class FileNameListContainer(AnnotationContainer):
+    """
+    Simple container to initialize the files to be annotated.
+    """
+
+    def parseFromFile(self, filename):
+        self.basedir_ = os.path.dirname(filename)
+        f = open(filename, "r")
+        print "Opening", filename
+
+        annotations = []
+        for line in f:
+            line = line.strip()
+            fileitem = {
+                'filename':    line,
+                'type':        'image',
+                'annotations': [],
+            }
+            annotations.append(fileitem)
+
+        return annotations
+
+    def serializeToFile(self, filename):
+        raise NotImplemented("FileNameListContainer.save() is not implemented yet.")
+
 class FeretContainer(AnnotationContainer):
     """
     Container for Feret labels.
