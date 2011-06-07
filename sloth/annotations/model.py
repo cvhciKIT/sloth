@@ -296,7 +296,7 @@ class AnnotationModel(QAbstractItemModel):
             return index.internalPointer()
         return self.root_
 
-    def index(self, row, column, parent_idx):
+    def index(self, row, column, parent_idx=QModelIndex()):
         parent_item = self.itemFromIndex(parent_idx)
         if row >= len(parent_item.children()):
             return QModelIndex()
@@ -317,7 +317,7 @@ class AnnotationModel(QAbstractItemModel):
         # try with next hierarchy up
         return self.imageIndex(index.parent())
 
-    def data(self, index, role):
+    def data(self, index, role=Qt.DisplayRole):
         if not index.isValid():
             return QVariant()
         index = QModelIndex(index)  # explicitly convert from QPersistentModelIndex
@@ -336,10 +336,10 @@ class AnnotationModel(QAbstractItemModel):
         item = self.itemFromIndex(index)
         return item.data(index, role)
 
-    def columnCount(self, index):
+    def columnCount(self, index=QModelIndex()):
         return 2
 
-    def rowCount(self, index):
+    def rowCount(self, index=QModelIndex()):
         item = self.itemFromIndex(index)
         return len(item.children())
 
@@ -366,7 +366,7 @@ class AnnotationModel(QAbstractItemModel):
         item = self.itemFromIndex(index)
         return item.flags(index)
 
-    def setData(self, index, value, role):
+    def setData(self, index, value, role=Qt.EditRole):
         if not index.isValid():
             return False
         index = QModelIndex(index)  # explicitly convert from QPersistentModelIndex
