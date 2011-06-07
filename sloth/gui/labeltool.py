@@ -14,6 +14,7 @@ from sloth.gui.annotationscene import *
 from sloth.gui.frameviewer import *
 from sloth.gui.controlbuttons import *
 from sloth.conf import config
+from sloth.core.utils import import_callable
 from sloth import APP_NAME, ORGANIZATION_NAME, ORGANIZATION_DOMAIN, VERSION
 
 import okapy.videoio as okv
@@ -61,6 +62,8 @@ class MainWindow(QMainWindow):
         # TODO clean up, make configurable
         self.plugins_ = []
         for plugin in plugins:
+            if type(plugin) == str:
+                plugin = import_callable(plugin)
             p = plugin(self)
             self.plugins_.append(p)
             action = p.action()
