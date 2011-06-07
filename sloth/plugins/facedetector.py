@@ -15,6 +15,10 @@ class FaceDetectorPlugin(QObject):
         det = BinaryPatternFaceDetector("/cvhci/data/mctcascades/new-detectors/face_frontal_new.xml")
         model = self.wnd_.model_
         n_images = model.rowCount()
+        progress = QProgressDialog("Detecting faces...", "Abort", 0, n_images, self.wnd_);
+        progress.setWindowModality(Qt.WindowModal);
+        progress.show()
+
         for i in range(n_images):
             index = model.index(i, 0)
             item = model.itemFromIndex(index)
@@ -31,6 +35,10 @@ class FaceDetectorPlugin(QObject):
                     'confidence': face.conf,
                 }
                 model.addAnnotation(index, ann)
+            progress.setValue(i+1);
+            QCoreApplication.processEvents()
+            if progress.wasCanceled():
+                break
 
     def action(self):
         return self.sc_
