@@ -10,20 +10,50 @@ The full configuration options will be covered in the next section :doc:`configu
 Using the default configuration
 ===============================
 
-The easiest way to start is using a supported label format, and supported label types only.  In this case
-we just need to start the label tool and supply the label file on the command line::
+The easiest way to start sloth is by using a supported label format and supported label types only.  In this case
+we just need to start sloth and supply the label file on the command line::
 
-    ./labeltool.py examples/examplelabels.txt
+    sloth examples/example1_labels.json
 
 Let's take look at the example label file::
 
-    image1.jpg type rect x 50 y 80 width 20 height 20 type rect x 50 y 80 width 20 height 80
-    image2.jpg type point x 70 y 80
+    [
+        {
+            "type": "image", 
+            "annotations": [
+                {
+                    "height": 60.0, 
+                    "width": 46.0, 
+                    "y": 105.0, 
+                    "x": 346.0, 
+                    "type": "rect"
+                }, 
+                {
+                    "height": 58.0, 
+                    "width": 56.0, 
+                    "y": 119.0, 
+                    "x": 636.0, 
+                    "type": "rect"
+                }
+            ], 
+            "filename": "image1.jpg"
+        }, 
+        {
+            "type": "image", 
+            "annotations": [
+                {
+                    "y": 155.0, 
+                    "x": 409.0, 
+                    "type": "point", 
+                }
+            ], 
+            "filename": "image2.jpg"
+        }
+    ]
 
-We have labeled two images, with two rectangles in image1 and one point in image 2.  Since we did not launch
-the label tool with a custom configuration, the standard visualizations for rect and point will be used. The
-label tool displays the two given image, and draw two rectangle at the labeled position in image1, and a
-point in image2.
+We have labeled two images, with two rectangles in image1 and one point in image 2.  Since we launched
+sloth without a custom configuration, the standard visualizations for ``rect`` and ``point`` will be used. Sloth
+displays two rectangles at the labeled positions in image1, and a point in image2.
 
 Writing a custom configuration
 ==============================
