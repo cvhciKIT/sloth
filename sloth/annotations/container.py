@@ -15,6 +15,7 @@ try:
 except:
     pass
 
+
 class AnnotationContainerFactory:
     def __init__(self, containers):
         """
@@ -47,9 +48,16 @@ class AnnotationContainerFactory:
         for pattern, container in self.containers_:
             if fnmatch.fnmatch(filename, pattern):
                 return container(*args, **kwargs)
-        raise ImproperlyConfigured("No container registered for filename %s" % filename)
+        raise ImproperlyConfigured(
+            "No container registered for filename %s" % filename
+        )
+
 
 class AnnotationContainer:
+    """
+    Annotation Container base class.
+    """
+
     def __init__(self):
         self.clear()
 
@@ -58,19 +66,44 @@ class AnnotationContainer:
 
     def clear(self):
         self.annotations_ = []
-        self.filename_    = None
+        self.filename_ = None
 
     def load(self, filename):
         """
         Load the annotations.  Must be implemented in the subclass.
         """
-        pass
+        self.annotations_ = self.parseFromFile(filename)
+        self.filename_ = filename
+
+    def parseFromFile(self, filename):
+        """
+        Read the annotations from disk. Must be implemented in the subclass.
+        """
+        raise NotImplementedException(
+            "You need to implement parseFromFile() in your subclass " +
+            "if you use the default implementation of " +
+            "AnnotationContainer.load()"
+        )
 
     def save(self, filename):
         """
         Save the annotations.  Must be implemented in the subclass.
         """
-        pass
+        self.serializeToFile(filename)
+        self.filename_ = filename
+
+    def serializeToFile(self, filename):
+        """
+        Serialize the annotations to disk. Must be implemented in the subclass.
+        """
+        raise NotImplementedException(
+            "You need to implement serializeToFile() in your subclass " +
+            "if you use the default implementation of " +
+            "AnnotationContainer.save()"
+        )
+
+    def setAnnotations(self, annotations):
+        self.annotations_ = annotations
 
     def annotations(self):
         """
@@ -78,13 +111,27 @@ class AnnotationContainer:
         """
         return self.annotations_
 
+    def _fullpath(self, filename):
+        """
+        Calculate the fullpath to the file, assuming that
+        the filename is given relative to the label file's
+        directory.
+        """
+        if self.filename() is not None:
+            basedir = os.path.dirname(self.filename())
+            fullpath = os.path.join(basedir, filename)
+        else:
+            fullpath = filename
+        return fullpath
+
     def loadImage(self, filename):
         """
         Load the image referenced to by the filename.  In the default
         implementation this will try to load the image from a path
         relative to the label files directory.
         """
-        return okapy.loadImage(filename)
+        fullpath = self._fullpath(filename)
+        return okapy.loadImage(fullpath)
 
     def loadVideo(self, filename):
         """
@@ -92,19 +139,17 @@ class AnnotationContainer:
         implementation this will try to load the video from a path
         relative to the label files directory.
         """
-        pass
-
-    def setAnnotations(self, annotations):
-        self.annotations_ = annotations
+        fullpath = self._fullpath(filename)
+        #TODO load video
 
     def numFiles(self):
-        return len(self.annotations_)
+        return len(self.annotations())
 
     def numAnnotations(self):
-        if self.annotations_ is None:
+        if self.annotations() is None:
             return 0
         num = 0
-        for file in self.annotations_:
+        for file in self.annotations():
             if file['type'] == 'image':
                 num += len(file['annotations'])
             elif file['type'] == 'video':
@@ -112,57 +157,58 @@ class AnnotationContainer:
                     num += len(frame['annotations'])
         return num
 
+
 class PickleContainer(AnnotationContainer):
     """
-    Simple container which just pickles the annotations to disk.
+    Simple container which pickles the annotations to disk.
     """
 
-    def load(self, fname):
+    def parseFromFile(self, fname):
         f = open(fname, "rb")
-        self.annotations_ = pickle.load(f)
-        self.filename_ = fname
+        return pickle.load(f)
 
-    def save(self, fname):
+    def serializeToFile(self, fname):
+        # TODO make all image filenames relative to the label file
         f = open(fname, "wb")
         pickle.dump(self.annotations(), f)
-        self.filename_ = fname
 
-class JSONContainer(AnnotationContainer):
+
+class JsonContainer(AnnotationContainer):
     """
     Simple container which writes the annotations to disk in JSON format.
     """
 
-    def load(self, fname):
+    def parseFromFile(self, fname):
         f = open(fname, "r")
-        self.annotations_ = json.load(f)
-        self.filename_ = fname
+        return json.load(f)
 
-    def save(self, fname):
+    def serializeToFile(self, fname):
+        # TODO make all image filenames relative to the label file
         f = open(fname, "w")
         json.dump(self.annotations(), f, indent=4)
-        self.filename_ = fname
 
-class YAMLContainer(AnnotationContainer):
+
+class YamlContainer(AnnotationContainer):
     """
     Simple container which writes the annotations to disk in YAML format.
     """
 
-    def load(self, fname):
+    def parseFromFile(self, fname):
         f = open(fname, "r")
-        self.annotations_ = yaml.load(f)
-        self.filename_ = fname
+        return yaml.load(f)
 
-    def save(self, fname):
+    def serializeToFile(self, fname):
+        # TODO make all image filenames relative to the label file
         f = open(fname, "w")
         yaml.dump(self.annotations(), f)
-        self.filename_ = fname
+
 
 class FeretContainer(AnnotationContainer):
     """
     Container for Feret labels.
     """
 
-    def load(self, filename):
+    def parseFromFile(self, filename):
         self.basedir_ = os.path.dirname(filename)
         f = open(filename)
 
@@ -170,24 +216,24 @@ class FeretContainer(AnnotationContainer):
         for line in f:
             s = line.split()
             fileitem = {
-                'filename': os.path.join(self.basedir_, s[0]+".bmp"),
+                'filename': s[0] + ".bmp",
                 'type': 'image',
             }
             fileitem['annotations'] = [
-                {'type': 'point', 'class': 'left_eye',  'x': int(s[1]), 'y': int(s[2])},
-                {'type': 'point', 'class': 'right_eye', 'x': int(s[3]), 'y': int(s[4])},
-                {'type': 'point', 'class': 'mouth',     'x': int(s[5]), 'y': int(s[6])}
+                {'type': 'point', 'class': 'left_eye',
+                 'x': int(s[1]), 'y': int(s[2])},
+                {'type': 'point', 'class': 'right_eye',
+                 'x': int(s[3]), 'y': int(s[4])},
+                {'type': 'point', 'class': 'mouth',
+                 'x': int(s[5]), 'y': int(s[6])}
             ]
             annotations.append(fileitem)
 
-        self.annotations_ = annotations
-        self.filename_    = filename
+        return annotations
 
-
-    def save(self, filename):
-        # TODO make sure the image paths are relative to the label file's directory
-        raise NotImplemented("FeretContainer.save() is not implemented yet.")
-
-
-
-
+    def serializeToFile(self, filename):
+        # TODO make sure the image paths are
+        # relative to the label file's directory
+        raise NotImplemented(
+            "FeretContainer.serializeToFile() is not implemented yet."
+        )
