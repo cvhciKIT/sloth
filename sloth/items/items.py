@@ -36,6 +36,7 @@ class BaseItem(QAbstractGraphicsShapeItem):
         # initialize members
         self.text_ = ""
         self.text_bg_brush_ = None
+        self.auto_text_keys_ = []
 
     def annotation(self):
         """
