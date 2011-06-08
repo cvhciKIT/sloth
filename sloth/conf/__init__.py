@@ -1,5 +1,7 @@
 from sloth.conf import default_config
 import importlib
+import sys
+import os
 
 class Config:
     def __init__(self):
@@ -10,9 +12,18 @@ class Config:
 
     def update(self, module_path):
         try:
-            mod = importlib.import_module(module_path)
+            module_path = os.path.abspath(module_path)
+            if module_path.endswith('.py'):
+                module_path = module_path[:-3]
+            module_dir, module_name = os.path.split(module_path)
+            oldpath = sys.path
+            sys.path = [module_dir, ] + sys.path
+            print sys.path
+            mod = importlib.import_module(module_name)
         except ImportError, e:
             raise ImportError("Could not import configuration '%s' (Is it on sys.path?): %s" % (module_path, e))
+        finally:
+            sys.path = oldpath
 
         for setting in dir(mod):
             if setting == setting.upper():
