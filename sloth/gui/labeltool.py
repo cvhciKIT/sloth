@@ -87,6 +87,13 @@ class MainWindow(QMainWindow):
         self.ui.menuPlugins.addAction(selectPreviousItem)
         self.shortcuts.append(selectPreviousItem)
 
+        exitInsertMode = QAction("Exit insert mode", self)
+        exitInsertMode.setShortcut(QKeySequence("ESC"))
+        exitInsertMode.setEnabled(True)
+        exitInsertMode.triggered.connect(self.buttonarea.exitInsertMode)
+        self.ui.menuPlugins.addAction(exitInsertMode)
+        self.shortcuts.append(exitInsertMode)
+
     ###
     ### GUI/Application setup
     ###___________________________________________________________________________________________

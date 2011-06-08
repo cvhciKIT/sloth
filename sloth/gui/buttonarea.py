@@ -179,6 +179,11 @@ class ButtonArea(QWidget):
             self.show_only_label_properties("")
         self.stateChanged.emit(self.get_current_state())
 
+    def exitInsertMode(self):
+        button = self.label_button_list.get_checked_button()
+        if button is not None:
+            self.label_button_list.toggleChecked(button)
+
 def main():
     from conf import config
     config.update("example_config")
