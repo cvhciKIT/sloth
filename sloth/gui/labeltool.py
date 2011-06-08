@@ -80,6 +80,13 @@ class MainWindow(QMainWindow):
         self.ui.menuPlugins.addAction(selectNextItem)
         self.shortcuts.append(selectNextItem)
 
+        selectPreviousItem = QAction("Select previous item", self)
+        selectPreviousItem.setShortcut(QKeySequence("Shift+Tab"))
+        selectPreviousItem.setEnabled(True)
+        selectPreviousItem.triggered.connect(lambda: self.scene.selectNextItem(True))
+        self.ui.menuPlugins.addAction(selectPreviousItem)
+        self.shortcuts.append(selectPreviousItem)
+
     ###
     ### GUI/Application setup
     ###___________________________________________________________________________________________

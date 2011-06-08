@@ -173,7 +173,7 @@ class AnnotationScene(QGraphicsScene):
     #
     # key event handlers
     #______________________________________________________________________________________________________
-    def selectNextItem(self):
+    def selectNextItem(self, reverse=False):
         # disable inserting
         # TODO: forward this to the ButtonArea
         self.inserter_ = None
@@ -182,24 +182,27 @@ class AnnotationScene(QGraphicsScene):
         if len(self.views()) > 0:
             self.views()[0].setFocus(True)
 
-        if len(self.selectedItems()) == 0:
-            for item in self.items():
-                if (item.flags() & QGraphicsItem.ItemIsSelectable):
-                    item.setSelected(True)
-                    break
-        else:
+        # get the current selected item if there is any
+        selected_item = None
+        found = True
+        if len(self.selectedItems()) > 0:
             selected_item = self.selectedItems()[0]
-            idx = -1
-            found = False
-            for i, item in enumerate(self.items() + self.items()):
-                if item is selected_item:
-                    found = True
-                if found and item is not selected_item:
-                    if (item.flags() & QGraphicsItem.ItemIsSelectable):
-                        item.setSelected(True)
-                        break
             selected_item.setSelected(False)
+            found = False
 
+        items = [item for item in self.items()
+                      if item.flags() & QGraphicsItem.ItemIsSelectable] * 2
+        if reverse:
+            items.reverse()
+
+        for item in items:
+            if item is selected_item:
+                found = True
+                continue
+
+            if found and item is not selected_item:
+                item.setSelected(True)
+                break
 
     def keyPressEvent(self, event):
         if self.debug_:
