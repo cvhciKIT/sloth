@@ -44,7 +44,7 @@ Let's take look at the example label file::
                 {
                     "y": 155.0, 
                     "x": 409.0, 
-                    "type": "point", 
+                    "type": "point"
                 }
             ], 
             "filename": "image2.jpg"
