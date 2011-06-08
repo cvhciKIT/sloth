@@ -34,6 +34,9 @@ class AnnotationContainerFactory:
                 item = import_callable(item)
             self.containers_.append((pattern, item))
 
+    def patterns(self):
+        return [pattern for pattern, item in self.containers_]
+
     def create(self, filename, *args, **kwargs):
         """
         Create a container for the filename.
