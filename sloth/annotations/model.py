@@ -359,7 +359,7 @@ class AnnotationModel(QAbstractItemModel):
         return index
 
     def flags(self, index):
-        return Qt.ItemIsEnabled
+        return Qt.ItemIsEnabled | Qt.ItemIsSelectable
         if not index.isValid():
             return Qt.ItemIsEnabled
         index = QModelIndex(index)  # explicitly convert from QPersistentModelIndex
@@ -535,10 +535,10 @@ class AnnotationTreeView(QTreeView):
         self.setAlternatingRowColors(True)
         self.setEditTriggers(QAbstractItemView.SelectedClicked)
         self.setSortingEnabled(True)
-        self.setStyleSheet("""
-            QTreeView { selection-color: blue; show-decoration-selected: 1; }
-            QTreeView::item:alternate { background-color: #EEEEEE; }
-        """)
+#        self.setStyleSheet("""
+#            QTreeView { selection-color: blue; show-decoration-selected: 1; }
+#            QTreeView::item:alternate { background-color: #EEEEEE; }
+#        """)
 
         self.connect(self, SIGNAL("expanded(QModelIndex)"), self.expanded)
 
