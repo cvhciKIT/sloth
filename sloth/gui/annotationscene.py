@@ -3,6 +3,7 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from sloth.items import *
 from sloth.annotations.model import TypeRole, ImageRole
+from sloth.core.exceptions import InvalidArgumentException
 import math
 import okapy
 from okapy.guiqt.utilities import toQImage
