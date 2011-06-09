@@ -96,6 +96,14 @@ class BaseItem(QAbstractGraphicsShapeItem):
                     (key, self.annotation().get(key, "")))
         return '\n'.join(text_lines)
 
+    def dataChanged(self):
+        self.data_ = self.index().data(DataRole).toPyObject()
+        self.dataChange()
+        self.update()
+
+    def dataChange(self):
+        pass
+
     def updateModel(self, data=None):
         if data is not None:
             model = self.index().model()
@@ -157,6 +165,9 @@ class PointItem(BaseItem):
         pointitem.setRadius(self.radius_)
         return pointitem
 
+    def dataChange(self):
+        self.updatePoint()
+
     def updateModel(self):
         self.data_['x'] = self.scenePos().x()
         self.data_['y'] = self.scenePos().y()
@@ -188,10 +199,6 @@ class PointItem(BaseItem):
             pen.setStyle(Qt.DashLine)
         painter.setPen(pen)
         painter.drawEllipse(self.boundingRect())
-
-    def dataChanged(self):
-        self.data_ = self.index().data(DataRole).toPyObject()
-        self.updatePoint()
 
     def keyPressEvent(self, event):
         step = 1
@@ -265,8 +272,7 @@ class RectItem(BaseItem):
         painter.setPen(pen)
         painter.drawRect(self.boundingRect())
 
-    def dataChanged(self):
-        self.data_ = self.index().data(DataRole).toPyObject()
+    def dataChange(self):
         rect = self._dataToRect(self.data_)
         self._updateRect(rect)
 
