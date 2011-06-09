@@ -1,21 +1,19 @@
 import sys, os
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
+from sloth.gui.floatinglayout import FloatingLayout
 
-class ButtonListWidget(QWidget):
+class ButtonListWidget(QGroupBox):
     selectionChanged = pyqtSignal(object)
 
     def __init__(self, name, parent=None):
-        QWidget.__init__(self, parent)
+        QGroupBox.__init__(self, name, parent)
+        self.setLayout(FloatingLayout())
+
         self.name = name
-        vlayout = QVBoxLayout()
-        vlayout.setSpacing(0)
-        vlayout.setAlignment(Qt.AlignTop)
-        vlayout.addWidget(QLabel("<center><b>" + name + "</b></center>"))
         self.button_group = QButtonGroup()
         self.button_group.setExclusive(False)
         self.buttons = {}
-        self.setLayout(vlayout)
 
     def create_button(self, button_name):
         button = QPushButton(button_name)
@@ -78,10 +76,10 @@ class ButtonArea(QWidget):
 
         self.hotkeys = []
 
-        self.hlayout = QHBoxLayout()
-        self.hlayout.setAlignment(Qt.AlignLeft)
-        self.hlayout.addWidget(self.label_button_list)
-        self.setLayout(self.hlayout)
+        self.vlayout = QVBoxLayout()
+        self.vlayout.setAlignment(Qt.AlignTop)
+        self.vlayout.addWidget(self.label_button_list)
+        self.setLayout(self.vlayout)
         self.stateChanged.connect(self.stateHasChanged)
 
         if labels is not None:
@@ -91,6 +89,7 @@ class ButtonArea(QWidget):
             for choice, name, hotkey in hotkeys:
                 self.add_hotkey(choice, name, hotkey)
         self.init_button_lists()
+        self.vlayout.addStretch(1)
 
     def stateHasChanged(self, state):
         print "stateChanged(object)", state
@@ -112,7 +111,7 @@ class ButtonArea(QWidget):
             button_list.hide()
             print key
             self.property_button_lists[key] = button_list
-            self.hlayout.addWidget(button_list)
+            self.vlayout.addWidget(button_list)
 
         for choice, name, hotkey in self.hotkeys:
             if choice == "" or choice is None:
