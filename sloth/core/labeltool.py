@@ -8,7 +8,7 @@ from sloth.annotations.model import *
 from sloth.annotations.container import AnnotationContainerFactory, AnnotationContainer
 from sloth.conf import config
 from sloth.core.utils import import_callable
-from sloth import APP_NAME, ORGANIZATION_NAME, ORGANIZATION_DOMAIN, VERSION
+from sloth import VERSION
 
 import okapy.videoio as okv
 

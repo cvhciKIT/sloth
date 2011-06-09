@@ -1,22 +1,18 @@
 #!/usr/bin/python
-import sys, os
+import os
 import functools, importlib
 import fnmatch
-from optparse import OptionParser
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import PyQt4.uic as uic
 from sloth.gui import qrc_icons
 from sloth.gui.buttonarea import *
-from sloth.annotations.model import *
-from sloth.annotations.container import AnnotationContainerFactory, AnnotationContainer
 from sloth.gui.annotationscene import *
 from sloth.gui.frameviewer import *
 from sloth.gui.controlbuttons import *
 from sloth.conf import config
-from sloth.core.utils import import_callable
-from sloth import APP_NAME, ORGANIZATION_NAME, ORGANIZATION_DOMAIN, VERSION
-
+from sloth.annotations.model import AnnotationTreeView
+from sloth import APP_NAME, ORGANIZATION_DOMAIN, VERSION
 import okapy.videoio as okv
 
 GUIDIR=os.path.join(os.path.dirname(__file__))
