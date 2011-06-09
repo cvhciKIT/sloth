@@ -22,52 +22,47 @@ import okapy.videoio as okv
 GUIDIR=os.path.join(os.path.dirname(__file__))
 
 class MainWindow(QMainWindow):
-    def __init__(self, argv, parent=None):
-        super(MainWindow, self).__init__(parent)
+    def __init__(self, labeltool, parent=None):
+        QMainWindow.__init__(self, parent)
 
-        # parse command line options
-        options, args = self.parseCommandLineOptions(argv)
-        if options.config != "":
-            # load config
-            config.update(options.config)
-
-        self.container_factory_ = AnnotationContainerFactory(config.CONTAINERS)
-        self.container_ = AnnotationContainer()
-        self.current_index_ = None
+        self.labeltool = labeltool
 
         self.setupGui()
 
         self.loadApplicationSettings()
-        self.updateStatus()
-        self.updateViews()
 
-        if len(args) > 0:
-            self.loadInitialFile(args[0])
-        else:
-            self.loadInitialFile()
+        self.onAnnotationsLoaded()
 
-        self.loadPlugins(config.PLUGINS)
         self.initShortcuts()
 
-    def parseCommandLineOptions(self, argv):
-        usage   = "Usage: %prog [-c config.py] [annotation_file]"
-        version = "%prog " + VERSION
+    # Slots
+    def onPluginLoaded(self, action):
+        self.ui.menuPlugins.addAction(action)
 
-        parser = OptionParser(usage=usage, version=version)
-        parser.add_option("-c", "--config",  action="store", type="string", default="",   help="Configuration file.")
+    def onStatusMessage(self, message=''):
+        self.statusBar().showMessage(message, 5000)
 
-        return parser.parse_args(argv)
+    def onAnnotationsLoaded(self):
+        if self.labeltool.getCurrentFilename() is not None:
+            self.setWindowTitle("%s - %s[*]" % \
+                (APP_NAME, QFileInfo(self.labeltool.getCurrentFilename()).fileName()))
+        else:
+            self.setWindowTitle("%s - Unnamed[*]" % APP_NAME)
+        self.treeview.setModel(self.labeltool.model())
+        self.scene.setModel(self.labeltool.model())
+        self.treeview.selectionModel().currentChanged.connect(self.labeltool.setCurrentIndex)
 
-    def loadPlugins(self, plugins):
-        # TODO clean up, make configurable
-        self.plugins_ = []
-        for plugin in plugins:
-            if type(plugin) == str:
-                plugin = import_callable(plugin)
-            p = plugin(self)
-            self.plugins_.append(p)
-            action = p.action()
-            self.ui.menuPlugins.addAction(action)
+    def onCurrentIndexChanged(self, new_index):
+        self.scene.setRoot(new_index)
+
+        # TODO: This info should be obtained from AnnotationModel or LabelTool
+        item = self.labeltool.model().itemFromIndex(new_index)
+        if isinstance(item, FrameModelItem):
+            self.controls.setFrameNumAndTimestamp(item.framenum(), item.timestamp())
+        elif isinstance(item, ImageFileModelItem):
+            self.controls.setFilename(os.path.basename(item.filename()))
+        if new_index != self.treeview.currentIndex():
+            self.treeview.setCurrentIndex(new_index)
 
     def initShortcuts(self):
         # TODO clean up, make configurable
@@ -107,8 +102,8 @@ class MainWindow(QMainWindow):
         self.central_widget = QWidget()
         self.central_layout = QVBoxLayout()
         self.controls = ControlButtonWidget()
-        self.controls.back_button.clicked.connect(self.gotoPrevious)
-        self.controls.forward_button.clicked.connect(self.gotoNext)
+        self.controls.back_button.clicked.connect(self.labeltool.gotoPrevious)
+        self.controls.forward_button.clicked.connect(self.labeltool.gotoNext)
 
         self.central_layout.addWidget(self.controls)
         self.central_layout.addWidget(self.view)
@@ -141,10 +136,16 @@ class MainWindow(QMainWindow):
 
         ## Navigation
         self.ui.action_Add_Image.triggered.connect(self.addMediaFile)
-        self.ui.actionNext.      triggered.connect(self.gotoNext)
-        self.ui.actionPrevious.  triggered.connect(self.gotoPrevious)
+        self.ui.actionNext.      triggered.connect(self.labeltool.gotoNext)
+        self.ui.actionPrevious.  triggered.connect(self.labeltool.gotoPrevious)
         self.ui.actionZoom_In.   triggered.connect(functools.partial(self.view.setScaleRelative, 1.2))
         self.ui.actionZoom_Out.  triggered.connect(functools.partial(self.view.setScaleRelative, 1/1.2))
+
+        ## Connections to LabelTool
+        self.labeltool.pluginLoaded.       connect(self.onPluginLoaded)
+        self.labeltool.statusMessage.      connect(self.onStatusMessage)
+        self.labeltool.annotationsLoaded.  connect(self.onAnnotationsLoaded)
+        self.labeltool.currentIndexChanged.connect(self.onCurrentIndexChanged)
 
     def loadApplicationSettings(self):
         settings = QSettings()
@@ -157,62 +158,14 @@ class MainWindow(QMainWindow):
         settings.setValue("MainWindow/Size",     QVariant(self.size()))
         settings.setValue("MainWindow/Position", QVariant(self.pos()))
         settings.setValue("MainWindow/State",    QVariant(self.saveState()))
-        if self.container_.filename() is not None:
-            filename = QVariant(QString(self.container_.filename()))
+        if self.labeltool.getCurrentFilename() is not None:
+            filename = QVariant(QString(self.labeltool.getCurrentFilename()))
         else:
             filename = QVariant()
         settings.setValue("LastFile", filename)
 
-
-    ###
-    ### Annoation file handling
-    ###___________________________________________________________________________________________
-    def loadAnnotations(self, fname):
-        fname = str(fname) # convert from QString
-        try:
-            self.container_ = self.container_factory_.create(fname)
-            self.container_.load(fname)
-            msg = "Successfully loaded %s (%d files, %d annotations)" % \
-                    (fname, self.container_.numFiles(), self.container_.numAnnotations())
-        except Exception, e:
-            msg = "Error: Loading failed (%s)" % str(e)
-        self.updateStatus(msg)
-        self.updateViews()
-
-    def saveAnnotations(self, fname):
-        success = False
-        try:
-            # create new container if the filename is different
-            if fname != self.container_.filename():
-                # TODO: skip if it is the same class
-                newcontainer = self.container_factory_.create(fname)
-                newcontainer.setAnnotations(self.container_.annotations())
-                self.container_ = newcontainer
-
-            self.container_.save(fname)
-            #self.model_.writeback() # write back changes that are cached in the model itself, e.g. mask updates
-            msg = "Successfully saved %s (%d files, %d annotations)" % \
-                    (fname, self.container_.numFiles(), self.container_.numAnnotations())
-            success = True
-            self.model_.setDirty(False)
-        except Exception as e:
-            msg = "Error: Saving failed (%s)" % str(e)
-
-        self.updateStatus(msg)
-        return success
-
-    def loadInitialFile(self, fname=None):
-        if fname is not None:
-            if QFile.exists(fname):
-                self.loadAnnotations(fname)
-        else:
-            settings = QSettings()
-            fname = settings.value("LastFile").toString()
-            if (not fname.isEmpty()) and QFile.exists(fname):
-                self.loadAnnotations(fname)
-
     def okToContinue(self):
-        if self.model_.dirty():
+        if self.labeltool.model().dirty():
             reply = QMessageBox.question(self,
                     "%s - Unsaved Changes" % (APP_NAME),
                     "Save unsaved changes?",
@@ -224,21 +177,18 @@ class MainWindow(QMainWindow):
         return True
 
     def fileNew(self):
-        if not self.okToContinue():
-            return
-        self.container_.clear()
-        self.updateStatus()
-        self.updateViews()
+        if self.okToContinue():
+            self.labeltool.clearAnnotations()
 
     def fileOpen(self):
         if not self.okToContinue():
             return
         path = '.'
-        if (self.container_.filename() is not None) and \
-                (len(self.container_.filename()) > 0):
-            path = QFileInfo(self.container_.filename()).path()
+        filename = self.labeltool.getCurrentFilename()
+        if (filename is not None) and (len(filename) > 0):
+            path = QFileInfo(filename).path()
 
-        format_str = ' '.join(self.container_factory_.patterns())
+        format_str = ' '.join(self.labeltool.getAnnotationFilePatterns())
         fname = QFileDialog.getOpenFileName(self, 
                 "%s - Load Annotations" % APP_NAME, path,
                 "%s annotation files (%s)" % (APP_NAME, format_str))
@@ -246,13 +196,14 @@ class MainWindow(QMainWindow):
             self.loadAnnotations(fname)
 
     def fileSave(self):
-        if self.container_.filename() is None:
+        filename = self.labeltool.getCurrentFilename()
+        if filename is None:
             return self.fileSaveAs()
-        return self.saveAnnotations(self.container_.filename())
+        return self.saveAnnotations(filename)
 
     def fileSaveAs(self):
         fname = '.'  # self.annotations.filename() or '.'
-        format_str = ' '.join(self.container_factory_.patterns())
+        format_str = ' '.join(self.labeltool.getAnnotationFilePatterns())
         fname = QFileDialog.getSaveFileName(self,
                 "%s - Save Annotations" % APP_NAME, fname,
                 "%s annotation files (%s)" % (APP_NAME, format_str))
@@ -261,101 +212,11 @@ class MainWindow(QMainWindow):
             return self.saveAnnotations(str(fname))
         return False
 
-    def gotoNext(self):
-        # TODO move this to the scene
-        if self.model_ is not None and self.current_index_ is not None:
-            next_index = self.model_.getNextIndex(self.current_index_)
-            self.setCurrentIndex(next_index)
-
-    def gotoPrevious(self):
-        # TODO move this to the scene
-        if self.model_ is not None and self.current_index_ is not None:
-            prev_index = self.model_.getPreviousIndex(self.current_index_)
-            self.setCurrentIndex(prev_index)
-
-    def updateStatus(self, message=''):
-        self.statusBar().showMessage(message, 5000)
-        if self.container_.filename() is not None:
-            self.setWindowTitle("%s - %s[*]" % \
-                (APP_NAME, QFileInfo(self.container_.filename()).fileName()))
-        else:
-            self.setWindowTitle("%s - Unnamed[*]" % APP_NAME)
-        self.updateModified()
-
-    def updateViews(self):
-        self.model_ = AnnotationModel(self.container_.annotations())
-        if self.container_.filename() is not None:
-            self.model_.setBasedir(os.path.dirname(self.container_.filename()))
-        else:
-            self.model_.setBasedir("")
-        self.model_.dirtyChanged.connect(self.updateModified)
-
-        self.treeview.setModel(self.model_)
-        self.scene.setModel(self.model_)
-        self.treeview.selectionModel().currentChanged.connect(self.setCurrentIndex)
-
-    def updateModified(self):
-        """update all GUI elements which depend on the state of the model,
-        e.g. whether it has been modified since the last save"""
-        #self.ui.action_Add_Image.setEnabled(self.model_ is not None)
-        # TODO also disable/enable other items
-        #self.ui.actionSave.setEnabled(self.annotations.dirty())
-        #self.setWindowModified(self.annotations.dirty())
-        pass
-
-    def currentIndex(self):
-        return self.current_index_
-
-    def setCurrentIndex(self, index):
-        assert index.isValid()
-        newindex = index.model().imageIndex(index)
-        if newindex.isValid() and newindex != self.current_index_:
-            self.current_index_ = newindex
-            self.scene.setRoot(self.current_index_)
-            item = index.model().itemFromIndex(self.current_index_)
-            if isinstance(item, FrameModelItem):
-                self.controls.setFrameNumAndTimestamp(item.framenum(), item.timestamp())
-            elif isinstance(item, ImageFileModelItem):
-                self.controls.setFilename(os.path.basename(item.filename()))
-            if index != self.treeview.currentIndex():
-                self.treeview.setCurrentIndex(self.current_index_)
-
-    def addImageFile(self, fname):
-        fileitem = {
-                'filename': fname,
-                'type': 'image',
-                'annotations': [ ],
-            }
-        self.model_.root_.addFile(fileitem)
-
-    def addVideoFile(self, fname):
-        fileitem = {
-                'filename': fname,
-                'type': 'video',
-                'frames': [ ],
-            }
-
-        # FIXME: OKAPI should provide a method to get all timestamps at once
-        # FIXME: Some dialog should be displayed, telling the user that the
-        # video is being loaded/indexed and that this might take a while
-        video = okv.FFMPEGIndexedVideoSource(fname)
-        i = 0
-        while video.getNextFrame():
-            ts = video.getTimestamp()
-            frame = { 'annotations': [],
-                      'num': i,
-                      'timestamp': ts,
-                    }
-            fileitem['frames'].append(frame)
-            i += 1
-
-        self.model_.root_.addFile(fileitem)
-
     def addMediaFile(self):
         path = '.'
-        if (self.container_.filename() is not None) and \
-                (len(self.container_.filename()) > 0):
-            path = QFileInfo(self.container_.filename()).path()
+        filename = self.labeltool.getCurrentFilename()
+        if (filename is not None) and (len(filename) > 0):
+            path = QFileInfo(filename).path()
 
         image_types = [ '*.jpg', '*.bmp', '*.png', '*.pgm', '*.ppm', '*.ppm', '*.tif', '*.gif' ]
         video_types = [ '*.mp4', '*.mpg', '*.mpeg', '*.avi', '*.mov', '*.vob' ]
@@ -369,9 +230,9 @@ class MainWindow(QMainWindow):
 
         for pattern in image_types:
             if fnmatch.fnmatch(fname, pattern):
-                return self.addImageFile(fname)
+                return self.labeltool.addImageFile(fname)
 
-        return self.addVideoFile(fname)
+        return self.labeltool.addVideoFile(fname)
 
 
     ###

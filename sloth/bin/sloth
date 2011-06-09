@@ -2,6 +2,7 @@
 import sys
 from PyQt4.QtGui import QApplication
 from sloth.gui import MainWindow
+from sloth.core.labeltool import LabelTool
 from sloth import APP_NAME, ORGANIZATION_NAME, ORGANIZATION_DOMAIN
 
 if __name__ == '__main__':
@@ -10,7 +11,9 @@ if __name__ == '__main__':
     app.setOrganizationDomain(ORGANIZATION_DOMAIN)
     app.setApplicationName(APP_NAME)
 
-    wnd = MainWindow(sys.argv[1:])
+    labeltool = LabelTool(sys.argv[1:])
+
+    wnd = MainWindow(labeltool)
     wnd.show()
 
     sys.exit(app.exec_())
