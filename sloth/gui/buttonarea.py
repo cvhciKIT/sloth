@@ -88,7 +88,6 @@ class ButtonArea(QWidget):
         self.vlayout = QVBoxLayout()
         self.vlayout.setAlignment(Qt.AlignTop)
         self.vlayout.addWidget(self.label_button_list)
-        self.setLayout(self.vlayout)
         self.stateChanged.connect(self.stateHasChanged)
 
         if labels is not None:
@@ -99,6 +98,7 @@ class ButtonArea(QWidget):
                 self.add_hotkey(choice, name, hotkey)
         self.init_button_lists()
         self.vlayout.addStretch(1)
+        self.setLayout(self.vlayout)
 
     def stateHasChanged(self, state):
         print "stateChanged(object)", state
