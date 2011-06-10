@@ -11,17 +11,14 @@ import okapy.videoio as okv
 TypeRole, DataRole, ImageRole = [Qt.UserRole + i + 1 for i in range(3)]
 
 class ModelItem:
-    def __init__(self, model, parent=None):
-        self.model_    = model
-        self.parent_   = parent
+    def __init__(self):
         self.children_ = []
+        self._pindex   = None
+        self.model_    = None
+        self.parent_   = None
 
-    def children(self, index=None):
-        if index is None:
-            return self.children_
-        else:
-            # return tuple child, index of the child
-            return [(child, index.child(row, 0)) for row, child in enumerate(self.children_)]
+    def children(self):
+        return self.children_
 
     def model(self):
         return self.model_
@@ -35,65 +32,109 @@ class ModelItem:
         except:
             return -1
 
-    def data(self, index, role):
+    def data(self, role=Qt.DisplayRole, column=0):
         return QVariant()
 
+    def setParent(self, parent):
+        assert self.parent_ is None
+        self.parent_ = parent
+
+    def setIndex(self, index):
+        assert self._pindex is None
+        self._pindex = QPersistentModelIndex(index)
+        if index.isValid():
+            self.model_ = index.model()
+
+    def pindex(self):
+        assert self._pindex is not None
+        return self._pindex
+
+    def index(self):
+        assert self._pindex is not None
+        return QModelIndex(self._pindex)
+
+    def parentIndex(self):
+        if self.parent_ is not None:
+            return self.parent_.index()
+        else:
+            return QModelIndex()
+
+    def appendChild(self, item):
+        next_row = len(self.children_)
+        index = self.index()
+        self.model_.beginInsertRows(index, next_row, next_row)
+        self.children_.append(item)
+        item.setParent(self)
+        self.model_.endInsertRows()
+        item.setIndex(self.model_.index(next_row, 0, index))
+
+    def deleteAllChildren(self):
+        for child in self.children_:
+            child.deleteAllChildren()
+
+        self.model_.beginRemoveRows(self.index(), 0, len(self.children_) - 1)
+        self.children_ = []
+        self.model_.endRemoveRows()
+
+    def deleteChild(self, arg):
+        if arg isinstance ModelItem:
+            self.deleteChild(self.children_.index(item))
+        else:
+            if pos < 0 or pos >= len(self.children_):
+                raise IndexError("child index out of range")
+            self.children_[pos].deleteAllChildren()
+            self.model_.beginRemoveRows(self.index(), pos, pos)
+            del self.children_[pos]
+            self.model_.endRemoveRows()
+
 class RootModelItem(ModelItem):
-    def __init__(self, model, files):
-        ModelItem.__init__(self, model, None)
-        self.files_ = files
+    def __init__(self, model, fileinfos):
+        ModelItem.__init__(self)
+        self.model_ = model
+        self.setIndex(QModelIndex())
 
-        for file in files:
-            fmi = FileModelItem.create(self.model(), file, self)
-            self.children_.append(fmi)
+        for fileinfo in fileinfos:
+            appendFileItem(fileinfo)
 
-    def addFile(self, file):
-        fmi = FileModelItem.create(self.model(), file, self)
-        next = len(self.children_)
-        index = QModelIndex()
-        self.model().beginInsertRows(index, next, next)
-        self.children_.append(fmi)
-        self.files_.append(file)
-        self.model().endInsertRows()
-        self.model().emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"), index, index)
+    def appendFileItem(self, fileinfo):
+        item = FileModelItem.create(fileinfo, self)
+        self.appendChild(item)
 
 class FileModelItem(ModelItem):
-    def __init__(self, model, file, parent):
-        ModelItem.__init__(self, model, parent)
-        self.file_ = file
+    def __init__(self, fileinfo):
+        ModelItem.__init__(self)
+        self._fileinfo = fileinfo
 
     def filename(self):
-        return self.file_['filename']
+        return self._fileinfo['filename']
 
-    def fullpath(self):
-        return os.path.join(self.model().basedir(), self.filename())
-
-    def data(self, index, role):
+    def data(self, role=Qt.DisplayRole, column=0):
         if role == Qt.DisplayRole and index.column() == 0:
             return os.path.basename(self.filename())
-        return ModelItem.data(self, index, role)
+        return ModelItem.data(self, role, column)
 
     @staticmethod
-    def create(model, file, parent):
-        if file['type'] == 'image':
-            return ImageFileModelItem(model, file, parent)
-        elif file['type'] == 'video':
-            return VideoFileModelItem(model, file, parent)
+    def create(fileinfo, parent):
+        if fileinfo['type'] == 'image':
+            return ImageFileModelItem(fileinfo, parent)
+        elif fileinfo['type'] == 'video':
+            return VideoFileModelItem(fileinfo, parent)
 
 class ImageFileModelItem(FileModelItem):
-    def __init__(self, model, file, parent):
-        FileModelItem.__init__(self, model, file, parent)
+    def __init__(self, fileinfo):
+        FileModelItem.__init__(self, fileinfo)
 
-        for ann in file['annotations']:
-            ami = AnnotationModelItem(self.model(), ann, self)
-            self.children_.append(ami)
+        for ann in fileinfo['annotations']:
+            item = AnnotationModelItem(ann)
+            self.appendChild(item)
 
     def addAnnotation(self, ann):
-        self.file_['annotations'].append(ann)
-        ami = AnnotationModelItem(self.model(), ann, self)
-        self.children_.append(ami)
+        self.fileinfo_['annotations'].append(ann)
+        item = AnnotationModelItem(ann)
+        self.appendChild(item)
 
-    def updateAnnotation(self, index, ann):
+    # TODO
+    def updateAnnotation(self, ann):
         child_found = False
         for child in self.children_:
             if child.type() == ann['type']:
@@ -106,62 +147,44 @@ class ImageFileModelItem(FileModelItem):
             raise Exception("No ImageFileModelItem found that could be updated!")
 
     def removeAnnotation(self, pos):
-        del self.file_['annotations'][pos]
-        del self.children_[pos]
+        del self.fileinfo_['annotations'][pos]
+        self.deleteChild(pos)
 
-    def data(self, index, role):
-        if role == ImageRole:
-            return okapy.loadImage(self.fullpath())
+    def data(self, role=Qt.DisplayRole, column=0):
         elif role == DataRole:
-            return self.file_
-        return FileModelItem.data(self, index, role)
+            return self.fileinfo_
+        return FileModelItem.data(self, role)
 
 class VideoFileModelItem(FileModelItem):
-    _cached_vs_filename = None
-    _cached_vs          = None
+    def __init__(self, fileinfo):
+        FileModelItem.__init__(self, fileinfo)
 
-    def __init__(self, model, file, parent):
-        FileModelItem.__init__(self, model, file, parent)
-
-        for frame in file['frames']:
-            fmi = FrameModelItem(self.model(), frame, self)
-            self.children_.append(fmi)
-
-    def updateCachedVideoSource(self):
-        # have only one cached video source at a time for now
-        # TODO: for labeling multiple synchronized videos this should
-        # be modified, otherwise it might be awfully slow
-        VideoFileModelItem._cached_vs = okv.FFMPEGIndexedVideoSource(self.fullpath())
-        VideoFileModelItem._cached_vs_filename = self.fullpath()
-
-    def getFrame(self, frame):
-        if VideoFileModelItem._cached_vs_filename != self.fullpath():
-            self.updateCachedVideoSource()
-
-        VideoFileModelItem._cached_vs.getFrame(frame)
-        return VideoFileModelItem._cached_vs.getImage()
+        for frameinfo in fileinfo['frames']:
+            item = FrameModelItem(frameinfo)
+            self.appendChild(item)
 
 class FrameModelItem(ModelItem):
-    def __init__(self, model, frame, parent):
-        ModelItem.__init__(self, model, parent)
-        self.frame_ = frame
+    def __init__(self, frameinfo):
+        ModelItem.__init__(self)
+        self.frameinfo_ = frameinfo
 
-        for ann in frame['annotations']:
-            ami = AnnotationModelItem(ann, self)
-            self.children_.append(ami)
+        for ann in frameinfo['annotations']:
+            item = AnnotationModelItem(ann)
+            self.appendChild(item)
 
     def framenum(self):
-        return int(self.frame_.get('num', -1))
+        return int(self.frameinfo_.get('num', -1))
 
     def timestamp(self):
-        return float(self.frame_.get('timestamp', -1))
+        return float(self.frameinfo_.get('timestamp', -1))
 
     def addAnnotation(self, ann):
-        self.frame_['annotations'].append(ann)
-        ami = AnnotationModelItem(ann, self)
-        self.children_.append(ami)
+        self.frameinfo_['annotations'].append(ann)
+        item = AnnotationModelItem(ann)
+        self.appendChild(item)
 
-    def updateAnnotation(self, index, ann):
+    # TODO
+    def updateAnnotation(self, ann):
         child_found = False
         for child in self.children_:
             if child.type() == ann['type']:
@@ -174,19 +197,17 @@ class FrameModelItem(ModelItem):
             raise Exception("No FrameModelItem found that could be updated!")
 
     def removeAnnotation(self, pos):
-        del self.frame_['annotations'][pos]
-        del self.children_[pos]
+        del self.frameinfo_['annotations'][pos]
+        self.deleteChild(pos)
 
-    def data(self, index, role):
+    def data(self, index, role=Qt.DisplayRole, column=0):
         if role == Qt.DisplayRole and index.column() == 0:
             return "%d / %.3f" % (self.framenum(), self.timestamp())
-        elif role == ImageRole:
-            return self.parent().getFrame(self.frame_['num'])
         return QVariant()
 
 class AnnotationModelItem(ModelItem):
-    def __init__(self, model, annotation, parent):
-        ModelItem.__init__(self, model, parent)
+    def __init__(self, annotation):
+        ModelItem.__init__(self)
         self.annotation_ = annotation
         # dummy key/value so that pyqt does not convert the dict
         # into a QVariantMap while communicating with the Views
@@ -195,7 +216,7 @@ class AnnotationModelItem(ModelItem):
         for key, value in annotation.iteritems():
             if key == None:
                 continue
-            self.children_.append(KeyValueModelItem(model, key, self))
+            self.addChild(KeyValueModelItem(key))
 
     def type(self):
         return self.annotation_['type']
@@ -210,38 +231,35 @@ class AnnotationModelItem(ModelItem):
                 print key, value
                 if not key in self.annotation_:
                     print "not in annotation: ", key
-                    next = len(self.children_)
-                    index.model().beginInsertRows(index, next, next)
-                    self.children_.append(KeyValueModelItem(key, self))
-                    index.model().endInsertRows()
-                    index.model().emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"), index, index)
+                    self.addChild(KeyValueModelItem(key))
                     self.annotation_[key] = data[key]
 
             for key in self.annotation_.keys():
                 if not key in data:
-                    #TODO beginRemoveRows, delete child, etc.
+                    # TODO
+                    self.deleteChild(???)
                     del self.annotation_[key]
                 else:
                     self.annotation_[key] = data[key]
+                    # TODO: Emit data changed signal
+
             print "new annotation:", self.annotation_
-            index.model().dataChanged.emit(index, index.sibling(index.row(), 0))
+            # TODO: Emit data changed signal
             return True
         return False
 
-    def data(self, index, role):
-        if role == Qt.DisplayRole and index.column() == 0:
+    def data(self, index, role=Qt.DisplayRole, column=0):
+        if role == Qt.DisplayRole and column == 0:
             return self.type()
         elif role == TypeRole:
             return self.type()
         elif role == DataRole:
-            #print "data():", self.annotation_
             return self.annotation_
-
         return QVariant()
 
-    def setValue(self, key, value, index):
+    def setValue(self, key, value):
         self.annotation_[key] = value
-        index.model().dataChanged.emit(index, index.sibling(index.row(), 0))
+        # TODO: Emit data changed signal
 
     def value(self, key):
         return self.annotation_[key]
@@ -250,16 +268,16 @@ class AnnotationModelItem(ModelItem):
         return self.annotation_.has_key(key)
 
 class KeyValueModelItem(ModelItem):
-    def __init__(self, model, key, parent):
-        ModelItem.__init__(self, model, parent)
-        self.key_  = key
+    def __init__(self, key):
+        ModelItem.__init__(self)
+        self._key = key
 
-    def data(self, index, role):
+    def data(self, role=Qt.DisplayRole, column=0):
         if role == Qt.DisplayRole:
-            if index.column() == 0:
-                return self.key_
-            elif index.column() == 1:
-                return self.parent().value(self.key_)
+            if column == 0:
+                return self._key
+            elif column == 1:
+                return self.parent().value(self._key)
             else:
                 return QVariant()
 
