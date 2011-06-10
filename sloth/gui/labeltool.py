@@ -11,7 +11,7 @@ from sloth.gui.annotationscene import *
 from sloth.gui.frameviewer import *
 from sloth.gui.controlbuttons import *
 from sloth.conf import config
-from sloth.annotations.model import AnnotationTreeView
+from sloth.annotations.model import *
 from sloth import APP_NAME, ORGANIZATION_DOMAIN, VERSION
 import okapy.videoio as okv
 
