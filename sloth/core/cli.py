@@ -9,39 +9,6 @@ import sys
 from optparse import make_option, OptionParser
 import sloth
 
-from sloth.annotations.container import *
-import shutil
-
-# command dictionary str -> Command
-_commands = {}
-
-def get_commands():
-    """
-    Returns a dictionary mapping command names to their callback applications.
-
-    This works by looking for a management.commands package in django.core, and
-    in each installed application -- if a commands package exists, all commands
-    in that package are registered.
-
-    Core commands are always included. If a settings module has been
-    specified, user-defined commands will also be included, the
-    startproject command will be disabled, and the startapp command
-    will be modified to use the directory in which the settings module appears.
-
-    The dictionary is in the format {command_name: app_name}. Key-value
-    pairs from this dictionary can then be used in calls to
-    load_command_class(app_name, command_name)
-
-    If a specific version of a command must be loaded (e.g., with the
-    startapp command), the instantiated module can be placed in the
-    dictionary in place of the application name.
-
-    The dictionary is cached on the first call and reused on subsequent
-    calls.
-    """
-    global _commands
-    return _commands
-
 
 class CommandError(Exception):
     """
@@ -227,53 +194,6 @@ class NoArgsCommand(BaseCommand):
         raise NotImplementedError()
 
 
-class ConvertCommand(BaseCommand):
-    """
-    Converts a label file from one file format to another.
-    """
-    args = '<input> <output>'
-    help = __doc__.strip()
-
-    def handle(self, *args, **options):
-        if len(args) != 2:
-            raise CommandError("Expect exactly 2 arguments.")
-
-        print "Converting labels from %s to %s" % args
-
-class CreateConfigCommand(BaseCommand):
-    """
-    Creates a configuration file with default values.
-    """
-    args = '<output>'
-    help = __doc__.strip()
-    option_list = BaseCommand.option_list + (
-        make_option('-f', '--force', action='store_true', default=False,
-            help='Overwrite the file if it exists.'),
-    )
-
-    def handle(self, *args, **options):
-        if len(args) != 1:
-            raise CommandError("Expect exactly 1 argument.")
-
-        template_dir = os.path.join(sloth.__path__[0], 'conf', 'template')
-        config_template = os.path.join(template_dir, 'config_template.py')
-        target = args[0]
-
-        if os.path.exists(target) and not options['force']:
-            sys.stderr.write("Error: %s exists.  Use -f to overwrite.\n" % target)
-            return
-
-        try:
-            shutil.copy(config_template, target)
-            _make_writeable(target)
-        except OSError, e:
-            sys.stderr.write("Notice: Couldn't set permission bits on %s.\n" % target)
-
-
-_commands['convert'] = ConvertCommand()
-_commands['createconfig'] = CreateConfigCommand()
-
-
 class LaxOptionParser(OptionParser):
     """
     An option parser that doesn't raise any errors on unknown options.
@@ -342,7 +262,7 @@ class CommandLineUtility(object):
         """
         Returns the script's main help text, as a string.
         """
-        usage = ['',"Type '%s help <subcommand>' for help on a specific subcommand." % self.prog_name,'']
+        usage = ['', "Type '%s help <subcommand>' for help on a specific subcommand." % self.prog_name,'']
         usage.append('Available subcommands:')
         commands = get_commands().keys()
         commands.sort()
@@ -383,12 +303,12 @@ class CommandLineUtility(object):
             options, args = parser.parse_args(self.argv)
             #handle_default_options(options)
         except:
-            pass # Ignore any option errors at this point.
+            pass  # Ignore any option errors at this point.
 
         try:
             subcommand = self.argv[1]
         except IndexError:
-            subcommand = 'help' # Display help if no arguments were given.
+            subcommand = 'help'  # Display help if no arguments were given.
 
         if subcommand == 'help':
             if len(args) > 2:
@@ -408,17 +328,4 @@ class CommandLineUtility(object):
         else:
             self.fetch_command(subcommand).run_from_argv(self.argv)
 
-
-def _make_writeable(filename):
-    """
-    Make sure that the file is writeable. Useful if our source is
-    read-only.
-    """
-    import stat
-    if sys.platform.startswith('java'):
-        # On Jython there is no os.access()
-        return
-    if not os.access(filename, os.W_OK):
-        st = os.stat(filename)
-        new_permissions = stat.S_IMODE(st.st_mode) | stat.S_IWUSR
-        os.chmod(filename, new_permissions)
+from commands import get_commands
