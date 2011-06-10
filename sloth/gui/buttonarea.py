@@ -3,6 +3,15 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from sloth.gui.floatinglayout import FloatingLayout
 
+def unique_list(seq):
+    seen = {}
+    result = []
+    for item in seq:
+        if item in seen: continue
+        seen[item] = 1
+        result.append(item)
+    return result
+
 class ButtonListWidget(QGroupBox):
     selectionChanged = pyqtSignal(object)
 
@@ -134,9 +143,10 @@ class ButtonArea(QWidget):
         self.label_properties[label_name] = properties
         for key, value in properties.iteritems():
             if self.properties.has_key(key):
-                self.properties[key] |= set(value)
+                self.properties[key] = unique_list(self.properties[key] + value)
+
             else:
-                self.properties[key] = set(value)
+                self.properties[key] = value
 
     def get_checked_label_button(self):
         return self.label_button_list.get_checked_button()
