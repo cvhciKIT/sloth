@@ -57,22 +57,22 @@ Usage:
 Write your own visualization item
 =================================
 
-The base class for all visualization item is the :ref:`AnnotationGraphicsItem <AnnotationGraphicsItem>` class.  In
+The base class for all visualization item is the :ref:`BaseItem <BaseItem>` class.  In
 order to write a new visualization item, you need to subclass this class and implement
 a few functions.
 
 The easiest way to visualize your label is by using some of the existing Qt graphics items.  You can initialize
 it in the constructor and be done::
 
-    class MyRectItem(AnnotationGraphicsItem):
+    class MyRectItem(BaseItem):
         def __init__(self, index, data):
             # Call the base class constructor.  This will make the label
             # data available in self.data
-            AnnotationGraphicsItem.__init__(self, index, data)
+            BaseItem.__init__(self, index, data)
 
             # Create a new rect item and add it as child item. 
             # This defines what will be displayed for this label, since the
-            # AnnotationGraphicsItem base class itself does not display anything.
+            # BaseItem base class itself does not display anything.
             x, y, width, height = map(float, (self.data['x'],     self.data['y'],
                                               self.data['width'], self.data['height']))
             self.rect_ = QGraphicsRectItem(x, y, width, height, self)
@@ -119,9 +119,9 @@ to clone.
 
 Example::
 
-    class MyRectItem(AnnotationGraphicsItem):
+    class MyRectItem(BaseItem):
         def __init__(self, index, data):
-            AnnotationGraphicsItem.__init__(self, index, data)
+            BaseItem.__init__(self, index, data)
             self.color_ = Qt.Red
 
         def setColor(self, color):
