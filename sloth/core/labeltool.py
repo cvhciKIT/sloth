@@ -73,11 +73,11 @@ class LabelTool(QObject):
             self.container_.load(fname)
             msg = "Successfully loaded %s (%d files, %d annotations)" % \
                     (fname, self.container_.numFiles(), self.container_.numAnnotations())
-            self.model_ = AnnotationModel(self.container_.annotations())
+            self._model = AnnotationModel(self.container_.annotations())
             if self.container_.filename() is not None:
-                self.model_.setBasedir(os.path.dirname(self.container_.filename()))
+                self._model.setBasedir(os.path.dirname(self.container_.filename()))
             else:
-                self.model_.setBasedir("")
+                self._model.setBasedir("")
         except Exception, e:
             msg = "Error: Loading failed (%s)" % str(e)
         self.statusMessage.emit(msg)
@@ -94,11 +94,11 @@ class LabelTool(QObject):
                 self.container_ = newcontainer
 
             self.container_.save(fname)
-            #self.model_.writeback() # write back changes that are cached in the model itself, e.g. mask updates
+            #self._model.writeback() # write back changes that are cached in the model itself, e.g. mask updates
             msg = "Successfully saved %s (%d files, %d annotations)" % \
                     (fname, self.container_.numFiles(), self.container_.numAnnotations())
             success = True
-            self.model_.setDirty(False)
+            self._model.setDirty(False)
         except Exception as e:
             msg = "Error: Saving failed (%s)" % str(e)
 
@@ -114,12 +114,14 @@ class LabelTool(QObject):
             fname = settings.value("LastFile").toString()
             if (not fname.isEmpty()) and QFile.exists(fname):
                 self.loadAnnotations(fname)
+            else:
+                self.clearAnnotations()
 
     def clearAnnotations(self):
         self.container_.clear()
-        self.model_ = AnnotationModel(self.container_.annotations())
-        self.model_.setBasedir("")
-        self.statusMessage.emit()
+        self._model = AnnotationModel(self.container_.annotations())
+        self._model.setBasedir("")
+        self.statusMessage.emit('')
         self.annotationsLoaded.emit()
 
     def getCurrentFilename(self):
@@ -130,24 +132,24 @@ class LabelTool(QObject):
     ###########################################################################
 
     def model(self):
-        return self.model_
+        return self._model
 
     def gotoNext(self):
         # TODO move this to the scene
-        if self.model_ is not None and self.current_index_ is not None:
-            next_index = self.model_.getNextIndex(self.current_index_)
+        if self._model is not None and self.current_index_ is not None:
+            next_index = self._model.getNextIndex(self.current_index_)
             self.setCurrentIndex(next_index)
 
     def gotoPrevious(self):
         # TODO move this to the scene
-        if self.model_ is not None and self.current_index_ is not None:
-            prev_index = self.model_.getPreviousIndex(self.current_index_)
+        if self._model is not None and self.current_index_ is not None:
+            prev_index = self._model.getPreviousIndex(self.current_index_)
             self.setCurrentIndex(prev_index)
 
     def updateModified(self):
         """update all GUI elements which depend on the state of the model,
         e.g. whether it has been modified since the last save"""
-        #self.ui.action_Add_Image.setEnabled(self.model_ is not None)
+        #self.ui.action_Add_Image.setEnabled(self._model is not None)
         # TODO also disable/enable other items
         #self.ui.actionSave.setEnabled(self.annotations.dirty())
         #self.setWindowModified(self.annotations.dirty())
@@ -172,7 +174,7 @@ class LabelTool(QObject):
                 'type': 'image',
                 'annotations': [ ],
             }
-        self.model_.root_.addFile(fileitem)
+        self._model.root_.addFile(fileitem)
 
     def addVideoFile(self, fname):
         fileitem = {
@@ -195,4 +197,4 @@ class LabelTool(QObject):
             fileitem['frames'].append(frame)
             i += 1
 
-        self.model_.root_.addFile(fileitem)
+        self._model.root_.addFile(fileitem)
