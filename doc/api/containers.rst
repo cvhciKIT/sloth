@@ -2,8 +2,6 @@
 Containers
 ==========
 
-.. module:: sloth.annotations.container
-
 This details the default containers that come with sloth.
 
 The following containers are available in :mod:`sloth.annotations.container`:
