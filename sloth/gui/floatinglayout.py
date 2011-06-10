@@ -20,7 +20,10 @@ class FloatingLayout(QLayout):
     def takeAt(self, index):
         if index < 0 or index >= len(self._items):
             return None
-        return self._items[index]
+        else:
+            item = self._items[index]
+            del self._items[index]
+            return item
 
     def sizeHint(self):
         return self.minimumSize()
