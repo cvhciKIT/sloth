@@ -62,7 +62,7 @@ class BaseItem(QAbstractGraphicsShapeItem):
     def setTextBackgroundBrush(self, brush=None):
         """
         Sets the brush to be used to fill the background region
-        behind the text. Set to None to not draw a background 
+        behind the text. Set to None to not draw a background
         (leave transparent).
         """
         self.text_bg_brush_ = brush
@@ -115,7 +115,8 @@ class BaseItem(QAbstractGraphicsShapeItem):
 
         # display the text for this item
         text = self._compile_text()
-        rect = painter.boundingRect(QRect(5, 5, 1000, 1000), Qt.AlignTop | Qt.AlignLeft, text)
+        rect = painter.boundingRect(
+                QRect(5, 5, 1000, 1000), Qt.AlignTop | Qt.AlignLeft, text)
 
         # fill background region behind text
         if self.text_bg_brush_ is not None:
@@ -263,7 +264,7 @@ class RectItem(BaseItem):
     def boundingRect(self):
         return QRectF(QPointF(0, 0), self.rect_.size())
 
-    def paint(self, painter, option, widget = None):
+    def paint(self, painter, option, widget=None):
         BaseItem.paint(self, painter, option, widget)
 
         pen = self.pen()
@@ -280,10 +281,10 @@ class RectItem(BaseItem):
         step = 1
         if event.modifiers() & Qt.ShiftModifier:
             step = 5
-        ds = { Qt.Key_Left:  (-step, 0),
-               Qt.Key_Right: (step, 0),
-               Qt.Key_Up:    (0, -step),
-               Qt.Key_Down:  (0, step),
+        ds = {Qt.Key_Left:  (-step, 0),
+              Qt.Key_Right: (step, 0),
+              Qt.Key_Up:    (0, -step),
+              Qt.Key_Down:  (0, step),
              }.get(event.key(), None)
         if ds is not None:
             if event.modifiers() & Qt.ControlModifier:
@@ -301,7 +302,7 @@ class ControlItem(QGraphicsItem):
         # always have the same size
         self.setFlags(QGraphicsItem.ItemIgnoresTransformations)
 
-    def paint(self, painter, option, widget = None):
+    def paint(self, painter, option, widget=None):
         color = QColor('black')
         color.setAlpha(200)
         painter.fillRect(self.boundingRect(), color)
