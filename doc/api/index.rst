@@ -13,7 +13,7 @@ API Reference
 annotationmodel
 ===============
 
-.. automodule:: annotations.model
+.. automodule:: sloth.annotations.model
 .. autoclass:: AnnotationModel
     :members:
     :undoc-members:
@@ -44,14 +44,14 @@ annotationmodel
 
 annotation.container
 ====================
-.. automodule:: annotations.container
+.. automodule:: sloth.annotations.container
 .. autoclass:: AnnotationContainer
     :members:
 
 annotationscene
 ===============
 
-.. automodule:: annotationscene
+.. automodule:: sloth.annotationscene
 .. autoclass:: AnnotationScene
     :members:
     :undoc-members:
@@ -59,7 +59,7 @@ annotationscene
 items
 =====
 
-.. automodule:: items
+.. automodule:: sloth.items
 
 .. _AnnotationGraphicsItem:
 
