@@ -189,7 +189,7 @@ class MainWindow(QMainWindow):
                 "%s - Load Annotations" % APP_NAME, path,
                 "%s annotation files (%s)" % (APP_NAME, format_str))
         if not fname.isEmpty():
-            self.loadAnnotations(fname)
+            self.labeltool.loadAnnotations(fname)
 
     def fileSave(self):
         filename = self.labeltool.getCurrentFilename()
