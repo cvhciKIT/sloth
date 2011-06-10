@@ -44,11 +44,11 @@ class FloatingLayout(QLayout):
             w = max(w, item.minimumSize().width())
             h = max(h, item.minimumSize().height())
 
-        current_width = self.contentsRect().width()
+        left, top, right, bottom = self.getContentsMargins()
+        current_width = self.contentsRect().width() - left - right
         if current_width > 0:
             h = self.heightForWidth(current_width)
 
-        left, top, right, bottom = self.getContentsMargins()
         w += left + right
         h += top + bottom
 
