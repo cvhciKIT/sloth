@@ -1,12 +1,9 @@
 """
 The annotationmodel module contains the classes for the AnnotationModel.
 """
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
-from functools import partial
+from PyQt4.QtGui import QAbstractItemModel, QModelIndex, QPersistentModelIndex, QSortFilterProxyModel, QTreeView, QAbstractItemView, QApplication
+from PyQt4.QtCore import QVariant, Qt, pyqtSignal, SIGNAL
 import os.path
-import okapy
-import okapy.videoio as okv
 
 TypeRole, DataRole, ImageRole = [Qt.UserRole + i + 1 for i in range(3)]
 
@@ -77,14 +74,14 @@ class ModelItem:
         self.model_.endRemoveRows()
 
     def deleteChild(self, arg):
-        if arg isinstance ModelItem:
-            self.deleteChild(self.children_.index(item))
+        if isinstance(arg, ModelItem):
+            self.deleteChild(self.children_.index(arg))
         else:
-            if pos < 0 or pos >= len(self.children_):
+            if arg < 0 or arg >= len(self.children_):
                 raise IndexError("child index out of range")
-            self.children_[pos].deleteAllChildren()
-            self.model_.beginRemoveRows(self.index(), pos, pos)
-            del self.children_[pos]
+            self.children_[arg].deleteAllChildren()
+            self.model_.beginRemoveRows(self.index(), arg, arg)
+            del self.children_[arg]
             self.model_.endRemoveRows()
 
 class RootModelItem(ModelItem):
@@ -94,7 +91,7 @@ class RootModelItem(ModelItem):
         self.setIndex(QModelIndex())
 
         for fileinfo in fileinfos:
-            appendFileItem(fileinfo)
+            self.appendFileItem(fileinfo)
 
     def appendFileItem(self, fileinfo):
         item = FileModelItem.create(fileinfo, self)
@@ -109,7 +106,7 @@ class FileModelItem(ModelItem):
         return self._fileinfo['filename']
 
     def data(self, role=Qt.DisplayRole, column=0):
-        if role == Qt.DisplayRole and index.column() == 0:
+        if role == Qt.DisplayRole and column == 0:
             return os.path.basename(self.filename())
         return ModelItem.data(self, role, column)
 
@@ -151,7 +148,7 @@ class ImageFileModelItem(FileModelItem):
         self.deleteChild(pos)
 
     def data(self, role=Qt.DisplayRole, column=0):
-        elif role == DataRole:
+        if role == DataRole:
             return self.fileinfo_
         return FileModelItem.data(self, role)
 
@@ -494,14 +491,6 @@ class AnnotationModel(QAbstractItemModel):
             return index.sibling(index.row()-1, 0)
 
         return index
-
-    def asDictList(self):
-        """return annotations as python list of dictionary"""
-        # TODO
-        annotations = []
-        if self.root_ is not None:
-            for child in self.root_.children_:
-                pass
 
 
 
