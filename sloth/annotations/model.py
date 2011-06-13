@@ -1,13 +1,13 @@
 """
 The annotationmodel module contains the classes for the AnnotationModel.
 """
-from PyQt4.QtGui import QAbstractItemModel, QModelIndex, QPersistentModelIndex, QSortFilterProxyModel, QTreeView, QAbstractItemView, QApplication
-from PyQt4.QtCore import QVariant, Qt, pyqtSignal, SIGNAL
+from PyQt4.QtGui import QTreeView, QSortFilterProxyModel, QAbstractItemView
+from PyQt4.QtCore import QObject, QModelIndex, QPersistentModelIndex, QAbstractItemModel, QVariant, Qt, pyqtSignal
 import os.path
 
-TypeRole, DataRole, ImageRole = [Qt.UserRole + i + 1 for i in range(3)]
+ItemRole, TypeRole, DataRole, ImageRole = [Qt.UserRole + i + 1 for i in range(4)]
 
-class ModelItem:
+class ModelItem(QObject):
     def __init__(self):
         self.children_ = []
         self._pindex   = None
@@ -21,16 +21,14 @@ class ModelItem:
         return self.model_
 
     def parent(self):
+        assert self.parent_ != self
         return self.parent_
 
-    def rowOfChild(self, item):
-        try:
-            return self.children_.index(item)
-        except:
-            return -1
-
     def data(self, role=Qt.DisplayRole, column=0):
-        return QVariant()
+        if role == ItemRole:
+            return QVariant(self)
+        else:
+            return QVariant()
 
     def setParent(self, parent):
         assert self.parent_ is None
@@ -46,8 +44,13 @@ class ModelItem:
         assert self._pindex is not None
         return self._pindex
 
-    def index(self):
+    def index(self, column=0):
+        # TODO: The two columns can probably be handled better...
+        # Maybe use a list of indices, with the second being QModelIndex()
+        # for everything except the KeyValueModelItems?
         assert self._pindex is not None
+        if column != 0:
+            return QModelIndex()
         return QModelIndex(self._pindex)
 
     def parentIndex(self):
@@ -63,7 +66,8 @@ class ModelItem:
         self.children_.append(item)
         item.setParent(self)
         self.model_.endInsertRows()
-        item.setIndex(self.model_.index(next_row, 0, index))
+        item_index = self.model().createIndex(next_row, 0, item)
+        item.setIndex(item_index)
 
     def deleteAllChildren(self):
         for child in self.children_:
@@ -72,6 +76,12 @@ class ModelItem:
         self.model_.beginRemoveRows(self.index(), 0, len(self.children_) - 1)
         self.children_ = []
         self.model_.endRemoveRows()
+
+    def delete(self):
+        if self.parent() is None:
+            raise RuntimeError("Trying to delete orphan")
+        else:
+            self.parent().deleteChild(self)
 
     def deleteChild(self, arg):
         if isinstance(arg, ModelItem):
@@ -85,17 +95,24 @@ class ModelItem:
             self.model_.endRemoveRows()
 
 class RootModelItem(ModelItem):
-    def __init__(self, model, fileinfos):
+    def __init__(self, model):
         ModelItem.__init__(self)
         self.model_ = model
         self.setIndex(QModelIndex())
 
-        for fileinfo in fileinfos:
-            self.appendFileItem(fileinfo)
+    def appendChild(self, item):
+        if isinstance(item, FileModelItem):
+            ModelItem.appendChild(self, item)
+        else:
+            raise TypeError("Only FileModelItems can be attached to RootModelItem")
 
     def appendFileItem(self, fileinfo):
-        item = FileModelItem.create(fileinfo, self)
+        item = FileModelItem.create(fileinfo)
         self.appendChild(item)
+
+    def appendFileItems(self, fileinfos):
+        for fileinfo in fileinfos:
+            self.appendFileItem(fileinfo)
 
 class FileModelItem(ModelItem):
     def __init__(self, fileinfo):
@@ -111,13 +128,16 @@ class FileModelItem(ModelItem):
         return ModelItem.data(self, role, column)
 
     @staticmethod
-    def create(fileinfo, parent):
+    def create(fileinfo):
         if fileinfo['type'] == 'image':
-            return ImageFileModelItem(fileinfo, parent)
+            return ImageFileModelItem(fileinfo)
         elif fileinfo['type'] == 'video':
-            return VideoFileModelItem(fileinfo, parent)
+            return VideoFileModelItem(fileinfo)
 
-class ImageFileModelItem(FileModelItem):
+class ImageModelItem(ModelItem):
+    pass
+
+class ImageFileModelItem(FileModelItem, ImageModelItem):
     def __init__(self, fileinfo):
         FileModelItem.__init__(self, fileinfo)
 
@@ -137,7 +157,7 @@ class ImageFileModelItem(FileModelItem):
             if child.type() == ann['type']:
                 if (child.has_key('id') and ann.has_key('id') and child.value('id') == ann['id']) or (not child.has_key('id') and not ann.has_key('id')):
                     ann[None] = None
-                    child.setData(index, QVariant(ann), DataRole)
+                    #child.setData(index, QVariant(ann), DataRole)
                     child_found = True
                     break
         if not child_found:
@@ -160,7 +180,7 @@ class VideoFileModelItem(FileModelItem):
             item = FrameModelItem(frameinfo)
             self.appendChild(item)
 
-class FrameModelItem(ModelItem):
+class FrameModelItem(ImageModelItem):
     def __init__(self, frameinfo):
         ModelItem.__init__(self)
         self.frameinfo_ = frameinfo
@@ -187,7 +207,7 @@ class FrameModelItem(ModelItem):
             if child.type() == ann['type']:
                 if (child.has_key('id') and ann.has_key('id') and child.value('id') == ann['id']) or (not child.has_key('id') and not ann.has_key('id')):
                     ann[None] = None
-                    child.setData(index, QVariant(ann), DataRole)
+                    #child.setData(index, QVariant(ann), DataRole)
                     child_found = True
                     break
         if not child_found:
@@ -234,7 +254,7 @@ class AnnotationModelItem(ModelItem):
             for key in self.annotation_.keys():
                 if not key in data:
                     # TODO
-                    self.deleteChild(???)
+                    self.deleteChild() # TODO
                     del self.annotation_[key]
                 else:
                     self.annotation_[key] = data[key]
@@ -285,72 +305,11 @@ class AnnotationModel(QAbstractItemModel):
     def __init__(self, annotations, parent=None):
         QAbstractItemModel.__init__(self, parent)
         self.annotations_ = annotations
-        self.root_        = RootModelItem(self, self.annotations_)
         self.dirty_       = False
-        self.basedir_     = ""
+        self.root_        = RootModelItem(self)
+        self.root_.appendFileItems(self.annotations_)
 
-    def dirty(self):
-        return self.dirty_
-
-    def setDirty(self, dirty=True):
-        previous = self.dirty_
-        self.dirty_ = dirty
-        if previous != dirty:
-            self.dirtyChanged.emit(dirty)
-
-    def basedir(self):
-        return self.basedir_
-
-    def setBasedir(self, dir):
-        print "setBasedir: \"" + dir + "\"" 
-        self.basedir_ = dir
-
-    def itemFromIndex(self, index):
-        index = QModelIndex(index)  # explicitly convert from QPersistentModelIndex
-        if index.isValid():
-            return index.internalPointer()
-        return self.root_
-
-    def index(self, row, column, parent_idx=QModelIndex()):
-        parent_item = self.itemFromIndex(parent_idx)
-        if row >= len(parent_item.children()):
-            return QModelIndex()
-        child_item = parent_item.children()[row]
-        return self.createIndex(row, column, child_item)
-
-    def imageIndex(self, index):
-        """return index that points to the (maybe parental) image/frame object"""
-        if not index.isValid():
-            return QModelIndex()
-
-        index = QModelIndex(index)  # explicitly convert from QPersistentModelIndex
-        item = self.itemFromIndex(index)
-        if isinstance(item, ImageFileModelItem) or \
-           isinstance(item, FrameModelItem):
-            return index
-
-        # try with next hierarchy up
-        return self.imageIndex(index.parent())
-
-    def data(self, index, role=Qt.DisplayRole):
-        if not index.isValid():
-            return QVariant()
-        index = QModelIndex(index)  # explicitly convert from QPersistentModelIndex
-
-        #if role == Qt.CheckStateRole:
-            #item = self.itemFromIndex(index)
-            #if item.isCheckable(index.column()):
-                #return QVariant(Qt.Checked if item.visible() else Qt.Unchecked)
-            #return QVariant()
-
-        #if role != Qt.DisplayRole and role != GraphicsItemRole and role != DataRole:
-            #return QVariant()
-
-        ## non decorational behaviour
-
-        item = self.itemFromIndex(index)
-        return item.data(index, role)
-
+    # QAbstractItemModel overloads
     def columnCount(self, index=QModelIndex()):
         return 2
 
@@ -359,108 +318,34 @@ class AnnotationModel(QAbstractItemModel):
         return len(item.children())
 
     def parent(self, index):
+        if index is None:
+            return QModelIndex()
         item = self.itemFromIndex(index)
         parent = item.parent()
         if parent is None:
             return QModelIndex()
-        grandparent = parent.parent()
-        if grandparent is None:
+        return parent.index()
+
+    def index(self, row, column, parent_idx=QModelIndex()):
+        parent = self.itemFromIndex(parent_idx)
+        if row >= len(parent.children()):
             return QModelIndex()
-        row = grandparent.rowOfChild(parent)
-        assert row != -1
-        return self.createIndex(row, 0, parent)
+        return parent.children()[row].index(column)
 
-    def mapToSource(self, index):
-        return index
-
-    def flags(self, index):
-        return Qt.ItemIsEnabled | Qt.ItemIsSelectable
+    def data(self, index, role=Qt.DisplayRole):
         if not index.isValid():
-            return Qt.ItemIsEnabled
-        index = QModelIndex(index)  # explicitly convert from QPersistentModelIndex
+            return QVariant()
         item = self.itemFromIndex(index)
-        return item.flags(index)
+        return item.data(role, index.column())
 
     def setData(self, index, value, role=Qt.EditRole):
         if not index.isValid():
             return False
-        index = QModelIndex(index)  # explicitly convert from QPersistentModelIndex
+        item = self.itemFromIndex(index)
+        return item.setData(index, value, role)
 
-        #if role == Qt.EditRole:
-            #item = self.itemFromIndex(index)
-            #item.data_ = value
-            #self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"), index, index)
-            #return True
-
-        if role == Qt.CheckStateRole:
-            item = self.itemFromIndex(index)
-            checked = (value.toInt()[0] == Qt.Checked)
-            item.set_visible(checked)
-            self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"), index, index)
-            return True
-
-        if role == Qt.EditRole:
-            item = self.itemFromIndex(index)
-            return item.setData(index, value, role)
-
-        if role == DataRole:
-            item = self.itemFromIndex(index)
-            print "setData", value.toPyObject()
-            if item.setData(index, value, role):
-                self.setDirty(True)
-                # TODO check why this is needed (should be done by item.setData() anyway)
-                self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"), index, index.sibling(index.row(), 1))
-            return True
-
-        return False
-
-    def addAnnotation(self, imageidx, ann={}, **kwargs):
-        ann.update(kwargs)
-        print "addAnnotation", ann
-        imageidx = QModelIndex(imageidx)  # explicitly convert from QPersistentModelIndex
-        item = self.itemFromIndex(imageidx)
-        assert isinstance(item, FrameModelItem) or isinstance(item, ImageFileModelItem)
-
-        next = len(item.children())
-        self.beginInsertRows(imageidx, next, next)
-        item.addAnnotation(ann)
-        self.endInsertRows()
-        self.setDirty(True)
-
-        self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"), imageidx, imageidx)
-
-        return True
-
-    def updateAnnotation(self, imageidx, ann={}, **kwargs):
-        ann.update(kwargs)
-        print "updateAnnotation", ann
-        imageidx = QModelIndex(imageidx)  # explicitly convert from QPersistentModelIndex
-        item = self.itemFromIndex(imageidx)
-        assert isinstance(item, FrameModelItem) or isinstance(item, ImageFileModelItem)
-
-        item.updateAnnotation(imageidx, ann)
-        self.setDirty(True)
-
-        self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"), imageidx, imageidx)
-
-        return True
-
-    def removeAnnotation(self, annidx):
-        annidx = QModelIndex(annidx)  # explicitly convert from QPersistentModelIndex
-        item = self.itemFromIndex(annidx)
-        assert isinstance(item, AnnotationModelItem)
-
-        parent = item.parent_
-        parentidx = annidx.parent()
-        assert isinstance(parent, FrameModelItem) or isinstance(parent, ImageFileModelItem)
-
-        pos = parent.rowOfChild(item)
-        self.beginRemoveRows(parentidx, pos, pos)
-        parent.removeAnnotation(pos)
-        self.endRemoveRows()
-        self.setDirty(True)
-
-        return True
+    def flags(self, index):
+        return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
     def headerData(self, section, orientation, role):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
@@ -468,30 +353,20 @@ class AnnotationModel(QAbstractItemModel):
             elif section == 1: return QVariant("Value")
         return QVariant()
 
-    def getNextIndex(self, index):
-        """returns index of next *image* or *frame*"""
-        if not index.isValid():
-            return QModelIndex()
+    # Own methods
+    def dirty(self):
+        return self.dirty_
 
-        assert index == self.imageIndex(index)
-        num_images = self.rowCount(index.parent())
-        if index.row() < num_images - 1:
-            return index.sibling(index.row()+1, 0)
+    def setDirty(self, dirty=True):
+        if dirty != self.dirty_:
+            self.dirty_ = dirty
+            self.dirtyChanged.emit(self.dirty_)
 
-        return index
-
-    def getPreviousIndex(self, index):
-        # TODO bool parameter to disable wrap around
-        """returns index of previous *image* or *frame*"""
-        if not index.isValid():
-            return QModelIndex()
-
-        assert index == self.imageIndex(index)
-        if index.row() > 0:
-            return index.sibling(index.row()-1, 0)
-
-        return index
-
+    def itemFromIndex(self, index):
+        index = QModelIndex(index)  # explicitly convert from QPersistentModelIndex
+        if index.isValid():
+            return index.internalPointer()
+        return self.root_
 
 
 #######################################################################################
@@ -527,6 +402,7 @@ class AnnotationSortFilterProxyModel(QSortFilterProxyModel):
     def insertFile(self, filename):
         return self.sourceModel().insertFile(filename)
 
+
 #######################################################################################
 # view
 #######################################################################################
@@ -542,18 +418,13 @@ class AnnotationTreeView(QTreeView):
         self.setAlternatingRowColors(True)
         self.setEditTriggers(QAbstractItemView.SelectedClicked)
         self.setSortingEnabled(True)
-#        self.setStyleSheet("""
-#            QTreeView { selection-color: blue; show-decoration-selected: 1; }
-#            QTreeView::item:alternate { background-color: #EEEEEE; }
-#        """)
-
-        self.connect(self, SIGNAL("expanded(QModelIndex)"), self.expanded)
+        self.expanded.connect(self.onExpanded)
 
     def resizeColumns(self):
         for column in range(self.model().columnCount(QModelIndex())):
             self.resizeColumnToContents(column)
 
-    def expanded(self):
+    def onExpanded(self):
         self.resizeColumns()
 
     def setModel(self, model):
@@ -563,11 +434,7 @@ class AnnotationTreeView(QTreeView):
     def keyPressEvent(self, event):
         ## handle deletions of items
         if event.key() == Qt.Key_Delete:
-            index = self.currentIndex()
-            if not index.isValid():
-                return
-            parent = self.model().parent(index)
-            self.model().removeRow(index.row(), parent)
+            self.model().itemFromIndex(self.currentindex()).delete()
 
         ## it is important to use the keyPressEvent of QAbstractItemView, not QTreeView
         QAbstractItemView.keyPressEvent(self, event)
@@ -576,76 +443,3 @@ class AnnotationTreeView(QTreeView):
         QTreeView.rowsInserted(self, index, start, end)
         self.resizeColumns()
 #        self.setCurrentIndex(index.child(end, 0))
-
-
-def someAnnotations():
-    annotations = []
-    annotations.append({'type': 'rect',
-                        'x': '10',
-                        'y': '20',
-                        'w': '40',
-                        'h': '60'})
-    annotations.append({'type': 'rect',
-                        'x': '80',
-                        'y': '20',
-                        'w': '40',
-                        'h': '60'})
-    annotations.append({'type': 'point',
-                        'x': '30',
-                        'y': '30'})
-    annotations.append({'type': 'point',
-                        'x': '100',
-                        'y': '100'})
-    return annotations
-
-def defaultAnnotations():
-    annotations = []
-    import os, glob
-    if os.path.exists('/cvhci/data/multimedia/bigbangtheory/still_images/s1e1/'):
-        images = glob.glob('/cvhci/data/multimedia/bigbangtheory/still_images/s1e1/*.png')
-        images.sort()
-        for fname in images:
-            file = {
-                'filename': fname,
-                'type': 'image',
-                'annotations': someAnnotations()
-            }
-            annotations.append(file)
-
-    for i in range(5):
-        file = {
-            'filename': 'file%d.png' % i,
-            'type': 'image',
-            'annotations': someAnnotations()
-        }
-        annotations.append(file)
-    for i in range(5):
-        file = {
-            'filename': 'file%d.avi' % i,
-            'type':     'video',
-            'frames': [],
-        }
-        for j in range(5):
-            frame = {
-                'num':       '%d' % j,
-                'timestamp': '123456.789',
-                'annotations': someAnnotations()
-            }
-            file['frames'].append(frame)
-        annotations.append(file)
-    return annotations
-
-
-if __name__ == '__main__':
-    import sys
-    app = QApplication(sys.argv)
-    annotations = defaultAnnotations()
-
-    model = AnnotationModel(annotations)
-
-    wnd = AnnotationTreeView()
-    wnd.setModel(model)
-    wnd.show()
-
-    sys.exit(app.exec_())
-
