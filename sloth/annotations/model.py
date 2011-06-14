@@ -376,6 +376,7 @@ class AnnotationModel(QAbstractItemModel):
     def dirty(self):
         return self._dirty
 
+    # TODO: This might need to be updated from within the ModelItems when they change
     def setDirty(self, dirty=True):
         if dirty != self._dirty:
             self._dirty = dirty
