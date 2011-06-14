@@ -113,8 +113,8 @@ class LabelTool(QObject):
         except IndexError:
             subcommand = None
 
-        # handle commands
-        if subcommand == 'help' or subcommand == '-h' or subcommand == '--help':
+        # handle commands and command line arguments
+        if subcommand == 'help':
             if len(args) > 2:
                 self.fetch_command(args[2]).print_help(self.prog_name, args[2])
                 sys.exit(0)
@@ -122,6 +122,15 @@ class LabelTool(QObject):
                 sys.stdout.write(self.main_help_text() + '\n')
                 parser.print_lax_help()
                 sys.exit(1)
+
+        elif self.argv[1:] == ['--version']:
+            # LaxOptionParser already takes care of printing the version.
+            sys.exit(0)
+
+        elif self.argv[1:] in (['--help'], ['-h']):
+            sys.stdout.write(self.main_help_text() + '\n')
+            parser.print_lax_help()
+            sys.exit(0)
 
         elif subcommand in get_commands():
             self.fetch_command(subcommand).run_from_argv(self.argv)
