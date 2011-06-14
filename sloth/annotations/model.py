@@ -10,7 +10,7 @@ ItemRole, TypeRole, DataRole, ImageRole = [Qt.UserRole + i + 1 for i in range(4)
 class ModelItem:
     def __init__(self):
         self.children_ = []
-        self._pindex   = None
+        self._pindex   = []
         self.model_    = None
         self.parent_   = None
 
@@ -30,44 +30,51 @@ class ModelItem:
         else:
             return QVariant()
 
-    def setParent(self, parent):
-        assert self.parent_ is None
-        self.parent_ = parent
+    def getPosOfChild(self, item):
+        return self.children_.index(item)
+
+    def getChildAt(self, pos):
+        return self.children_[pos]
 
     def getPreviousSibling(self):
-        if self.parent_ is not None:
-            c = self.parent().children()
-            row = c.index(self)
+        p = self.parent()
+        if p is not None:
+            row = p.getPosOfChild(self)
             if row > 0:
-                return c[row-1]
+                return p.getChildAt(row-1)
         return None
 
     def getNextSibling(self):
-        if self.parent_ is not None:
-            c = self.parent().children()
-            row = c.index(self)
-            if row < len(c) - 2:
-                return c[row+1]
+        p = self.parent()
+        if p is not None:
+            row = p.getPosOfChild(self)
+            if row < len(p.children()) - 2:
+                return p.getChildAt(row+1)
         return None
 
-    def setIndex(self, index):
-        assert self._pindex is None
-        self._pindex = QPersistentModelIndex(index)
-        if index.isValid():
-            self.model_ = index.model()
+    def _attachToModel(self, model):
+        assert self.model() is None
+        assert self.parent() is not None
+        assert self.parent().model() is not None
 
-    def pindex(self):
-        assert self._pindex is not None
-        return self._pindex
+        self.model_ = model
+        p = self.parent()
+
+        # Find out own index
+        index = self.model().createIndex(p.getPosOfChild(self), 0, self)
+        self._pindex = [QPersistentModelIndex(index), QPersistentModelIndex()]
+
+        # Recurse
+        for item in self.children():
+            item._attachToModel(model)
+
+    def pindex(self, column=0):
+        assert self._pindex
+        return self._pindex[column]
 
     def index(self, column=0):
-        # TODO: The two columns can probably be handled better...
-        # Maybe use a list of indices, with the second being QModelIndex()
-        # for everything except the KeyValueModelItems?
-        assert self._pindex is not None
-        if column != 0:
-            return QModelIndex()
-        return QModelIndex(self._pindex)
+        assert self._pindex
+        return QModelIndex(self._pindex[column])
 
     def parentIndex(self):
         if self.parent_ is not None:
@@ -75,15 +82,27 @@ class ModelItem:
         else:
             return QModelIndex()
 
+    def getNDescendants(self):
+        n = 1
+        for item in self.children_:
+            n += item.getNDescendants()
+        return n
+
     def appendChild(self, item):
-        next_row = len(self.children_)
-        index = self.index()
-        self.model_.beginInsertRows(index, next_row, next_row)
-        self.children_.append(item)
-        item.setParent(self)
-        self.model_.endInsertRows()
-        item_index = self.model().createIndex(next_row, 0, item)
-        item.setIndex(item_index)
+        assert isinstance(item, ModelItem)
+        assert item.model() is None
+        assert item.parent() is None
+
+        if self.model() is not None:
+            next_row = len(self.children_)
+            self.model().beginInsertRows(self.index(), next_row, next_row)
+
+        item.parent_ = self
+        self.children().append(item)
+
+        if self.model() is not None:
+            item._attachToModel(self.model())
+            self.model().endInsertRows()
 
     def deleteAllChildren(self):
         for child in self.children_:
@@ -114,7 +133,7 @@ class RootModelItem(ModelItem):
     def __init__(self, model):
         ModelItem.__init__(self)
         self.model_ = model
-        self.setIndex(QModelIndex())
+        self._pindex = [QPersistentModelIndex(), QPersistentModelIndex()]
 
     def appendChild(self, item):
         if isinstance(item, FileModelItem):
@@ -233,8 +252,8 @@ class FrameModelItem(ImageModelItem):
         del self.frameinfo_['annotations'][pos]
         self.deleteChild(pos)
 
-    def data(self, index, role=Qt.DisplayRole, column=0):
-        if role == Qt.DisplayRole and index.column() == 0:
+    def data(self, role=Qt.DisplayRole, column=0):
+        if role == Qt.DisplayRole and column == 0:
             return "%d / %.3f" % (self.framenum(), self.timestamp())
         return QVariant()
 
@@ -249,7 +268,7 @@ class AnnotationModelItem(ModelItem):
         for key, value in annotation.iteritems():
             if key == None:
                 continue
-            self.addChild(KeyValueModelItem(key))
+            self.appendChild(KeyValueModelItem(key))
 
     def type(self):
         return self.annotation_['type']
@@ -281,7 +300,7 @@ class AnnotationModelItem(ModelItem):
             return True
         return False
 
-    def data(self, index, role=Qt.DisplayRole, column=0):
+    def data(self, role=Qt.DisplayRole, column=0):
         if role == Qt.DisplayRole and column == 0:
             return self.type()
         elif role == TypeRole:
