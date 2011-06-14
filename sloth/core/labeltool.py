@@ -1,4 +1,10 @@
 #!/usr/bin/python
+"""
+This is the core labeltool module.
+
+
+"""
+
 import sys, os
 import fnmatch
 from optparse import OptionParser
@@ -7,53 +13,161 @@ from PyQt4.QtCore import *
 from sloth.annotations.model import *
 from sloth.annotations.container import AnnotationContainerFactory, AnnotationContainer
 from sloth.conf import config
+from sloth.core.cli import LaxOptionParser, BaseCommand
 from sloth.core.utils import import_callable
 from sloth import VERSION
+from sloth.core.commands import get_commands
 
 import okapy.videoio as okv
 
 class LabelTool(QObject):
+    """
+    This is the main label tool object.  It stores the state of the tool, i.e.
+    the current annotations, the containers responsible for loading and saving
+    etc.
+
+    It is also responsible for parsing command line options, call respective
+    commands or start the gui.
+    """
+    usage = "\n" + \
+            "  %prog [options] [filename]\n\n" + \
+            "  %prog subcommand [options] [args]\n"
+
+    help_text = "Sloth can be started in two different ways.  If the first argument\n" + \
+                "is any of the following subcommands, this command is executed.  Otherwise the\n" + \
+                "sloth GUI is started and the optionally given label file is loaded.\n" + \
+                "\n" + \
+                "Type '%s help <subcommand>' for help on a specific subcommand.\n\n"
+
     # Signals
     statusMessage       = pyqtSignal(QString)
     annotationsLoaded   = pyqtSignal()
     pluginLoaded        = pyqtSignal(QAction)
     currentIndexChanged = pyqtSignal(QModelIndex)
 
-    def __init__(self, argv, parent=None):
+    # TODO clean up --> prefix all members with _
+    def __init__(self, parent=None):
+        """
+        Constructor.  Does nothing except resetting everything.
+        Initialize the labeltool with either::
+
+            execute_from_commandline()
+
+        or::
+
+            init_from_config()
+        """
         QObject.__init__(self, parent)
 
-        # Parse command line options
-        options, args = self.parseCommandLineOptions(argv)
+        self.container_factory_ = None
+        self.container_ = AnnotationContainer()
+        self.current_index_ = None
+        self._model = None
 
+    def main_help_text(self):
+        """
+        Returns the labeltool's main help text, as a string.
+
+        Includes a list of all available subcommands.
+        """
+        usage = self.help_text % self.prog_name
+        usage += 'Available subcommands:\n'
+        commands = get_commands().keys()
+        commands.sort()
+        for cmd in commands:
+            usage += '  %s\n' % cmd
+        return usage
+
+    def execute_from_commandline(self, argv=None):
+        """
+        TODO
+        """
+        self.argv = argv or sys.argv[:]
+        self.prog_name = os.path.basename(argv[0])
+
+        # Preprocess options to extract --settings and --pythonpath.
+        # These options could affect the commands that are available, so they
+        # must be processed early.
+        parser = LaxOptionParser(usage=self.usage,
+                                 version=VERSION,
+                                 option_list=BaseCommand.option_list)
+        try:
+            options, args = parser.parse_args(self.argv)
+            handle_default_options(options)
+        except:
+            pass  # Ignore any option errors at this point.
+
+        # Handle options common for all commands
+        # and initialize the labeltool object from
+        # the configuration (default config if not specified)
+        if options.pythonpath:
+            sys.path.insert(0, options.pythonpath)
+        self.init_from_config(options.config)
+
+        # check for commands
+        try:
+            subcommand = self.argv[1]
+        except IndexError:
+            subcommand = None
+
+        # handle commands
+        if subcommand == 'help' or subcommand == '-h' or subcommand == '--help':
+            if len(args) > 2:
+                self.fetch_command(args[2]).print_help(self.prog_name, args[2])
+                sys.exit(0)
+            else:
+                sys.stdout.write(self.main_help_text() + '\n')
+                parser.print_lax_help()
+                sys.exit(1)
+
+        elif subcommand in get_commands():
+            self.fetch_command(subcommand).run_from_argv(self.argv)
+            sys.exit(0)
+
+        else:
+            # no command is matching, then -- if not empty --
+            # args must contain a labelfile filename to load
+            if len(args) > 1:
+                self.loadAnnotations(args[1])
+            else:
+                self.clearAnnotations()
+
+    def fetch_command(self, subcommand):
+        """
+        Tries to fetch the given subcommand, printing a message with the
+        appropriate command called from the command line if it can't be found.
+        """
+        try:
+            app_name = get_commands()[subcommand]
+        except KeyError:
+            sys.stderr.write("Unknown command: %r\nType '%s help' for usage.\n" % \
+                (subcommand, self.prog_name))
+            sys.exit(1)
+        if isinstance(app_name, BaseCommand):
+            # If the command is already loaded, use it directly.
+            klass = app_name
+        else:
+            # TODO implement load_command_class
+            klass = load_command_class(app_name, subcommand)
+        return klass
+
+    def init_from_config(self, config_module_path=""):
+        """
+        Initializes the labeltool from the given configuration
+        at ``config_module_path``.  If empty, the default configuration
+        is used.
+        """
         # Load config
-        if options.config != "":
-            config.update(options.config)
+        if config_module_path:
+            config.update(config_module_path)
 
         # Instatiate container factory
         self.container_factory_ = AnnotationContainerFactory(config.CONTAINERS)
-        self.container_         = AnnotationContainer()
-        self.current_index_     = None
-
-        # Load annotation file
-        if len(args) > 0:
-            self.loadInitialFile(args[0])
-        else:
-            self.loadInitialFile()
 
         # Load plugins
         self.loadPlugins(config.PLUGINS)
 
-    def parseCommandLineOptions(self, argv):
-        usage   = "Usage: %prog [-c config.py] [annotation_file]"
-        version = "%prog " + VERSION
-
-        parser = OptionParser(usage=usage, version=version)
-        parser.add_option("-c", "--config", action="store", type="string", default="", help="Configuration file.")
-
-        return parser.parse_args(argv)
-
     def loadPlugins(self, plugins):
-        # TODO clean up, make configurable
         self.plugins_ = []
         for plugin in plugins:
             if type(plugin) == str:
@@ -80,6 +194,7 @@ class LabelTool(QObject):
                 self._model.setBasedir("")
         except Exception, e:
             msg = "Error: Loading failed (%s)" % str(e)
+
         self.statusMessage.emit(msg)
         self.annotationsLoaded.emit()
 
@@ -104,18 +219,6 @@ class LabelTool(QObject):
 
         self.statusMessage.emit(msg)
         return success
-
-    def loadInitialFile(self, fname=None):
-        if fname is not None:
-            if QFile.exists(fname):
-                self.loadAnnotations(fname)
-        else:
-            settings = QSettings()
-            fname = settings.value("LastFile").toString()
-            if (not fname.isEmpty()) and QFile.exists(fname):
-                self.loadAnnotations(fname)
-            else:
-                self.clearAnnotations()
 
     def clearAnnotations(self):
         self.container_.clear()

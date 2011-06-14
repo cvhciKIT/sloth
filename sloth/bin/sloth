@@ -11,7 +11,8 @@ if __name__ == '__main__':
     app.setOrganizationDomain(ORGANIZATION_DOMAIN)
     app.setApplicationName(APP_NAME)
 
-    labeltool = LabelTool(sys.argv[1:])
+    labeltool = LabelTool()
+    labeltool.execute_from_commandline(sys.argv)
 
     wnd = MainWindow(labeltool)
     wnd.show()
