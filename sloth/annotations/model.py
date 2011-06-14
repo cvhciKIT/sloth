@@ -302,7 +302,6 @@ class AnnotationModelItem(ModelItem):
         return False
 
     def data(self, role=Qt.DisplayRole, column=0):
-        print "Annotation:", self._annotation
         if role == Qt.DisplayRole and column == 0:
             return self.type()
         elif role == TypeRole:
@@ -332,7 +331,6 @@ class KeyValueModelItem(ModelItem):
         return self._key
 
     def data(self, role=Qt.DisplayRole, column=0):
-        print "KeyValue:", self._key
         if role == Qt.DisplayRole:
             if column == 0:
                 return self._key
