@@ -17,7 +17,10 @@ class LabelTool(QObject):
     statusMessage       = pyqtSignal(QString)
     annotationsLoaded   = pyqtSignal()
     pluginLoaded        = pyqtSignal(QAction)
-    currentIndexChanged = pyqtSignal(QModelIndex)
+    # This still emits a QModelIndex, because Qt cannot handle emiting
+    # a derived class instead of a base class, i.e. ImageFileModelItem
+    # instead of ModelItem
+    currentImageChanged = pyqtSignal(QModelIndex)
 
     def __init__(self, argv, parent=None):
         QObject.__init__(self, parent)
@@ -32,7 +35,8 @@ class LabelTool(QObject):
         # Instatiate container factory
         self.container_factory_ = AnnotationContainerFactory(config.CONTAINERS)
         self.container_         = AnnotationContainer()
-        self.current_index_     = None
+        self._current_image     = None
+        self._model             = None
 
         # Load annotation file
         if len(args) > 0:
@@ -68,18 +72,18 @@ class LabelTool(QObject):
     ###___________________________________________________________________________________________
     def loadAnnotations(self, fname):
         fname = str(fname) # convert from QString
-        try:
-            self.container_ = self.container_factory_.create(fname)
-            self.container_.load(fname)
-            msg = "Successfully loaded %s (%d files, %d annotations)" % \
-                    (fname, self.container_.numFiles(), self.container_.numAnnotations())
-            self._model = AnnotationModel(self.container_.annotations())
-            if self.container_.filename() is not None:
-                self._model.setBasedir(os.path.dirname(self.container_.filename()))
-            else:
-                self._model.setBasedir("")
-        except Exception, e:
-            msg = "Error: Loading failed (%s)" % str(e)
+        #try:
+        self.container_ = self.container_factory_.create(fname)
+        self.container_.load(fname)
+        msg = "Successfully loaded %s (%d files, %d annotations)" % \
+                (fname, self.container_.numFiles(), self.container_.numAnnotations())
+        self._model = AnnotationModel(self.container_.annotations())
+            #if self.container_.filename() is not None:
+                #self._model.setBasedir(os.path.dirname(self.container_.filename()))
+            #else:
+                #self._model.setBasedir("")
+        #except Exception, e:
+            #msg = "Error: Loading failed (%s)" % str(e)
         self.statusMessage.emit(msg)
         self.annotationsLoaded.emit()
 
@@ -120,7 +124,7 @@ class LabelTool(QObject):
     def clearAnnotations(self):
         self.container_.clear()
         self._model = AnnotationModel(self.container_.annotations())
-        self._model.setBasedir("")
+        #self._model.setBasedir("")
         self.statusMessage.emit('')
         self.annotationsLoaded.emit()
 
@@ -136,15 +140,15 @@ class LabelTool(QObject):
 
     def gotoNext(self):
         # TODO move this to the scene
-        if self._model is not None and self.current_index_ is not None:
-            next_index = self._model.getNextIndex(self.current_index_)
-            self.setCurrentIndex(next_index)
+        if self._model is not None and self._current_image is not None:
+            next_image = self._current_image.getNextSibling()
+            self.setCurrentImage(next_image)
 
     def gotoPrevious(self):
         # TODO move this to the scene
-        if self._model is not None and self.current_index_ is not None:
-            prev_index = self._model.getPreviousIndex(self.current_index_)
-            self.setCurrentIndex(prev_index)
+        if self._model is not None and self._current_image is not None:
+            prev_image = self._current_image.getPreviousSibling()
+            self.setCurrentImage(prev_image)
 
     def updateModified(self):
         """update all GUI elements which depend on the state of the model,
@@ -155,15 +159,23 @@ class LabelTool(QObject):
         #self.setWindowModified(self.annotations.dirty())
         pass
 
-    def currentIndex(self):
-        return self.current_index_
+    def currentImage(self):
+        return self._current_image
 
-    def setCurrentIndex(self, index):
-        assert index.isValid()
-        newindex = index.model().imageIndex(index)
-        if newindex.isValid() and newindex != self.current_index_:
-            self.current_index_ = newindex
-            self.currentIndexChanged.emit(self.current_index_)
+    def setCurrentImage(self, image):
+        if isinstance(image, QModelIndex):
+            image = self._model.itemFromIndex(image)
+        while (image is not None) and (not isinstance(image, ImageModelItem)):
+            image = image.parent()
+        if image is None:
+            raise RuntimeError("Tried to set current image to item that has no Image or Frame as parent!")
+        if image != self._current_image:
+            self._current_image = image
+            self.currentImageChanged.emit(self._current_image.index())
+
+    def getImage(self, item):
+        # TODO: Also handle video frames
+        return self.container_.loadImage(item.filename())
 
     def getAnnotationFilePatterns(self):
         return self.container_factory_.patterns()

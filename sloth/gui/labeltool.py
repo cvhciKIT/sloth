@@ -46,19 +46,19 @@ class MainWindow(QMainWindow):
             self.setWindowTitle("%s - Unnamed[*]" % APP_NAME)
         self.treeview.setModel(self.labeltool.model())
         self.scene.setModel(self.labeltool.model())
-        self.treeview.selectionModel().currentChanged.connect(self.labeltool.setCurrentIndex)
+        self.treeview.selectionModel().currentChanged.connect(self.labeltool.setCurrentImage)
 
-    def onCurrentIndexChanged(self, new_index):
-        self.scene.setRoot(new_index)
+    def onCurrentImageChanged(self, index):
+        self.scene.setRoot(index)
 
+        new_image = self.labeltool.currentImage()
         # TODO: This info should be obtained from AnnotationModel or LabelTool
-        item = self.labeltool.model().itemFromIndex(new_index)
-        if isinstance(item, FrameModelItem):
+        if isinstance(new_image, FrameModelItem):
             self.controls.setFrameNumAndTimestamp(item.framenum(), item.timestamp())
-        elif isinstance(item, ImageFileModelItem):
-            self.controls.setFilename(os.path.basename(item.filename()))
-        if new_index != self.treeview.currentIndex():
-            self.treeview.setCurrentIndex(new_index)
+        elif isinstance(new_image, ImageFileModelItem):
+            self.controls.setFilename(os.path.basename(new_image.filename()))
+        if new_image.index() != self.treeview.currentIndex():
+            self.treeview.setCurrentIndex(new_image.index())
 
     def initShortcuts(self):
         # TODO clean up, make configurable
@@ -91,7 +91,7 @@ class MainWindow(QMainWindow):
     def setupGui(self):
         self.ui = uic.loadUi(os.path.join(GUIDIR, "labeltool.ui"), self)
 
-        self.scene = AnnotationScene(items=config.ITEMS, inserters=config.INSERTERS)
+        self.scene = AnnotationScene(self.labeltool, items=config.ITEMS, inserters=config.INSERTERS)
         self.view = GraphicsView(self)
         self.view.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
         self.view.setScene(self.scene)
@@ -141,7 +141,7 @@ class MainWindow(QMainWindow):
         self.labeltool.pluginLoaded.       connect(self.onPluginLoaded)
         self.labeltool.statusMessage.      connect(self.onStatusMessage)
         self.labeltool.annotationsLoaded.  connect(self.onAnnotationsLoaded)
-        self.labeltool.currentIndexChanged.connect(self.onCurrentIndexChanged)
+        self.labeltool.currentImageChanged.connect(self.onCurrentImageChanged)
 
     def loadApplicationSettings(self):
         settings = QSettings()
