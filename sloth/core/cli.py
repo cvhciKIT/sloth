@@ -97,7 +97,7 @@ class BaseCommand(object):
 
     def __init__(self):
         #self.style = color_style()
-        pass
+        self.labeltool = None
 
     def usage(self, subcommand):
         """

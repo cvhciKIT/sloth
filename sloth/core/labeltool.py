@@ -161,6 +161,10 @@ class LabelTool(QObject):
         else:
             # TODO implement load_command_class
             klass = load_command_class(app_name, subcommand)
+
+        # set labeltool reference
+        klass.labeltool = self
+
         return klass
 
     def init_from_config(self, config_module_path=""):
