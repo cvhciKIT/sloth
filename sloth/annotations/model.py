@@ -2,12 +2,12 @@
 The annotationmodel module contains the classes for the AnnotationModel.
 """
 from PyQt4.QtGui import QTreeView, QSortFilterProxyModel, QAbstractItemView
-from PyQt4.QtCore import QObject, QModelIndex, QPersistentModelIndex, QAbstractItemModel, QVariant, Qt, pyqtSignal
+from PyQt4.QtCore import QModelIndex, QPersistentModelIndex, QAbstractItemModel, QVariant, Qt, pyqtSignal
 import os.path
 
 ItemRole, TypeRole, DataRole, ImageRole = [Qt.UserRole + i + 1 for i in range(4)]
 
-class ModelItem(QObject):
+class ModelItem:
     def __init__(self):
         self.children_ = []
         self._pindex   = None
