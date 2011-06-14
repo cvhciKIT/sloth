@@ -195,10 +195,11 @@ class ImageModelItem(ModelItem):
 
 class ImageFileModelItem(FileModelItem, ImageModelItem):
     def __init__(self, fileinfo):
+        annotations = fileinfo.get("annotations", [])
         if fileinfo.has_key("annotations"):
-            ImageModelItem.__init__(self, fileinfo["annotations"])
             del fileinfo["annotations"]
         FileModelItem.__init__(self, fileinfo)
+        ImageModelItem.__init__(self, annotations)
 
     def data(self, role=Qt.DisplayRole, column=0):
         if role == DataRole:
