@@ -12,13 +12,12 @@ class Config:
 
     def update(self, module_path):
         try:
+            oldpath = sys.path
             module_path = os.path.abspath(module_path)
             if module_path.endswith('.py'):
                 module_path = module_path[:-3]
             module_dir, module_name = os.path.split(module_path)
-            oldpath = sys.path
             sys.path = [module_dir, ] + sys.path
-            print sys.path
             mod = importlib.import_module(module_name)
         except ImportError, e:
             raise ImportError("Could not import configuration '%s' (Is it on sys.path?): %s" % (module_path, e))
