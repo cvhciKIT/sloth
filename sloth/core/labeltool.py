@@ -297,7 +297,7 @@ class LabelTool(QObject):
                 'type': 'image',
                 'annotations': [ ],
             }
-        self._model.root_.addFile(fileitem)
+        self._model._root.appendFileItem(fileitem)
 
     def addVideoFile(self, fname):
         fileitem = {
@@ -320,4 +320,4 @@ class LabelTool(QObject):
             fileitem['frames'].append(frame)
             i += 1
 
-        self._model.root_.addFile(fileitem)
+        self._model._root.appendFileItem(fileitem)
