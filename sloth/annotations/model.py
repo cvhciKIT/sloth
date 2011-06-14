@@ -13,6 +13,7 @@ class ModelItem:
         self._pindex   = []
         self.model_    = None
         self.parent_   = None
+        self._columns  = 1
 
     def children(self):
         return self.children_
@@ -57,6 +58,7 @@ class ModelItem:
 
     def _attachToModel(self, model):
         assert self.model() is None
+        assert not self._pindex
         assert self.parent() is not None
         assert self.parent().model() is not None
 
@@ -64,8 +66,12 @@ class ModelItem:
         p = self.parent()
 
         # Find out own index
-        index = self.model().createIndex(p.getPosOfChild(self), 0, self)
-        self._pindex = [QPersistentModelIndex(index), QPersistentModelIndex()]
+        for i in range(self.model().columnCount()):
+            if i < self._columns:
+                index = self.model().createIndex(p.getPosOfChild(self), i, self)
+            else:
+                index = QModelIndex()
+            self._pindex.append(QPersistentModelIndex(index))
 
         # Recurse
         for item in self.children():
@@ -318,6 +324,7 @@ class KeyValueModelItem(ModelItem):
     def __init__(self, key):
         ModelItem.__init__(self)
         self._key = key
+        self._columns = 2
 
     def data(self, role=Qt.DisplayRole, column=0):
         if role == Qt.DisplayRole:
