@@ -1,7 +1,10 @@
+import sys
+import sloth
+import shutil
+from pprint import pprint
 from sloth.core.cli import BaseCommand, CommandError
 from sloth.annotations.container import *
 from optparse import make_option, OptionParser
-import shutil
 
 class ConvertCommand(BaseCommand):
     """
@@ -14,7 +17,9 @@ class ConvertCommand(BaseCommand):
         if len(args) != 2:
             raise CommandError("Expect exactly 2 arguments.")
 
-        raise CommandError("Not implemented")
+        input, output = args[:]
+        self.labeltool.loadAnnotations(input)
+        self.labeltool.saveAnnotations(output)
 
 
 class CreateConfigCommand(BaseCommand):
@@ -58,7 +63,9 @@ class DumpLabelsCommand(BaseCommand):
         if len(args) != 1:
             raise CommandError("Expect exactly 1 argument.")
 
-        raise CommandError("Not implemented")
+        self.labeltool.loadAnnotations(args[0])
+        # TODO add better accessor the the labeltool
+        pprint(self.labeltool.container_.annotations())
 
 
 class AppendFilesCommand(BaseCommand):
@@ -73,7 +80,10 @@ class AppendFilesCommand(BaseCommand):
         if len(args) < 2:
             raise CommandError("Expect at least 2 arguments.")
 
-        raise CommandError("Not implemented")
+        self.labeltool.loadAnnotations(args[0])
+        for filename in args[1:]:
+            self.labeltool.addImageFile(filename)
+        self.labeltool.saveAnnotations(args[0])
 
 
 def _make_writeable(filename):
