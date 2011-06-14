@@ -9,21 +9,21 @@ ItemRole, TypeRole, DataRole, ImageRole = [Qt.UserRole + i + 1 for i in range(4)
 
 class ModelItem:
     def __init__(self):
-        self.children_ = []
+        self._children = []
         self._pindex   = []
-        self.model_    = None
-        self.parent_   = None
+        self._model    = None
+        self._parent   = None
         self._columns  = 1
 
     def children(self):
-        return self.children_
+        return self._children
 
     def model(self):
-        return self.model_
+        return self._model
 
     def parent(self):
-        assert self.parent_ != self
-        return self.parent_
+        assert self._parent != self
+        return self._parent
 
     def data(self, role=Qt.DisplayRole, column=0):
         if role == ItemRole:
@@ -35,10 +35,10 @@ class ModelItem:
         pass
 
     def getPosOfChild(self, item):
-        return self.children_.index(item)
+        return self._children.index(item)
 
     def getChildAt(self, pos):
-        return self.children_[pos]
+        return self._children[pos]
 
     def getPreviousSibling(self):
         p = self.parent()
@@ -62,7 +62,7 @@ class ModelItem:
         assert self.parent() is not None
         assert self.parent().model() is not None
 
-        self.model_ = model
+        self._model = model
         p = self.parent()
 
         # Find out own index
@@ -91,10 +91,10 @@ class ModelItem:
         assert item.parent() is None
 
         if self.model() is not None:
-            next_row = len(self.children_)
+            next_row = len(self._children)
             self.model().beginInsertRows(self.index(), next_row, next_row)
 
-        item.parent_ = self
+        item._parent = self
         self.children().append(item)
 
         if self.model() is not None:
@@ -102,12 +102,12 @@ class ModelItem:
             self.model().endInsertRows()
 
     def deleteAllChildren(self):
-        for child in self.children_:
+        for child in self._children:
             child.deleteAllChildren()
 
-        self.model_.beginRemoveRows(self.index(), 0, len(self.children_) - 1)
-        self.children_ = []
-        self.model_.endRemoveRows()
+        self._model.beginRemoveRows(self.index(), 0, len(self._children) - 1)
+        self._children = []
+        self._model.endRemoveRows()
 
     def delete(self):
         if self.parent() is None:
@@ -117,20 +117,20 @@ class ModelItem:
 
     def deleteChild(self, arg):
         if isinstance(arg, ModelItem):
-            self.deleteChild(self.children_.index(arg))
+            self.deleteChild(self._children.index(arg))
         else:
-            if arg < 0 or arg >= len(self.children_):
+            if arg < 0 or arg >= len(self._children):
                 raise IndexError("child index out of range")
-            self.children_[arg].deleteAllChildren()
-            self.model_.beginRemoveRows(self.index(), arg, arg)
-            del self.children_[arg]
-            self.model_.endRemoveRows()
+            self._children[arg].deleteAllChildren()
+            self._model.beginRemoveRows(self.index(), arg, arg)
+            del self._children[arg]
+            self._model.endRemoveRows()
 
 class RootModelItem(ModelItem):
     def __init__(self, model):
         ModelItem.__init__(self)
-        self.model_ = model
-        self._pindex = [QPersistentModelIndex(), QPersistentModelIndex()]
+        self._model = model
+        self._pindex = [QPersistentModelIndex() for i in range(model.columnCount())]
 
     def appendChild(self, item):
         if isinstance(item, FileModelItem):
@@ -185,7 +185,7 @@ class ImageFileModelItem(FileModelItem, ImageModelItem):
     # TODO
     def updateAnnotation(self, ann):
         child_found = False
-        for child in self.children_:
+        for child in self._children:
             if child.type() == ann['type']:
                 if (child.has_key('id') and ann.has_key('id') and child.value('id') == ann['id']) or (not child.has_key('id') and not ann.has_key('id')):
                     ann[None] = None
@@ -235,7 +235,7 @@ class FrameModelItem(ImageModelItem):
     # TODO
     def updateAnnotation(self, ann):
         child_found = False
-        for child in self.children_:
+        for child in self._children:
             if child.type() == ann['type']:
                 if (child.has_key('id') and ann.has_key('id') and child.value('id') == ann['id']) or (not child.has_key('id') and not ann.has_key('id')):
                     ann[None] = None
@@ -257,10 +257,10 @@ class FrameModelItem(ImageModelItem):
 class AnnotationModelItem(ModelItem):
     def __init__(self, annotation):
         ModelItem.__init__(self)
-        self.annotation_ = annotation
+        self._annotation = annotation
         # dummy key/value so that pyqt does not convert the dict
         # into a QVariantMap while communicating with the Views
-        self.annotation_[None] = None
+        self._annotation[None] = None
 
         for key, value in annotation.iteritems():
             if key == None:
@@ -268,33 +268,33 @@ class AnnotationModelItem(ModelItem):
             self.appendChild(KeyValueModelItem(key))
 
     def type(self):
-        return self.annotation_['type']
+        return self._annotation['type']
 
     def setData(self, value, role, column=0):
         if role == DataRole:
-            print self.annotation_
+            print self._annotation
             value = value.toPyObject()
             print value, type(value)
-            print self.annotation_
+            print self._annotation
             for key, val in value.iteritems():
                 print key, val
-                if not key in self.annotation_:
+                if not key in self._annotation:
                     print "not in annotation: ", key
                     self.appendChild(KeyValueModelItem(key))
-                    self.annotation_[key] = val
+                    self._annotation[key] = val
 
-            for key in self.annotation_.keys():
+            for key in self._annotation.keys():
                 if not key in value:
                     # TODO
                     self.deleteChild()
-                    del self.annotation_[key]
+                    del self._annotation[key]
                 else:
-                    self.annotation_[key] = value[key]
+                    self._annotation[key] = value[key]
                     if self.model() is not None:
                         # TODO: Emit for child with changed key, not for self
                         self.model().dataChanged.emit(self.index(), self.index())
 
-            print "new annotation:", self.annotation_
+            print "new annotation:", self._annotation
             if self.model() is not None:
                 self.model().dataChanged.emit(self.index(), self.index())
             return True
@@ -306,19 +306,19 @@ class AnnotationModelItem(ModelItem):
         elif role == TypeRole:
             return self.type()
         elif role == DataRole:
-            return self.annotation_
+            return self._annotation
         return ModelItem.data(self, role, column)
 
     def setValue(self, key, value):
-        self.annotation_[key] = value
+        self._annotation[key] = value
         if self.model() is not None:
             self.model().dataChanged.emit(self.index(), self.index())
 
     def value(self, key):
-        return self.annotation_[key]
+        return self._annotation[key]
 
     def has_key(self, key):
-        return self.annotation_.has_key(key)
+        return self._annotation.has_key(key)
 
 class KeyValueModelItem(ModelItem):
     def __init__(self, key):
@@ -343,10 +343,10 @@ class AnnotationModel(QAbstractItemModel):
 
     def __init__(self, annotations, parent=None):
         QAbstractItemModel.__init__(self, parent)
-        self.annotations_ = annotations
-        self.dirty_       = False
-        self.root_        = RootModelItem(self)
-        self.root_.appendFileItems(self.annotations_)
+        self._annotations = annotations
+        self._dirty       = False
+        self._root        = RootModelItem(self)
+        self._root.appendFileItems(annotations)
 
     # QAbstractItemModel overloads
     def columnCount(self, index=QModelIndex()):
@@ -394,18 +394,18 @@ class AnnotationModel(QAbstractItemModel):
 
     # Own methods
     def dirty(self):
-        return self.dirty_
+        return self._dirty
 
     def setDirty(self, dirty=True):
-        if dirty != self.dirty_:
-            self.dirty_ = dirty
-            self.dirtyChanged.emit(self.dirty_)
+        if dirty != self._dirty:
+            self._dirty = dirty
+            self.dirtyChanged.emit(self._dirty)
 
     def itemFromIndex(self, index):
         index = QModelIndex(index)  # explicitly convert from QPersistentModelIndex
         if index.isValid():
             return index.internalPointer()
-        return self.root_
+        return self._root
 
 
 #######################################################################################
