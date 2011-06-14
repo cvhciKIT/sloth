@@ -305,7 +305,8 @@ class AnnotationModelItem(ModelItem):
 
     def setValue(self, key, value):
         self.annotation_[key] = value
-        # TODO: Emit data changed signal
+        if self.model() is not None:
+            self.model().dataChanged.emit(self.index(), self.index())
 
     def value(self, key):
         return self.annotation_[key]
