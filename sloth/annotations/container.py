@@ -75,6 +75,8 @@ class AnnotationContainer:
         """
         Load the annotations.
         """
+        if not filename:
+            raise InvalidArgumentException("filename cannot be empty")
         self.annotations_ = self.parseFromFile(filename)
         self.filename_ = filename
 
@@ -88,10 +90,12 @@ class AnnotationContainer:
             "AnnotationContainer.load()"
         )
 
-    def save(self, filename):
+    def save(self, filename=""):
         """
         Save the annotations.
         """
+        if not filename:
+            filename = self.filename()
         self.serializeToFile(filename)
         self.filename_ = filename
 
