@@ -76,18 +76,6 @@ class ModelItem:
         assert self._pindex
         return QModelIndex(self._pindex[column])
 
-    def parentIndex(self):
-        if self.parent_ is not None:
-            return self.parent_.index()
-        else:
-            return QModelIndex()
-
-    def getNDescendants(self):
-        n = 1
-        for item in self.children_:
-            n += item.getNDescendants()
-        return n
-
     def appendChild(self, item):
         assert isinstance(item, ModelItem)
         assert item.model() is None
