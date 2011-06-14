@@ -56,26 +56,26 @@ class ModelItem:
                 return p.getChildAt(row+1)
         return None
 
-    def _attachToModel(self, model):
+    def _attachToModel(self, model, indices):
         assert self.model() is None
         assert not self._pindex
         assert self.parent() is not None
         assert self.parent().model() is not None
 
         self._model = model
-        p = self.parent()
 
-        # Find out own index
         for i in range(self.model().columnCount()):
             if i < self._columns:
-                index = self.model().createIndex(p.getPosOfChild(self), i, self)
+                ind = indices[i]
             else:
-                index = QModelIndex()
-            self._pindex.append(QPersistentModelIndex(index))
+                ind = QModelIndex()
+            self._pindex.append(QPersistentModelIndex(ind))
 
         # Recurse
-        for item in self.children():
-            item._attachToModel(model)
+        for i in range(len(self.children())):
+            item = self.children()[i]
+            cindices = [self.model().createIndex(i, j, item) for j in range(item._columns)]
+            item._attachToModel(model, cindices)
 
     def pindex(self, column=0):
         assert self._pindex
@@ -98,7 +98,8 @@ class ModelItem:
         self.children().append(item)
 
         if self.model() is not None:
-            item._attachToModel(self.model())
+            indices = [self.model().createIndex(next_row, i, item) for i in range(item._columns)]
+            item._attachToModel(self.model(), indices)
             self.model().endInsertRows()
 
     def appendChildren(self, items):
@@ -116,8 +117,10 @@ class ModelItem:
             self.children().append(item)
 
         if self.model() is not None:
-            for item in items:
-                item._attachToModel(self.model())
+            for i in range(len(items)):
+                item = items[i]
+                indices = [self.model().createIndex(next_row+i, j, item) for j in range(item._columns)]
+                item._attachToModel(self.model(), indices)
 
             self.model().endInsertRows()
 
@@ -299,6 +302,7 @@ class AnnotationModelItem(ModelItem):
         return False
 
     def data(self, role=Qt.DisplayRole, column=0):
+        print "Annotation:", self._annotation
         if role == Qt.DisplayRole and column == 0:
             return self.type()
         elif role == TypeRole:
@@ -328,6 +332,7 @@ class KeyValueModelItem(ModelItem):
         return self._key
 
     def data(self, role=Qt.DisplayRole, column=0):
+        print "KeyValue:", self._key
         if role == Qt.DisplayRole:
             if column == 0:
                 return self._key
