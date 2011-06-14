@@ -13,7 +13,7 @@ class AnnotationScene(QGraphicsScene):
 
     # TODO signal itemadded
 
-    def __init__(self, items=None, inserters=None, parent=None):
+    def __init__(self, labeltool, items=None, inserters=None, parent=None):
         super(AnnotationScene, self).__init__(parent)
 
         self.model_     = None
@@ -22,6 +22,7 @@ class AnnotationScene(QGraphicsScene):
         self.debug_     = True
         self.message_   = ""
         self.last_key_  = None
+        self.labeltool_ = labeltool
 
         self.itemfactory_     = Factory(items)
         self.inserterfactory_ = Factory(inserters)
@@ -73,15 +74,20 @@ class AnnotationScene(QGraphicsScene):
         displayed by the scene.  This can be either the index to a frame in a
         video, or to an image.
         """
+        self.image_item_ = None
+        self.image_      = None
+        self.pixmap_     = None
+
         self.root_ = root
         self.clear()
         if not root.isValid():
             return
 
         assert self.root_.model() == self.model_
-        self.image_ = self.root_.data(ImageRole).toPyObject()
-        self.pixmap_ = QPixmap(okapy.guiqt.toQImage(self.image_))
-        item = QGraphicsPixmapItem(self.pixmap_)
+        self.image_item_ = self.model_.itemFromIndex(root)
+        self.image_      = self.labeltool_.getImage(self.image_item_)
+        self.pixmap_     = QPixmap(okapy.guiqt.toQImage(self.image_))
+        item             = QGraphicsPixmapItem(self.pixmap_)
         item.setZValue(-1)
         self.setSceneRect(0, 0, self.pixmap_.width(), self.pixmap_.height())
         self.addItem(item)
@@ -146,7 +152,7 @@ class AnnotationScene(QGraphicsScene):
                 # ignore events outside the scene rect
                 return
             # insert mode
-            self.inserter_.mousePressEvent(event, self.root_)
+            self.inserter_.mousePressEvent(event, self.image_item_)
         else:
             # selection mode
             QGraphicsScene.mousePressEvent(self, event)
@@ -156,7 +162,7 @@ class AnnotationScene(QGraphicsScene):
             print "mouseReleaseEvent", self.sceneRect().contains(event.scenePos()), event.scenePos()
         if self.inserter_ is not None:
             # insert mode
-            self.inserter_.mouseReleaseEvent(event, self.root_)
+            self.inserter_.mouseReleaseEvent(event, self.image_item_)
         else:
             # selection mode
             QGraphicsScene.mouseReleaseEvent(self, event)
@@ -166,7 +172,7 @@ class AnnotationScene(QGraphicsScene):
         #   print "mouseMoveEvent", self.sceneRect().contains(event.scenePos()), event.scenePos()
         if self.inserter_ is not None:
             # insert mode
-            self.inserter_.mouseMoveEvent(event, self.root_)
+            self.inserter_.mouseMoveEvent(event, self.image_item_)
         else:
             # selection mode
             QGraphicsScene.mouseMoveEvent(self, event)
@@ -215,7 +221,7 @@ class AnnotationScene(QGraphicsScene):
 
         if self.inserter_ is not None:
             # insert mode
-            self.inserter_.keyPressEvent(event, self.root_)
+            self.inserter_.keyPressEvent(event, self.image_item_)
         else:
             # selection mode
             if event.key() == Qt.Key_Delete:
@@ -272,7 +278,6 @@ class AnnotationScene(QGraphicsScene):
         pass
 
     def itemFromIndex(self, index):
-        index = index.model().mapToSource(index)  # TODO: solve this somehow else
         for item in self.items():
             # some graphics items will not have an index method,
             # we just skip these

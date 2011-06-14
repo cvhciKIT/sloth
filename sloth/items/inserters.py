@@ -17,27 +17,27 @@ class ItemInserter:
     def mode(self):
         return self.mode_
 
-    def mousePressEvent(self, event, index):
+    def mousePressEvent(self, event, image_item):
         event.accept()
 
-    def mouseReleaseEvent(self, event, index):
+    def mouseReleaseEvent(self, event, image_item):
         event.accept()
 
-    def mouseMoveEvent(self, event, index):
+    def mouseMoveEvent(self, event, image_item):
         event.accept()
 
-    def keyPressEvent(self, event, index):
+    def keyPressEvent(self, event, image_item):
         event.ignore()
 
     def allowOutOfSceneEvents(self):
         return False
 
 class PointItemInserter(ItemInserter):
-    def mousePressEvent(self, event, index):
+    def mousePressEvent(self, event, image_item):
         pos = event.scenePos()
         ann = {'type': 'point',
                'x': pos.x(), 'y': pos.y()}
-        index.model().addAnnotation(index, ann)
+        image_item.addAnnotation(ann)
         event.accept()
 
 class RectItemInserter(ItemInserter):
@@ -46,7 +46,7 @@ class RectItemInserter(ItemInserter):
         self.current_item_ = None
         self.init_pos_ = None
 
-    def mousePressEvent(self, event, index):
+    def mousePressEvent(self, event, image_item):
         pos = event.scenePos()
         item = QGraphicsRectItem(QRectF(pos.x(), pos.y(), 0, 0))
         item.setPen(Qt.red)
@@ -55,7 +55,7 @@ class RectItemInserter(ItemInserter):
         self.scene().addItem(item)
         event.accept()
 
-    def mouseMoveEvent(self, event, index):
+    def mouseMoveEvent(self, event, image_item):
         if self.current_item_ is not None:
             assert self.init_pos_ is not None
             rect = QRectF(self.init_pos_, event.scenePos()).normalized()
@@ -63,7 +63,7 @@ class RectItemInserter(ItemInserter):
 
         event.accept()
 
-    def mouseReleaseEvent(self, event, index):
+    def mouseReleaseEvent(self, event, image_item):
         if self.current_item_ is not None:
             if self.current_item_.rect().width() > 1 and \
                self.current_item_.rect().height() > 1:
@@ -72,7 +72,7 @@ class RectItemInserter(ItemInserter):
                        'x': rect.x(), 'y': rect.y(),
                        'width': rect.width(), 'height': rect.height()}
                 ann.update(self.mode())
-                index.model().addAnnotation(index, ann)
+                image_item.addAnnotation(ann)
             self.scene().removeItem(self.current_item_)
             self.current_item_ = None
             self.init_pos_ = None
@@ -94,7 +94,7 @@ class FixedRatioRectItemInserter(RectItemInserter):
             self.ratio_ = float(mode.get('_ratio', 1))
         RectItemInserter.setMode(self, mode)
 
-    def mouseMoveEvent(self, event, index):
+    def mouseMoveEvent(self, event, image_item):
         if self.current_item_ is not None:
             new_geometry = QRectF(self.current_item_.rect().topLeft(), event.scenePos())
             dx = new_geometry.width()
@@ -115,7 +115,7 @@ class PolygonItemInserter(ItemInserter):
         ItemInserter.__init__(self, scene, mode)
         self.current_item_ = None
 
-    def mousePressEvent(self, event, index):
+    def mousePressEvent(self, event, image_item):
         pos = event.scenePos()
         if self.current_item_ is None:
             item = QGraphicsPolygonItem(QPolygonF([pos]))
@@ -128,7 +128,7 @@ class PolygonItemInserter(ItemInserter):
 
         event.accept()
 
-    def mouseMoveEvent(self, event, index):
+    def mouseMoveEvent(self, event, image_item):
         if self.current_item_ is not None:
             pos = event.scenePos()
             polygon = self.current_item_.polygon()

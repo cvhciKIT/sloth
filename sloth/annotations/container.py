@@ -14,7 +14,7 @@ try:
     import yaml
 except:
     pass
-
+import okapy
 
 class AnnotationContainerFactory:
     def __init__(self, containers):
