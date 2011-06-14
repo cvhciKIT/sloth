@@ -101,6 +101,26 @@ class ModelItem:
             item._attachToModel(self.model())
             self.model().endInsertRows()
 
+    def appendChildren(self, items):
+        for item in items:
+            assert isinstance(item, ModelItem)
+            assert item.model() is None
+            assert item.parent() is None
+
+        if self.model() is not None:
+            next_row = len(self._children)
+            self.model().beginInsertRows(self.index(), next_row, next_row + len(items) - 1)
+
+        for item in items:
+            item._parent = self
+            self.children().append(item)
+
+        if self.model() is not None:
+            for item in items:
+                item._attachToModel(self.model())
+
+            self.model().endInsertRows()
+
     def deleteAllChildren(self):
         for child in self._children:
             child.deleteAllChildren()
@@ -143,8 +163,8 @@ class RootModelItem(ModelItem):
         self.appendChild(item)
 
     def appendFileItems(self, fileinfos):
-        for fileinfo in fileinfos:
-            self.appendFileItem(fileinfo)
+        items = [FileModelItem.create(fi) for fi in fileinfos]
+        self.appendChildren(items)
 
 class FileModelItem(ModelItem):
     def __init__(self, fileinfo):
