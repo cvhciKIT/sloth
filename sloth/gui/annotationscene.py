@@ -274,7 +274,6 @@ class AnnotationScene(QGraphicsScene):
         pass
 
     def itemFromIndex(self, index):
-        index = index.model().mapToSource(index)  # TODO: solve this somehow else
         for item in self.items():
             # some graphics items will not have an index method,
             # we just skip these
