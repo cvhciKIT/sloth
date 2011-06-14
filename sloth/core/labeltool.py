@@ -36,6 +36,7 @@ class LabelTool(QObject):
         self.container_factory_ = AnnotationContainerFactory(config.CONTAINERS)
         self.container_         = AnnotationContainer()
         self._current_image     = None
+        self._model             = None
 
         # Load annotation file
         if len(args) > 0:
