@@ -246,7 +246,7 @@ class FrameModelItem(ImageModelItem):
     def data(self, role=Qt.DisplayRole, column=0):
         if role == Qt.DisplayRole and column == 0:
             return "%d / %.3f" % (self.framenum(), self.timestamp())
-        return QVariant()
+        return ImageModelItem.data(self, role, column)
 
 class AnnotationModelItem(ModelItem):
     def __init__(self, annotation):
@@ -301,7 +301,7 @@ class AnnotationModelItem(ModelItem):
             return self.type()
         elif role == DataRole:
             return self.annotation_
-        return QVariant()
+        return ModelItem.data(self, role, column)
 
     def setValue(self, key, value):
         self.annotation_[key] = value
@@ -326,6 +326,8 @@ class KeyValueModelItem(ModelItem):
                 return self.parent().value(self._key)
             else:
                 return QVariant()
+        else:
+            return ModelItem.data(self, role, column)
 
 class AnnotationModel(QAbstractItemModel):
     # signals
