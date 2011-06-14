@@ -34,6 +34,22 @@ class ModelItem(QObject):
         assert self.parent_ is None
         self.parent_ = parent
 
+    def getPreviousSibling(self):
+        if self.parent_ is not None:
+            c = self.parent().children()
+            row = c.index(self)
+            if row > 0:
+                return c[row-1]
+        return None
+
+    def getNextSibling(self):
+        if self.parent_ is not None:
+            c = self.parent().children()
+            row = c.index(self)
+            if row < len(c) - 2:
+                return c[row+1]
+        return None
+
     def setIndex(self, index):
         assert self._pindex is None
         self._pindex = QPersistentModelIndex(index)

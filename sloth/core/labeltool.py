@@ -139,15 +139,15 @@ class LabelTool(QObject):
 
     def gotoNext(self):
         # TODO move this to the scene
-        if self._model is not None and self.current_index_ is not None:
-            next_index = self._model.getNextIndex(self.current_index_)
-            self.setCurrentIndex(next_index)
+        if self._model is not None and self._current_image is not None:
+            next_image = self._current_image.getNextSibling()
+            self.setCurrentImage(next_image)
 
     def gotoPrevious(self):
         # TODO move this to the scene
-        if self._model is not None and self.current_index_ is not None:
-            prev_index = self._model.getPreviousIndex(self.current_index_)
-            self.setCurrentIndex(prev_index)
+        if self._model is not None and self._current_image is not None:
+            prev_image = self._current_image.getPreviousSibling()
+            self.setCurrentImage(prev_image)
 
     def updateModified(self):
         """update all GUI elements which depend on the state of the model,
