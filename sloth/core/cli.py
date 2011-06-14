@@ -81,15 +81,13 @@ class BaseCommand(object):
     """
     # Metadata about this command.
     option_list = (
-        make_option('-v', '--verbosity', action='store', dest='verbosity', default='1',
-            type='choice', choices=['0', '1', '2', '3'],
-            help='Verbosity level; 0=minimal output, 1=normal output, 2=all output'),
+        #make_option('-v', '--verbosity', action='store', dest='verbosity', default='1',
+            #type='choice', choices=['0', '1', '2', '3'],
+            #help='Verbosity level; 0=minimal output, 1=normal output, 2=all output'),
         make_option('-c', '--config',
             help='The Python path to a configuration file, e.g. "myconfig". If this isn\'t provided, sloth\'s default configuration will be used.'),
         make_option('--pythonpath',
             help='A directory to add to the Python path, e.g. "/home/user/labeling".'),
-        make_option('--traceback', action='store_true',
-            help='Print traceback on exception'),
     )
     help = ''
     args = ''
