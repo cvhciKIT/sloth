@@ -32,7 +32,7 @@ class ModelItem:
             return QVariant()
 
     def setData(self, value, role=Qt.DisplayRole, column=0):
-        pass
+        return False
 
     def getPosOfChild(self, item):
         return self._children.index(item)
@@ -167,87 +167,66 @@ class FileModelItem(ModelItem):
             return VideoFileModelItem(fileinfo)
 
 class ImageModelItem(ModelItem):
-    pass
+    def __init__(self, annotations):
+        ModelItem.__init__(self)
+        for ann in annotations:
+            self.addAnnotation(ann)
 
-class ImageFileModelItem(FileModelItem, ImageModelItem):
-    def __init__(self, fileinfo):
-        FileModelItem.__init__(self, fileinfo)
-
-        for ann in fileinfo['annotations']:
-            item = AnnotationModelItem(ann)
-            self.appendChild(item)
+    def appendChild(self, item):
+        if isinstance(item, AnnotationModelItem):
+            ModelItem.appendChild(self, item)
+        else:
+            raise TypeError("Only AnnotationModelItems can be attached to ImageModelItem")
 
     def addAnnotation(self, ann):
-        self.fileinfo_['annotations'].append(ann)
-        item = AnnotationModelItem(ann)
-        self.appendChild(item)
+        self.appendChild(AnnotationModelItem(ann))
 
-    # TODO
+    def removeAnnotation(self, pos):
+        self.deleteChild(pos)
+
     def updateAnnotation(self, ann):
-        child_found = False
         for child in self._children:
             if child.type() == ann['type']:
                 if (child.has_key('id') and ann.has_key('id') and child.value('id') == ann['id']) or (not child.has_key('id') and not ann.has_key('id')):
                     ann[None] = None
-                    #child.setData(QVariant(ann), DataRole)
-                    child_found = True
-                    break
-        if not child_found:
-            raise Exception("No ImageFileModelItem found that could be updated!")
+                    child.setData(QVariant(ann), DataRole, 1)
+                    return
+        raise Exception("No AnnotationModelItem found that could be updated!")
 
-    def removeAnnotation(self, pos):
-        del self.fileinfo_['annotations'][pos]
-        self.deleteChild(pos)
+class ImageFileModelItem(FileModelItem, ImageModelItem):
+    def __init__(self, fileinfo):
+        if fileinfo.has_key("annotations"):
+            ImageModelItem.__init__(self, fileinfo["annotations"])
+            del fileinfo["annotations"]
+        FileModelItem.__init__(self, fileinfo)
 
     def data(self, role=Qt.DisplayRole, column=0):
         if role == DataRole:
-            return self.fileinfo_
+            return self._fileinfo
         return FileModelItem.data(self, role)
 
 class VideoFileModelItem(FileModelItem):
     def __init__(self, fileinfo):
+        frameinfos = fileinfo.get("frames", [])
+        if fileinfo.has_key("frames"):
+            del fileinfo["frames"]
         FileModelItem.__init__(self, fileinfo)
 
-        for frameinfo in fileinfo['frames']:
-            item = FrameModelItem(frameinfo)
-            self.appendChild(item)
+        for frameinfo in frameinfos:
+            self.appendChild(FrameModelItem(frameinfo))
 
 class FrameModelItem(ImageModelItem):
     def __init__(self, frameinfo):
-        ModelItem.__init__(self)
-        self.frameinfo_ = frameinfo
-
-        for ann in frameinfo['annotations']:
-            item = AnnotationModelItem(ann)
-            self.appendChild(item)
+        if frameinfo.has_key("annotations"):
+            ImageModelItem.__init__(self, frameinfo["annotations"])
+            del frameinfo["annotations"]
+        self._frameinfo = frameinfo
 
     def framenum(self):
-        return int(self.frameinfo_.get('num', -1))
+        return int(self._frameinfo.get('num', -1))
 
     def timestamp(self):
-        return float(self.frameinfo_.get('timestamp', -1))
-
-    def addAnnotation(self, ann):
-        self.frameinfo_['annotations'].append(ann)
-        item = AnnotationModelItem(ann)
-        self.appendChild(item)
-
-    # TODO
-    def updateAnnotation(self, ann):
-        child_found = False
-        for child in self._children:
-            if child.type() == ann['type']:
-                if (child.has_key('id') and ann.has_key('id') and child.value('id') == ann['id']) or (not child.has_key('id') and not ann.has_key('id')):
-                    ann[None] = None
-                    #child.setData(index, QVariant(ann), DataRole)
-                    child_found = True
-                    break
-        if not child_found:
-            raise Exception("No FrameModelItem found that could be updated!")
-
-    def removeAnnotation(self, pos):
-        del self.frameinfo_['annotations'][pos]
-        self.deleteChild(pos)
+        return float(self._frameinfo.get('timestamp', -1))
 
     def data(self, role=Qt.DisplayRole, column=0):
         if role == Qt.DisplayRole and column == 0:
@@ -280,23 +259,21 @@ class AnnotationModelItem(ModelItem):
                 print key, val
                 if not key in self._annotation:
                     print "not in annotation: ", key
-                    self.appendChild(KeyValueModelItem(key))
                     self._annotation[key] = val
+                    self.appendChild(KeyValueModelItem(key))
 
             for key in self._annotation.keys():
                 if not key in value:
-                    # TODO
-                    self.deleteChild()
+                    for child in [e for e in self.children() if e.key() == key]:
+                        self.deleteChild(child)
                     del self._annotation[key]
                 else:
                     self._annotation[key] = value[key]
                     if self.model() is not None:
-                        # TODO: Emit for child with changed key, not for self
-                        self.model().dataChanged.emit(self.index(), self.index())
+                        for child in [e for e in self.children() if e.key() == key]:
+                            self.model().dataChanged.emit(child.index(1), child.index(1))
 
             print "new annotation:", self._annotation
-            if self.model() is not None:
-                self.model().dataChanged.emit(self.index(), self.index())
             return True
         return False
 
@@ -325,6 +302,9 @@ class KeyValueModelItem(ModelItem):
         ModelItem.__init__(self)
         self._key = key
         self._columns = 2
+
+    def key(self):
+        return self._key
 
     def data(self, role=Qt.DisplayRole, column=0):
         if role == Qt.DisplayRole:
