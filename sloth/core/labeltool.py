@@ -172,6 +172,10 @@ class LabelTool(QObject):
             self._current_image = image
             self.currentImageChanged.emit(self._current_image.index())
 
+    def getImage(self, item):
+        # TODO: Also handle video frames
+        self.container_.loadImage(item.filename())
+
     def getAnnotationFilePatterns(self):
         return self.container_factory_.patterns()
 

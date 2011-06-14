@@ -13,7 +13,7 @@ class AnnotationScene(QGraphicsScene):
 
     # TODO signal itemadded
 
-    def __init__(self, items=None, inserters=None, parent=None):
+    def __init__(self, labeltool, items=None, inserters=None, parent=None):
         super(AnnotationScene, self).__init__(parent)
 
         self.model_     = None
@@ -22,6 +22,7 @@ class AnnotationScene(QGraphicsScene):
         self.debug_     = True
         self.message_   = ""
         self.last_key_  = None
+        self.labeltool_ = labeltool
 
         self.itemfactory_     = Factory(items)
         self.inserterfactory_ = Factory(inserters)
@@ -79,7 +80,8 @@ class AnnotationScene(QGraphicsScene):
             return
 
         assert self.root_.model() == self.model_
-        self.image_ = self.root_.data(ImageRole).toPyObject()
+        item = self.model_.itemFromIndex(root)
+        self.image_ = self.labeltool_.getImage(item)
         self.pixmap_ = QPixmap(okapy.guiqt.toQImage(self.image_))
         item = QGraphicsPixmapItem(self.pixmap_)
         item.setZValue(-1)

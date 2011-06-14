@@ -91,7 +91,7 @@ class MainWindow(QMainWindow):
     def setupGui(self):
         self.ui = uic.loadUi(os.path.join(GUIDIR, "labeltool.ui"), self)
 
-        self.scene = AnnotationScene(items=config.ITEMS, inserters=config.INSERTERS)
+        self.scene = AnnotationScene(self.labeltool, items=config.ITEMS, inserters=config.INSERTERS)
         self.view = GraphicsView(self)
         self.view.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
         self.view.setScene(self.scene)
