@@ -30,6 +30,9 @@ class ModelItem:
         else:
             return QVariant()
 
+    def setData(self, value, role=Qt.DisplayRole, column=0):
+        pass
+
     def getPosOfChild(self, item):
         return self.children_.index(item)
 
@@ -180,7 +183,7 @@ class ImageFileModelItem(FileModelItem, ImageModelItem):
             if child.type() == ann['type']:
                 if (child.has_key('id') and ann.has_key('id') and child.value('id') == ann['id']) or (not child.has_key('id') and not ann.has_key('id')):
                     ann[None] = None
-                    #child.setData(index, QVariant(ann), DataRole)
+                    #child.setData(QVariant(ann), DataRole)
                     child_found = True
                     break
         if not child_found:
@@ -261,30 +264,33 @@ class AnnotationModelItem(ModelItem):
     def type(self):
         return self.annotation_['type']
 
-    def setData(self, index, data, role):
+    def setData(self, value, role, column=0):
         if role == DataRole:
             print self.annotation_
-            data = data.toPyObject()
-            print data, type(data)
+            value = value.toPyObject()
+            print value, type(value)
             print self.annotation_
-            for key, value in data.iteritems():
-                print key, value
+            for key, val in value.iteritems():
+                print key, val
                 if not key in self.annotation_:
                     print "not in annotation: ", key
-                    self.addChild(KeyValueModelItem(key))
-                    self.annotation_[key] = data[key]
+                    self.appendChild(KeyValueModelItem(key))
+                    self.annotation_[key] = val
 
             for key in self.annotation_.keys():
-                if not key in data:
+                if not key in value:
                     # TODO
-                    self.deleteChild() # TODO
+                    self.deleteChild()
                     del self.annotation_[key]
                 else:
-                    self.annotation_[key] = data[key]
-                    # TODO: Emit data changed signal
+                    self.annotation_[key] = value[key]
+                    if self.model() is not None:
+                        # TODO: Emit for child with changed key, not for self
+                        self.model().dataChanged.emit(self.index(), self.index())
 
             print "new annotation:", self.annotation_
-            # TODO: Emit data changed signal
+            if self.model() is not None:
+                self.model().dataChanged.emit(self.index(), self.index())
             return True
         return False
 
@@ -365,7 +371,7 @@ class AnnotationModel(QAbstractItemModel):
         if not index.isValid():
             return False
         item = self.itemFromIndex(index)
-        return item.setData(index, value, role)
+        return item.setData(value, role, index.column())
 
     def flags(self, index):
         return Qt.ItemIsEnabled | Qt.ItemIsSelectable
