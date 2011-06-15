@@ -260,55 +260,35 @@ class FrameModelItem(ImageModelItem):
 class AnnotationModelItem(ModelItem):
     def __init__(self, annotation):
         ModelItem.__init__(self)
-        self._annotation = annotation
         # dummy key/value so that pyqt does not convert the dict
         # into a QVariantMap while communicating with the Views
-        self._annotation[None] = None
-
-        for key, value in annotation.iteritems():
-            if key == None:
-                continue
-            self.appendChild(KeyValueModelItem(key))
+        self._annotation = {None: None}
+        self.setAnnotation(annotation)
 
     def type(self):
         return self._annotation['type']
 
-    def setData(self, value, role, column=0):
-        if role == DataRole:
-            print self._annotation
-            value = value.toPyObject()
-            print value, type(value)
-            print self._annotation
-            for key, val in value.iteritems():
-                print key, val
-                if not key in self._annotation:
-                    print "not in annotation: ", key
-                    self._annotation[key] = val
-                    self.appendChild(KeyValueModelItem(key))
+    def annotation(self):
+        return self._annotation
 
-            for key in self._annotation.keys():
-                if not key in value:
+    def setAnnotation(self, ann):
+        for key, val in ann.iteritems():
+            # print key, val
+            if not key in self._annotation:
+                # print "not in annotation: ", key
+                self._annotation[key] = val
+                self.appendChild(KeyValueModelItem(key))
+
+        for key in self._annotation.keys():
+            if not key in ann:
+                for child in [e for e in self.children() if e.key() == key]:
+                    self.deleteChild(child)
+                del self._annotation[key]
+            else:
+                self._annotation[key] = ann[key]
+                if self.model() is not None:
                     for child in [e for e in self.children() if e.key() == key]:
-                        self.deleteChild(child)
-                    del self._annotation[key]
-                else:
-                    self._annotation[key] = value[key]
-                    if self.model() is not None:
-                        for child in [e for e in self.children() if e.key() == key]:
-                            self.model().dataChanged.emit(child.index(1), child.index(1))
-
-            print "new annotation:", self._annotation
-            return True
-        return False
-
-    def data(self, role=Qt.DisplayRole, column=0):
-        if role == Qt.DisplayRole and column == 0:
-            return self.type()
-        elif role == TypeRole:
-            return self.type()
-        elif role == DataRole:
-            return self._annotation
-        return ModelItem.data(self, role, column)
+                        self.model().dataChanged.emit(child.index(1), child.index(1))
 
     def setValue(self, key, value):
         self._annotation[key] = value
@@ -320,6 +300,16 @@ class AnnotationModelItem(ModelItem):
 
     def has_key(self, key):
         return self._annotation.has_key(key)
+
+    # Delegated from QAbstractItemModel
+    def data(self, role=Qt.DisplayRole, column=0):
+        if role == Qt.DisplayRole and column == 0:
+            return self.type()
+        elif role == TypeRole:
+            return self.type()
+        elif role == DataRole:
+            return self._annotation
+        return ModelItem.data(self, role, column)
 
 class KeyValueModelItem(ModelItem):
     def __init__(self, key):
