@@ -106,7 +106,7 @@ class AnnotationScene(QGraphicsScene):
         for row in range(first, last+1):
             child = self.root_.child(row, 0) # get index
             _type = str(child.data(TypeRole).toPyObject()) # get type from index
-            item = self.itemfactory_.create(_type, child)    # create graphics item from factory
+            item = self.itemfactory_.create(_type, self.model_.itemFromIndex(child))    # create graphics item from factory
             if item is not None:
                 self.addItem(item)
 
