@@ -195,7 +195,7 @@ class MainWindow(QMainWindow):
         filename = self.labeltool.getCurrentFilename()
         if filename is None:
             return self.fileSaveAs()
-        return self.saveAnnotations(filename)
+        return self.labeltool.saveAnnotations(filename)
 
     def fileSaveAs(self):
         fname = '.'  # self.annotations.filename() or '.'
@@ -205,7 +205,7 @@ class MainWindow(QMainWindow):
                 "%s annotation files (%s)" % (APP_NAME, format_str))
 
         if not fname.isEmpty():
-            return self.saveAnnotations(str(fname))
+            return self.labeltool.saveAnnotations(str(fname))
         return False
 
     def addMediaFile(self):

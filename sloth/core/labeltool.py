@@ -216,14 +216,12 @@ class LabelTool(QObject):
             # create new container if the filename is different
             if fname != self.container_.filename():
                 # TODO: skip if it is the same class
-                newcontainer = self.container_factory_.create(fname)
-                newcontainer.setAnnotations(self.container_.annotations())
-                self.container_ = newcontainer
+                self.container_ = self.container_factory_.create(fname)
 
             # Get annotations dict
-            ann = self._model.getAnnotations()
+            ann = self._model.root().getAnnotations()
 
-            self.container_.save(fname, ann)
+            self.container_.save(ann, fname)
             #self._model.writeback() # write back changes that are cached in the model itself, e.g. mask updates
             msg = "Successfully saved %s (%d files, %d annotations)" % \
                     (fname, self._model.root().numFiles(), self._model.root().numAnnotations())

@@ -90,7 +90,7 @@ class AnnotationContainer:
             "AnnotationContainer.load()"
         )
 
-    def save(self, filename=""):
+    def save(self, annotations, filename=""):
         """
         Save the annotations.
         """

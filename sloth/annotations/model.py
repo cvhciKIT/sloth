@@ -4,6 +4,7 @@ The annotationmodel module contains the classes for the AnnotationModel.
 from PyQt4.QtGui import QTreeView, QSortFilterProxyModel, QAbstractItemView
 from PyQt4.QtCore import QModelIndex, QPersistentModelIndex, QAbstractItemModel, QVariant, Qt, pyqtSignal
 import os.path
+import copy
 
 ItemRole, TypeRole, DataRole, ImageRole = [Qt.UserRole + i + 1 for i in range(4)]
 
@@ -176,6 +177,9 @@ class RootModelItem(ModelItem):
         # TODO
         return 0
 
+    def getAnnotations(self):
+        return [child.getAnnotations() for child in self.children()]
+
 class FileModelItem(ModelItem):
     def __init__(self, fileinfo):
         ModelItem.__init__(self)
@@ -236,6 +240,11 @@ class ImageFileModelItem(FileModelItem, ImageModelItem):
             return self._fileinfo
         return FileModelItem.data(self, role)
 
+    def getAnnotations(self):
+        fi = copy.deepcopy(self._fileinfo)
+        fi['annotations'] = [child.getAnnotations() for child in self.children()]
+        return fi
+
 class VideoFileModelItem(FileModelItem):
     def __init__(self, fileinfo):
         frameinfos = fileinfo.get("frames", [])
@@ -245,6 +254,11 @@ class VideoFileModelItem(FileModelItem):
 
         for frameinfo in frameinfos:
             self.appendChild(FrameModelItem(frameinfo))
+
+    def getAnnotations(self):
+        fi = copy.deepcopy(self._fileinfo)
+        fi['frames'] = [child.getAnnotations() for child in self.children()]
+        return fi
 
 class FrameModelItem(ImageModelItem):
     def __init__(self, frameinfo):
@@ -264,6 +278,11 @@ class FrameModelItem(ImageModelItem):
             return "%d / %.3f" % (self.framenum(), self.timestamp())
         return ImageModelItem.data(self, role, column)
 
+    def getAnnotations(self):
+        fi = copy.deepcopy(self._frameinfo)
+        fi['annotations'] = [child.getAnnotations() for child in self.children()]
+        return fi
+
 class AnnotationModelItem(ModelItem):
     def __init__(self, annotation):
         ModelItem.__init__(self)
@@ -274,6 +293,13 @@ class AnnotationModelItem(ModelItem):
 
     def type(self):
         return self._annotation['type']
+
+    def getAnnotations(self):
+        ann = copy.deepcopy(self._annotation)
+        if None in ann:
+            del ann[None]
+        # TODO: Maybe it would be nice to enforce a deterministic ordering?
+        return ann
 
     def annotation(self):
         return self._annotation
