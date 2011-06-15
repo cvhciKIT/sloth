@@ -65,7 +65,7 @@ class LabelTool(QObject):
         self.container_factory_ = None
         self.container_ = AnnotationContainer()
         self._current_image = None
-        self._model = None
+        self._model = AnnotationModel([])
 
     def main_help_text(self):
         """
@@ -234,8 +234,7 @@ class LabelTool(QObject):
         return success
 
     def clearAnnotations(self):
-        self.container_.clear()
-        self._model = AnnotationModel(self.container_.annotations())
+        self._model = AnnotationModel([])
         #self._model.setBasedir("")
         self.statusMessage.emit('')
         self.annotationsLoaded.emit()
