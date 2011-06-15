@@ -285,15 +285,15 @@ class AnnotationModelItem(ModelItem):
                     self.deleteChild(child)
                 del self._annotation[key]
             else:
-                self._annotation[key] = ann[key]
-                if self.model() is not None:
-                    for child in [e for e in self.children() if e.key() == key]:
-                        self.model().dataChanged.emit(child.index(1), child.index(1))
+                self.setValue(key, ann[key])
 
     def setValue(self, key, value):
-        self._annotation[key] = value
-        if self.model() is not None:
-            self.model().dataChanged.emit(self.index(), self.index())
+        if key not in self._annotation or self._annotation[key] != value:
+            self._annotation[key] = value
+            if self.model() is not None:
+                # TODO: This should only emit dataChanged for the value that
+                # was actually changed, not for the whole annotation
+                self.model().dataChanged.emit(self.index(), self.index())
 
     def value(self, key):
         return self._annotation[key]
