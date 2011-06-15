@@ -201,9 +201,9 @@ class LabelTool(QObject):
         try:
             self.container_ = self.container_factory_.create(fname)
             self.container_.load(fname)
+            self._model = AnnotationModel(self.container_.load(fname))
             msg = "Successfully loaded %s (%d files, %d annotations)" % \
-                    (fname, self.container_.numFiles(), self.container_.numAnnotations())
-            self._model = AnnotationModel(self.container_.annotations())
+                    (fname, self._model.root().numFiles(), self._model.root().numAnnotations())
         except Exception, e:
             msg = "Error: Loading failed (%s)" % str(e)
 
@@ -220,10 +220,13 @@ class LabelTool(QObject):
                 newcontainer.setAnnotations(self.container_.annotations())
                 self.container_ = newcontainer
 
-            self.container_.save(fname)
+            # Get annotations dict
+            ann = self._model.getAnnotations()
+
+            self.container_.save(fname, ann)
             #self._model.writeback() # write back changes that are cached in the model itself, e.g. mask updates
             msg = "Successfully saved %s (%d files, %d annotations)" % \
-                    (fname, self.container_.numFiles(), self.container_.numAnnotations())
+                    (fname, self._model.root().numFiles(), self._model.root().numAnnotations())
             success = True
             self._model.setDirty(False)
         except Exception as e:

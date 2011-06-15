@@ -169,6 +169,13 @@ class RootModelItem(ModelItem):
         items = [FileModelItem.create(fi) for fi in fileinfos]
         self.appendChildren(items)
 
+    def numFiles(self):
+        return len(self.children())
+
+    def numAnnotations(self):
+        # TODO
+        return 0
+
 class FileModelItem(ModelItem):
     def __init__(self, fileinfo):
         ModelItem.__init__(self)
@@ -387,6 +394,9 @@ class AnnotationModel(QAbstractItemModel):
         return QVariant()
 
     # Own methods
+    def root(self):
+        return self._root
+
     def dirty(self):
         return self._dirty
 

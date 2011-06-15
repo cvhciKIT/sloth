@@ -77,8 +77,8 @@ class AnnotationContainer:
         """
         if not filename:
             raise InvalidArgumentException("filename cannot be empty")
-        self.annotations_ = self.parseFromFile(filename)
         self.filename_ = filename
+        return self.parseFromFile(filename)
 
     def parseFromFile(self, filename):
         """
@@ -96,10 +96,10 @@ class AnnotationContainer:
         """
         if not filename:
             filename = self.filename()
-        self.serializeToFile(filename)
+        self.serializeToFile(filename, annotations)
         self.filename_ = filename
 
-    def serializeToFile(self, filename):
+    def serializeToFile(self, filename, annotations):
         """
         Serialize the annotations to disk. Must be implemented in the subclass.
         """
@@ -108,18 +108,6 @@ class AnnotationContainer:
             "if you use the default implementation of " +
             "AnnotationContainer.save()"
         )
-
-    def setAnnotations(self, annotations):
-        """
-        Set the current annotations. Expects a list of python dictionaries.
-        """
-        self.annotations_ = annotations
-
-    def annotations(self):
-        """
-        Returns the current annotations as list of python dictionaries.
-        """
-        return self.annotations_
 
     def _fullpath(self, filename):
         """
@@ -152,22 +140,6 @@ class AnnotationContainer:
         fullpath = self._fullpath(filename)
         #TODO load video
 
-    def numFiles(self):
-        return len(self.annotations())
-
-    def numAnnotations(self):
-        if self.annotations() is None:
-            return 0
-        num = 0
-        for file in self.annotations():
-            if file['type'] == 'image':
-                num += len(file['annotations'])
-            elif file['type'] == 'video':
-                for frame in file['frames']:
-                    num += len(frame['annotations'])
-        return num
-
-
 class PickleContainer(AnnotationContainer):
     """
     Simple container which pickles the annotations to disk.
@@ -180,13 +152,13 @@ class PickleContainer(AnnotationContainer):
         f = open(fname, "rb")
         return pickle.load(f)
 
-    def serializeToFile(self, fname):
+    def serializeToFile(self, fname, annotations):
         """
         Overwritten to write pickle files.
         """
         # TODO make all image filenames relative to the label file
         f = open(fname, "wb")
-        pickle.dump(self.annotations(), f)
+        pickle.dump(annotations, f)
 
 
 class JsonContainer(AnnotationContainer):
@@ -201,13 +173,13 @@ class JsonContainer(AnnotationContainer):
         f = open(fname, "r")
         return json.load(f)
 
-    def serializeToFile(self, fname):
+    def serializeToFile(self, fname, annotations):
         """
         Overwritten to write JSON files.
         """
         # TODO make all image filenames relative to the label file
         f = open(fname, "w")
-        json.dump(self.annotations(), f, indent=4)
+        json.dump(annotations, f, indent=4)
 
 
 class YamlContainer(AnnotationContainer):
@@ -222,13 +194,13 @@ class YamlContainer(AnnotationContainer):
         f = open(fname, "r")
         return yaml.load(f)
 
-    def serializeToFile(self, fname):
+    def serializeToFile(self, fname, annotations):
         """
         Overwritten to write YAML files.
         """
         # TODO make all image filenames relative to the label file
         f = open(fname, "w")
-        yaml.dump(self.annotations(), f)
+        yaml.dump(annotations, f)
 
 
 class FileNameListContainer(AnnotationContainer):
@@ -253,7 +225,7 @@ class FileNameListContainer(AnnotationContainer):
 
         return annotations
 
-    def serializeToFile(self, filename):
+    def serializeToFile(self, filename, annotations):
         raise NotImplemented("FileNameListContainer.save() is not implemented yet.")
 
 class FeretContainer(AnnotationContainer):
@@ -286,7 +258,7 @@ class FeretContainer(AnnotationContainer):
 
         return annotations
 
-    def serializeToFile(self, filename):
+    def serializeToFile(self, filename, annotations):
         """
         Not implemented yet.
         """
