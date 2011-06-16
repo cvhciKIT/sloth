@@ -333,6 +333,12 @@ class LabelTool(QObject):
     ###
     ### Scene functions
     ###___________________________________________________________________________________________
+    def scene(self):
+        if self._mainwindow is None:
+            return None
+        else:
+            return self._mainwindow.scene
+
     def selectNextAnnotation(self):
         if self._mainwindow is not None:
             return self._mainwindow.scene.selectNextItem()
@@ -344,3 +350,13 @@ class LabelTool(QObject):
     def exitInsertMode(self):
         if self._mainwindow is not None:
             return self._mainwindow.buttonarea.exitInsertMode()
+
+    ###
+    ### TreeView functions
+    ###___________________________________________________________________________________________
+    def treeview(self):
+        if self._mainwindow is None:
+            return None
+        else:
+            return self._mainwindow.treeview
+
