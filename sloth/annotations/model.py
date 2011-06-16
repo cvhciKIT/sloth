@@ -222,7 +222,6 @@ class FileModelItem(ModelItem):
     def __init__(self, fileinfo):
         ModelItem.__init__(self)
         self.update(fileinfo)
-        print self['filename']
 
     def data(self, role=Qt.DisplayRole, column=0):
         if role == Qt.DisplayRole and column == 0:
