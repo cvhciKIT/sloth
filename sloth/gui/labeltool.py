@@ -58,8 +58,6 @@ class MainWindow(QMainWindow):
             self.controls.setFrameNumAndTimestamp(item.framenum(), item.timestamp())
         elif isinstance(new_image, ImageFileModelItem):
             self.controls.setFilename(os.path.basename(new_image['filename']))
-        if new_image.index() != self.treeview.currentIndex():
-            self.treeview.setCurrentIndex(new_image.index())
 
     def initShortcuts(self, HOTKEYS):
         self.shortcuts = []
