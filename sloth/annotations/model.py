@@ -53,7 +53,7 @@ class ModelItem:
         p = self.parent()
         if p is not None:
             row = p.getPosOfChild(self)
-            if row < len(p.children()) - 2:
+            if row < len(p.children()) - 1:
                 return p.getChildAt(row+1)
         return None
 
