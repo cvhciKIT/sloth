@@ -1,7 +1,7 @@
 """
 The annotationmodel module contains the classes for the AnnotationModel.
 """
-from PyQt4.QtGui import QTreeView, QSortFilterProxyModel, QAbstractItemView
+from PyQt4.QtGui import QTreeView, QItemSelection, QItemSelectionModel, QSortFilterProxyModel, QAbstractItemView
 from PyQt4.QtCore import QModelIndex, QPersistentModelIndex, QAbstractItemModel, QVariant, Qt, pyqtSignal
 import os.path
 import copy
@@ -505,15 +505,17 @@ class AnnotationSortFilterProxyModel(QSortFilterProxyModel):
 #######################################################################################
 
 class AnnotationTreeView(QTreeView):
+    selectedItemsChanged = pyqtSignal(object)
+
     def __init__(self, parent=None):
         super(AnnotationTreeView, self).__init__(parent)
 
         self.setUniformRowHeights(True)
-        self.setSelectionMode(QTreeView.SingleSelection)
+        self.setSelectionMode(QTreeView.ExtendedSelection)
         self.setSelectionBehavior(QTreeView.SelectItems)
         self.setAllColumnsShowFocus(True)
         self.setAlternatingRowColors(True)
-        self.setEditTriggers(QAbstractItemView.SelectedClicked)
+        #self.setEditTriggers(QAbstractItemView.SelectedClicked)
         self.setSortingEnabled(True)
         self.expanded.connect(self.onExpanded)
 
@@ -539,4 +541,17 @@ class AnnotationTreeView(QTreeView):
     def rowsInserted(self, index, start, end):
         QTreeView.rowsInserted(self, index, start, end)
         self.resizeColumns()
-#        self.setCurrentIndex(index.child(end, 0))
+
+    def setSelectedItems(self, items):
+        block = self.blockSignals(True)
+        sel = QItemSelection()
+        for item in items:
+            sel.merge(QItemSelection(item.index(), item.index()), QItemSelectionModel.SelectCurrent)
+        self.selectionModel().clear()
+        self.selectionModel().select(sel, QItemSelectionModel.Select)
+        self.blockSignals(block)
+
+    def selectionChanged(self, selected, deselected):
+        items = [ self.model().itemFromIndex(index) for index in self.selectionModel().selectedIndexes()]
+        self.selectedItemsChanged.emit(items)
+        QTreeView.selectionChanged(self, selected, deselected)

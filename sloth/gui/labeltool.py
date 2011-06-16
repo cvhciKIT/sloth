@@ -47,6 +47,8 @@ class MainWindow(QMainWindow):
             self.setWindowTitle("%s - Unnamed[*]" % APP_NAME)
         self.treeview.setModel(self.labeltool.model())
         self.scene.setModel(self.labeltool.model())
+        self.selectionmodel = QItemSelectionModel(self.labeltool.model())
+        self.treeview.setSelectionModel(self.selectionmodel)
         self.treeview.selectionModel().currentChanged.connect(self.labeltool.setCurrentImage)
 
     def onCurrentImageChanged(self, index):
@@ -118,6 +120,9 @@ class MainWindow(QMainWindow):
         self.treeview = AnnotationTreeView()
         self.treeview.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
         self.ui.dockInformation.setWidget(self.treeview)
+
+        self.scene.selectionChanged.connect(self.scene.onSelectionChanged)
+        self.treeview.selectedItemsChanged.connect(self.scene.onSelectionChangedInTreeView)
 
         # Show the UI.  It is important that this comes *after* the above 
         # adding of custom widgets, especially the central widget.  Otherwise the

@@ -52,6 +52,7 @@ class AnnotationScene(QGraphicsScene):
             self.disconnect(self.model_, SIGNAL('rowsAboutToBeRemoved(QModelIndex,int,int)'), self.rowsAboutToBeRemoved)
             self.disconnect(self.model_, SIGNAL('rowsRemoved(QModelIndex,int,int)'), self.rowsRemoved)
             self.disconnect(self.model_, SIGNAL('modelReset()'), self.reset)
+
         self.model_ = model
 
         # connect new signals
@@ -177,6 +178,21 @@ class AnnotationScene(QGraphicsScene):
         else:
             # selection mode
             QGraphicsScene.mouseMoveEvent(self, event)
+
+
+    def onSelectionChanged(self):
+        model_items = [item.modelItem() for item in self.selectedItems()]
+        self.labeltool_.treeview().setSelectedItems(model_items)
+
+    def onSelectionChangedInTreeView(self, items):
+        block = self.blockSignals(True)
+        items = [self.itemFromIndex(item.index()) for item in items]
+        for item in self.items():
+            item.setSelected(False)
+        for item in items:
+            if item is not None:
+                item.setSelected(True)
+        self.blockSignals(block)
 
     #
     # key event handlers
