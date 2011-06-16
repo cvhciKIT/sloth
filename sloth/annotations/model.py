@@ -11,11 +11,16 @@ ItemRole, TypeRole, DataRole, ImageRole = [Qt.UserRole + i + 1 for i in range(4)
 
 class ModelItem(MutableMapping):
     def __init__(self):
-        self._children = []
-        self._pindex   = []
-        self._model    = None
-        self._parent   = None
-        self._columns  = 1
+        if not hasattr(self, "_children"):
+            self._children = []
+        if not hasattr(self, "_pindex"):
+            self._pindex   = []
+        if not hasattr(self, "_model"):
+            self._model    = None
+        if not hasattr(self, "_parent"):
+            self._parent   = None
+        if not hasattr(self, "_columns"):
+            self._columns  = 1
         if not hasattr(self, "_dict"):
             self._dict     = {}
 
