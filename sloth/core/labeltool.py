@@ -140,7 +140,11 @@ class LabelTool(QObject):
             # no command is matching, then -- if not empty --
             # args must contain a labelfile filename to load
             if len(args) > 1:
-                self.loadAnnotations(args[1])
+                try:
+                    self.loadAnnotations(args[1], handleErrors=False)
+                except Exception, e:
+                    print "Error loading annotations:", e
+                    sys.exit(1)
             else:
                 self.clearAnnotations()
 
@@ -196,8 +200,9 @@ class LabelTool(QObject):
     ###
     ### Annoation file handling
     ###___________________________________________________________________________________________
-    def loadAnnotations(self, fname):
+    def loadAnnotations(self, fname, handleErrors=True):
         fname = str(fname) # convert from QString
+
         try:
             self.container_ = self.container_factory_.create(fname)
             self.container_.load(fname)
@@ -205,7 +210,10 @@ class LabelTool(QObject):
             msg = "Successfully loaded %s (%d files, %d annotations)" % \
                     (fname, self._model.root().numFiles(), self._model.root().numAnnotations())
         except Exception, e:
-            msg = "Error: Loading failed (%s)" % str(e)
+            if handleErrors:
+                msg = "Error: Loading failed (%s)" % str(e)
+            else:
+                raise
 
         self.statusMessage.emit(msg)
         self.annotationsLoaded.emit()
