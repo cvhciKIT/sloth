@@ -32,11 +32,11 @@ class BaseItem(QAbstractGraphicsShapeItem):
         self.text_bg_brush_ = None
         self.auto_text_keys_ = []
 
-    def annotation(self):
+    def modelItem(self):
         """
-        Returns the annotation of this items.
+        Returns the model item of this items.
         """
-        return self._model_item.annotation()
+        return self._model_item
 
     def index(self):
         """
@@ -98,8 +98,8 @@ class BaseItem(QAbstractGraphicsShapeItem):
         pass
 
     def updateModel(self, ann=None):
-        if data is not None:
-            self._model_item.setAnnotation(ann)
+        if ann is not None:
+            self._model_item.update(ann)
 
     def paint(self, painter, option, widget=None):
         painter.save()
@@ -162,15 +162,15 @@ class PointItem(BaseItem):
         self.updatePoint()
 
     def updateModel(self):
-        self._model_item.setValue('x', self.scenePos().x())
-        self._model_item.setValue('y', self.scenePos().y())
+        self._model_item['x'] = self.scenePos().x()
+        self._model_item['y'] = self.scenePos().y()
 
     def updatePoint(self):
         if self._model_item is None:
             return
 
-        point = QPointF(float(self._model_item.value('x')),
-                        float(self._model_item.value('y')))
+        point = QPointF(float(self._model_item['x']),
+                        float(self._model_item['y']))
         if point == self.point_:
             return
 
@@ -222,14 +222,14 @@ class RectItem(BaseItem):
         if model_item is None:
             return QRectF()
         if model_item.has_key('w'):
-            w = model_item.value('w')
+            w = model_item['w']
         if model_item.has_key('width'):
-            w = model_item.value('width')
+            w = model_item['width']
         if model_item.has_key('h'):
-            h = model_item.value('h')
+            h = model_item['h']
         if model_item.has_key('height'):
-            h = model_item.value('height')
-        return QRectF(float(model_item.value('x')), float(model_item.value('y')),
+            h = model_item['height']
+        return QRectF(float(model_item['x']), float(model_item['y']),
                       float(w), float (h))
 
     def _updateRect(self, rect):
@@ -244,16 +244,16 @@ class RectItem(BaseItem):
 
     def updateModel(self):
         self.rect_ = QRectF(self.scenePos(), self.rect_.size())
-        self._model_item.setValue('x', self.rect_.topLeft().x())
-        self._model_item.setValue('y', self.rect_.topLeft().y())
+        self._model_item['x'] = self.rect_.topLeft().x()
+        self._model_item['y'] = self.rect_.topLeft().y()
         if self._model_item.has_key('width'):
-            self._model_item.setValue('width', float(self.rect_.width()))
+            self._model_item['width'] = float(self.rect_.width())
         if self._model_item.has_key('w'):
-            self._model_item.setValue('w', float(self.rect_.width()))
+            self._model_item['w'] = float(self.rect_.width())
         if self._model_item.has_key('height'):
-            self._model_item.setValue('height', float(self.rect_.height()))
+            self._model_item['height'] = float(self.rect_.height())
         if self._model_item.has_key('h'):
-            self._model_item.setValue('h', float(self.rect_.height()))
+            self._model_item['h'] = float(self.rect_.height())
 
     def boundingRect(self):
         return QRectF(QPointF(0, 0), self.rect_.size())

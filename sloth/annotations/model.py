@@ -5,16 +5,54 @@ from PyQt4.QtGui import QTreeView, QSortFilterProxyModel, QAbstractItemView
 from PyQt4.QtCore import QModelIndex, QPersistentModelIndex, QAbstractItemModel, QVariant, Qt, pyqtSignal
 import os.path
 import copy
+from collections import MutableMapping
 
 ItemRole, TypeRole, DataRole, ImageRole = [Qt.UserRole + i + 1 for i in range(4)]
 
-class ModelItem:
+class ModelItem(MutableMapping):
     def __init__(self):
         self._children = []
         self._pindex   = []
         self._model    = None
         self._parent   = None
         self._columns  = 1
+        if not hasattr(self, "_dict"):
+            self._dict     = {}
+
+    # Methods for MutableMapping
+    def __len__(self):
+        return len(self._dict)
+
+    def __iter__(self):
+        return self._dict.iterkeys()
+
+    def __getitem__(self, key):
+        return self._dict[key]
+
+    def __setitem__(self, key, value):
+        if key not in self._dict or self._dict[key] != value:
+            self._dict[key] = value
+            self._valueChanged()
+
+    def __delitem__(self, key):
+        del self._dict[key]
+        self._valueChanged()
+
+    def has_key(self, key):
+        return self.__contains__(key)
+
+    def clear(self):
+        if len(self) > 0:
+            MutableMapping.clear(self)
+            self._valueChanged()
+
+    def update(self, other=None, **kwargs):
+        MutableMapping.update(self, other, **kwargs)
+        # TODO: Only call _valueChanged, if anything actually changed...
+        self._valueChanged()
+
+    def _valueChanged(self):
+        pass
 
     def children(self):
         return self._children
@@ -23,7 +61,7 @@ class ModelItem:
         return self._model
 
     def parent(self):
-        assert self._parent != self
+        assert self._parent is not self
         return self._parent
 
     def data(self, role=Qt.DisplayRole, column=0):
@@ -183,14 +221,12 @@ class RootModelItem(ModelItem):
 class FileModelItem(ModelItem):
     def __init__(self, fileinfo):
         ModelItem.__init__(self)
-        self._fileinfo = fileinfo
-
-    def filename(self):
-        return self._fileinfo['filename']
+        self.update(fileinfo)
+        print self['filename']
 
     def data(self, role=Qt.DisplayRole, column=0):
         if role == Qt.DisplayRole and column == 0:
-            return os.path.basename(self.filename())
+            return os.path.basename(self['filename'])
         return ModelItem.data(self, role, column)
 
     @staticmethod
@@ -221,7 +257,7 @@ class ImageModelItem(ModelItem):
     def updateAnnotation(self, ann):
         for child in self._children:
             if child.type() == ann['type']:
-                if (child.has_key('id') and ann.has_key('id') and child.value('id') == ann['id']) or (not child.has_key('id') and not ann.has_key('id')):
+                if (child.has_key('id') and ann.has_key('id') and child['id'] == ann['id']) or (not child.has_key('id') and not ann.has_key('id')):
                     ann[None] = None
                     child.setData(QVariant(ann), DataRole, 1)
                     return
@@ -265,13 +301,13 @@ class FrameModelItem(ImageModelItem):
         if frameinfo.has_key("annotations"):
             ImageModelItem.__init__(self, frameinfo["annotations"])
             del frameinfo["annotations"]
-        self._frameinfo = frameinfo
+        self.update(frameinfo)
 
     def framenum(self):
-        return int(self._frameinfo.get('num', -1))
+        return int(self.get('num', -1))
 
     def timestamp(self):
-        return float(self._frameinfo.get('timestamp', -1))
+        return float(self.get('timestamp', -1))
 
     def data(self, role=Qt.DisplayRole, column=0):
         if role == Qt.DisplayRole and column == 0:
@@ -288,58 +324,30 @@ class AnnotationModelItem(ModelItem):
         ModelItem.__init__(self)
         # dummy key/value so that pyqt does not convert the dict
         # into a QVariantMap while communicating with the Views
-        self._annotation = {None: None}
-        self.setAnnotation(annotation)
+        self._items = {}
+        self[None] = None
+        self.update(annotation)
 
-    def type(self):
-        return self._annotation['type']
+    def _valueChanged(self):
+        # Keep self._dict and self._items in sync
+        for key, val in self._items.iteritems():
+            if not key in self:
+                self.deleteChild(val)
 
-    def getAnnotations(self):
-        ann = copy.deepcopy(self._annotation)
-        if None in ann:
-            del ann[None]
-        # TODO: Maybe it would be nice to enforce a deterministic ordering?
-        return ann
+        for key, val in self.iteritems():
+            if not key in self._items and key is not None:
+                self._items[key] = KeyValueModelItem(key)
+                self.appendChild(self._items[key])
 
-    def annotation(self):
-        return self._annotation
-
-    def setAnnotation(self, ann):
-        for key, val in ann.iteritems():
-            # print key, val
-            if not key in self._annotation:
-                # print "not in annotation: ", key
-                self._annotation[key] = val
-                self.appendChild(KeyValueModelItem(key))
-
-        for key in self._annotation.keys():
-            if not key in ann:
-                for child in [e for e in self.children() if e.key() == key]:
-                    self.deleteChild(child)
-                del self._annotation[key]
-            else:
-                self.setValue(key, ann[key])
-
-    def setValue(self, key, value):
-        if key not in self._annotation or self._annotation[key] != value:
-            self._annotation[key] = value
-            if self.model() is not None:
-                # TODO: This should only emit dataChanged for the value that
-                # was actually changed, not for the whole annotation
-                self.model().dataChanged.emit(self.index(), self.index())
-
-    def value(self, key):
-        return self._annotation[key]
-
-    def has_key(self, key):
-        return self._annotation.has_key(key)
+        if self.model() is not None:
+            self.model().dataChanged.emit(self.index(), self.index())
 
     # Delegated from QAbstractItemModel
     def data(self, role=Qt.DisplayRole, column=0):
         if role == Qt.DisplayRole and column == 0:
-            return self.type()
+            return self['type']
         elif role == TypeRole:
-            return self.type()
+            return self['type']
         elif role == DataRole:
             return self._annotation
         return ModelItem.data(self, role, column)
@@ -358,7 +366,7 @@ class KeyValueModelItem(ModelItem):
             if column == 0:
                 return self._key
             elif column == 1:
-                return self.parent().value(self._key)
+                return QVariant(self.parent()[self._key])
             else:
                 return QVariant()
         else:

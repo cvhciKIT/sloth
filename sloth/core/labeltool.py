@@ -145,6 +145,7 @@ class LabelTool(QObject):
                     self.loadAnnotations(args[1], handleErrors=False)
                 except Exception, e:
                     print "Error loading annotations:", e
+                    raise
                     sys.exit(1)
             else:
                 self.clearAnnotations()
@@ -295,7 +296,7 @@ class LabelTool(QObject):
 
     def getImage(self, item):
         # TODO: Also handle video frames
-        return self.container_.loadImage(item.filename())
+        return self.container_.loadImage(item['filename'])
 
     def getAnnotationFilePatterns(self):
         return self.container_factory_.patterns()
