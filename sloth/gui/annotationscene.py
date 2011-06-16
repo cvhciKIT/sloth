@@ -226,8 +226,7 @@ class AnnotationScene(QGraphicsScene):
             # selection mode
             if event.key() == Qt.Key_Delete:
                 for item in self.selectedItems():
-                    index = item.index()
-                    index.model().removeAnnotation(index)
+                    item.modelItem().delete()
                 event.accept()
 
             elif event.key() == Qt.Key_Escape:
