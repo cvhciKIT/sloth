@@ -246,12 +246,6 @@ class ImageModelItem(ModelItem):
         for ann in annotations:
             self.addAnnotation(ann)
 
-    def appendChild(self, item):
-        if isinstance(item, AnnotationModelItem):
-            ModelItem.appendChild(self, item)
-        else:
-            raise TypeError("Only AnnotationModelItems can be attached to ImageModelItem")
-
     def addAnnotation(self, ann):
         self.appendChild(AnnotationModelItem(ann))
 
@@ -267,11 +261,36 @@ class ImageModelItem(ModelItem):
                     return
         raise Exception("No AnnotationModelItem found that could be updated!")
 
-class ImageFileModelItem(FileModelItem, ImageModelItem):
+class KeyValueModelItem(ModelItem):
+    def __init__(self, hidden=[]):
+        ModelItem.__init__(self)
+        self._items = {}
+        self._hidden = hidden
+        # dummy key/value so that pyqt does not convert the dict
+        # into a QVariantMap while communicating with the Views
+        self[None] = None
+
+    def _valueChanged(self):
+        # Keep self._dict and self._items in sync
+        for key, val in self._items.iteritems():
+            if not key in self:
+                self.deleteChild(val)
+
+        for key, val in self.iteritems():
+            if not key in self._items and key is not None and key not in self._hidden:
+                self._items[key] = KeyValueRowModelItem(key)
+                self.appendChild(self._items[key])
+
+        if self.model() is not None:
+            # TODO: Emit for hidden key/values?
+            self.model().dataChanged.emit(self.index(), self.index())
+
+class ImageFileModelItem(FileModelItem, ImageModelItem, KeyValueModelItem):
     def __init__(self, fileinfo):
         annotations = fileinfo.get("annotations", [])
         if fileinfo.has_key("annotations"):
             del fileinfo["annotations"]
+        KeyValueModelItem.__init__(self, hidden=('filename', 'type'))
         FileModelItem.__init__(self, fileinfo)
         ImageModelItem.__init__(self, annotations)
 
@@ -300,11 +319,13 @@ class VideoFileModelItem(FileModelItem):
         fi['frames'] = [child.getAnnotations() for child in self.children()]
         return fi
 
-class FrameModelItem(ImageModelItem):
+class FrameModelItem(ImageModelItem, KeyValueModelItem):
     def __init__(self, frameinfo):
+        annotations = frameinfo.get("annotations", [])
         if frameinfo.has_key("annotations"):
-            ImageModelItem.__init__(self, frameinfo["annotations"])
             del frameinfo["annotations"]
+        KeyValueModelItem.__init__(self)
+        ImageModelItem.__init__(self, annotations)
         self.update(frameinfo)
 
     def framenum(self):
@@ -323,28 +344,13 @@ class FrameModelItem(ImageModelItem):
         fi['annotations'] = [child.getAnnotations() for child in self.children()]
         return fi
 
-class AnnotationModelItem(ModelItem):
+class AnnotationModelItem(KeyValueModelItem):
     def __init__(self, annotation):
-        ModelItem.__init__(self)
+        KeyValueModelItem.__init__(self)
         # dummy key/value so that pyqt does not convert the dict
         # into a QVariantMap while communicating with the Views
-        self._items = {}
         self[None] = None
         self.update(annotation)
-
-    def _valueChanged(self):
-        # Keep self._dict and self._items in sync
-        for key, val in self._items.iteritems():
-            if not key in self:
-                self.deleteChild(val)
-
-        for key, val in self.iteritems():
-            if not key in self._items and key is not None:
-                self._items[key] = KeyValueModelItem(key)
-                self.appendChild(self._items[key])
-
-        if self.model() is not None:
-            self.model().dataChanged.emit(self.index(), self.index())
 
     # Delegated from QAbstractItemModel
     def data(self, role=Qt.DisplayRole, column=0):
@@ -356,7 +362,7 @@ class AnnotationModelItem(ModelItem):
             return self._annotation
         return ModelItem.data(self, role, column)
 
-class KeyValueModelItem(ModelItem):
+class KeyValueRowModelItem(ModelItem):
     def __init__(self, key):
         ModelItem.__init__(self)
         self._key = key
