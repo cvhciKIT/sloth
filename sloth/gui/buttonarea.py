@@ -71,7 +71,7 @@ class ButtonListWidget(QGroupBox):
 class ButtonArea(QWidget):
     stateChanged = pyqtSignal(object)
 
-    def __init__(self, labels=None, hotkeys=None, parent=None):
+    def __init__(self, labels=None, parent=None):
         QWidget.__init__(self, parent)
 
         self.label_names = []
@@ -91,11 +91,12 @@ class ButtonArea(QWidget):
         self.stateChanged.connect(self.stateHasChanged)
 
         if labels is not None:
-            for name, prop in labels:
-                self.add_label(name, prop)
-        if hotkeys is not None:
-            for choice, name, hotkey in hotkeys:
-                self.add_hotkey(choice, name, hotkey)
+            for label in labels:
+                # Description is given in key 'text'.
+                # If empty, use the type attribute.
+                name = label.get('name', '') or label.get('attributes', {}).get('type', '') 
+                self.add_label(name, label.get('attributes', {}))
+
         self.init_button_lists()
         self.vlayout.addStretch(1)
         self.setLayout(self.vlayout)

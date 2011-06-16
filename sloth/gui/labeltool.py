@@ -88,7 +88,16 @@ class MainWindow(QMainWindow):
     def setupGui(self):
         self.ui = uic.loadUi(os.path.join(GUIDIR, "labeltool.ui"), self)
 
-        self.scene = AnnotationScene(self.labeltool, items=config.ITEMS, inserters=config.INSERTERS)
+        # get inserters and items from labels
+        # FIXME for handling the new-style config correctly
+        inserters = dict([(label['attributes']['type'], label['inserter']) 
+                          for label in config.LABELS
+                          if 'type' in label.get('attributes', {}) and 'inserter' in label])
+        items = dict([(label['attributes']['type'], label['item']) 
+                      for label in config.LABELS
+                      if 'type' in label.get('attributes', {}) and 'item' in label])
+
+        self.scene = AnnotationScene(self.labeltool, items=items, inserters=inserters)
         self.view = GraphicsView(self)
         self.view.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
         self.view.setScene(self.scene)
@@ -105,7 +114,7 @@ class MainWindow(QMainWindow):
 
         self.initShortcuts(config.HOTKEYS)
 
-        self.buttonarea = ButtonArea(config.LABELS, ())
+        self.buttonarea = ButtonArea(config.LABELS)
         self.ui.dockAnnotationButtons.setWidget(self.buttonarea)
         self.buttonarea.stateChanged.connect(self.scene.setMode)
 
