@@ -75,6 +75,9 @@ class ModelItem(MutableMapping):
         else:
             return QVariant()
 
+    def flags(self, column):
+        return Qt.ItemIsEnabled | Qt.ItemIsSelectable
+
     def setData(self, value, role=Qt.DisplayRole, column=0):
         return False
 
@@ -382,6 +385,9 @@ class KeyValueRowModelItem(ModelItem):
         else:
             return ModelItem.data(self, role, column)
 
+    def flags(self, column):
+        return Qt.NoItemFlags
+
 class AnnotationModel(QAbstractItemModel):
     # signals
     dirtyChanged = pyqtSignal(bool, name='dirtyChanged')
@@ -429,7 +435,10 @@ class AnnotationModel(QAbstractItemModel):
         return item.setData(value, role, index.column())
 
     def flags(self, index):
-        return Qt.ItemIsEnabled | Qt.ItemIsSelectable
+        if not index.isValid():
+            return self._root.flags(index.column())
+        item = self.itemFromIndex(index)
+        return item.flags(index.column())
 
     def headerData(self, section, orientation, role):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
