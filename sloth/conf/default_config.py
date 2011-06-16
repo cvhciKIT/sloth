@@ -4,6 +4,11 @@ LABELS = (
 )
 
 HOTKEYS = (
+        ('PgDown',    lambda lt: lt.gotoNext(),                 'Next image/frame'),
+        ('PgUp',      lambda lt: lt.gotoPrevious(),             'Previous image/frame'),
+        ('Tab',       lambda lt: lt.selectNextAnnotation(),     'Select next annotation'),
+        ('Shift+Tab', lambda lt: lt.selectPreviousAnnotation(), 'Select previous annotation'),
+        ('ESC',       lambda lt: lt.exitInsertMode(),           'Exit insert mode'),
 )
 
 # Defines the mapping from the annotation type to the visualization item. The

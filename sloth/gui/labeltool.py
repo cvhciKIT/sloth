@@ -11,11 +11,15 @@ from sloth.gui.annotationscene import *
 from sloth.gui.frameviewer import *
 from sloth.gui.controlbuttons import *
 from sloth.conf import config
+from sloth.core.utils import import_callable
 from sloth.annotations.model import *
 from sloth import APP_NAME, ORGANIZATION_DOMAIN, VERSION
 import okapy.videoio as okv
 
 GUIDIR=os.path.join(os.path.dirname(__file__))
+
+def bind(function, labeltool):
+    return lambda: function(labeltool)
 
 class MainWindow(QMainWindow):
     def __init__(self, labeltool, parent=None):
@@ -28,8 +32,6 @@ class MainWindow(QMainWindow):
         self.loadApplicationSettings()
 
         self.onAnnotationsLoaded()
-
-        self.initShortcuts()
 
     # Slots
     def onPluginLoaded(self, action):
@@ -60,30 +62,25 @@ class MainWindow(QMainWindow):
         if new_image.index() != self.treeview.currentIndex():
             self.treeview.setCurrentIndex(new_image.index())
 
-    def initShortcuts(self):
-        # TODO clean up, make configurable
+    def initShortcuts(self, HOTKEYS):
         self.shortcuts = []
 
-        selectNextItem = QAction("Select next item", self)
-        selectNextItem.setShortcut(QKeySequence("Tab"))
-        selectNextItem.setEnabled(True)
-        selectNextItem.triggered.connect(self.scene.selectNextItem)
-        self.ui.menuPlugins.addAction(selectNextItem)
-        self.shortcuts.append(selectNextItem)
+        for hotkey in HOTKEYS:
+            assert len(hotkey) >= 2
+            key = hotkey[0]
+            fun = hotkey[1]
+            desc = ""
+            if len(hotkey) > 2:
+                desc = hotkey[2]
+            if type(fun) == str:
+                fun = import_callable(fun)
 
-        selectPreviousItem = QAction("Select previous item", self)
-        selectPreviousItem.setShortcut(QKeySequence("Shift+Tab"))
-        selectPreviousItem.setEnabled(True)
-        selectPreviousItem.triggered.connect(lambda: self.scene.selectNextItem(True))
-        self.ui.menuPlugins.addAction(selectPreviousItem)
-        self.shortcuts.append(selectPreviousItem)
-
-        exitInsertMode = QAction("Exit insert mode", self)
-        exitInsertMode.setShortcut(QKeySequence("ESC"))
-        exitInsertMode.setEnabled(True)
-        exitInsertMode.triggered.connect(self.buttonarea.exitInsertMode)
-        self.ui.menuPlugins.addAction(exitInsertMode)
-        self.shortcuts.append(exitInsertMode)
+            hk = QAction(desc, self)
+            hk.setShortcut(QKeySequence(key))
+            hk.setEnabled(True)
+            hk.triggered.connect(bind(fun, self.labeltool))
+            self.ui.menuPlugins.addAction(hk)
+            self.shortcuts.append(hk)
 
     ###
     ### GUI/Application setup
@@ -106,7 +103,9 @@ class MainWindow(QMainWindow):
         self.central_widget.setLayout(self.central_layout)
         self.setCentralWidget(self.central_widget)
 
-        self.buttonarea = ButtonArea(config.LABELS, config.HOTKEYS)
+        self.initShortcuts(config.HOTKEYS)
+
+        self.buttonarea = ButtonArea(config.LABELS, ())
         self.ui.dockAnnotationButtons.setWidget(self.buttonarea)
         self.buttonarea.stateChanged.connect(self.scene.setMode)
 
