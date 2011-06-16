@@ -2,20 +2,15 @@ from PyQt4.QtGui import *
 from PyQt4.Qt import *
 import math
 
-class ItemInserter:
-    def __init__(self, scene, mode=None):
-        self.scene_ = scene
-        self.mode_  = mode
+class ItemInserter(QObject):
+    # Signals
+    inserterFinished = pyqtSignal()
 
-    def setScene(self, scene):
-        self.scene_ = scene
-    def scene(self):
-        return self.scene_
-
-    def setMode(self, mode):
-        self.mode_ = mode
-    def mode(self):
-        return self.mode_
+    def __init__(self, labeltool, scene, default_properties=None):
+        QObject.__init__(self)
+        self.labeltool_          = labeltool
+        self.scene_              = scene
+        self.default_properties_ = default_properties
 
     def mousePressEvent(self, event, image_item):
         event.accept()
@@ -32,19 +27,23 @@ class ItemInserter:
     def allowOutOfSceneEvents(self):
         return False
 
+    def abort(self):
+        self.inserterFinished.emit()
+
 class PointItemInserter(ItemInserter):
     def mousePressEvent(self, event, image_item):
         pos = event.scenePos()
         ann = {'type': 'point',
                'x': pos.x(), 'y': pos.y()}
+        ann.update(self.default_properties_)
         image_item.addAnnotation(ann)
         event.accept()
 
 class RectItemInserter(ItemInserter):
-    def __init__(self, scene, mode=None):
-        ItemInserter.__init__(self, scene, mode)
+    def __init__(self, labeltool, scene, default_properties=None):
+        ItemInserter.__init__(self, labeltool, scene, default_properties)
         self.current_item_ = None
-        self.init_pos_ = None
+        self.init_pos_     = None
 
     def mousePressEvent(self, event, image_item):
         pos = event.scenePos()
@@ -52,7 +51,7 @@ class RectItemInserter(ItemInserter):
         item.setPen(Qt.red)
         self.current_item_ = item
         self.init_pos_     = pos
-        self.scene().addItem(item)
+        self.scene_.addItem(item)
         event.accept()
 
     def mouseMoveEvent(self, event, image_item):
@@ -71,9 +70,9 @@ class RectItemInserter(ItemInserter):
                 ann = {'type': 'rect',
                        'x': rect.x(), 'y': rect.y(),
                        'width': rect.width(), 'height': rect.height()}
-                ann.update(self.mode())
+                ann.update(self.default_properties_)
                 image_item.addAnnotation(ann)
-            self.scene().removeItem(self.current_item_)
+            self.scene_.removeItem(self.current_item_)
             self.current_item_ = None
             self.init_pos_ = None
 
@@ -82,17 +81,19 @@ class RectItemInserter(ItemInserter):
     def allowOutOfSceneEvents(self):
         return True
 
-class FixedRatioRectItemInserter(RectItemInserter):
-    def __init__(self, scene, mode=None):
-        RectItemInserter.__init__(self, scene, mode)
-        self.ratio_ = 1
-        if mode is not None:
-            self.ratio_ = float(mode.get('_ratio', 1))
+    def abort(self):
+        if self.current_item_ is not None:
+            self.scene_.removeItem(self.current_item_)
+            self.current_item_ = None
+            self.init_pos_ = None
+        ItemInserter.abort(self)
 
-    def setMode(self, mode):
-        if mode is not None:
-            self.ratio_ = float(mode.get('_ratio', 1))
-        RectItemInserter.setMode(self, mode)
+class FixedRatioRectItemInserter(RectItemInserter):
+    def __init__(self, labeltool, scene, default_properties=None):
+        RectItemInserter.__init__(self, labeltool, scene, default_properties)
+        self.ratio_ = 1
+        if default_properties is not None:
+            self.ratio_ = float(default_properties.get('_ratio', 1))
 
     def mouseMoveEvent(self, event, image_item):
         if self.current_item_ is not None:
@@ -110,6 +111,7 @@ class FixedRatioRectItemInserter(RectItemInserter):
 
         event.accept()
 
+# TODO
 class PolygonItemInserter(ItemInserter):
     def __init__(self, scene, mode=None):
         ItemInserter.__init__(self, scene, mode)
@@ -120,7 +122,7 @@ class PolygonItemInserter(ItemInserter):
         if self.current_item_ is None:
             item = QGraphicsPolygonItem(QPolygonF([pos]))
             self.current_item_ = item
-            self.scene().addItem(item)
+            self.scene_.addItem(item)
         else:
             polygon = self.current_item_.polygon()
             polygon.append(pos)

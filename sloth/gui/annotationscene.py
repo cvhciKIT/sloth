@@ -110,23 +110,24 @@ class AnnotationScene(QGraphicsScene):
             if item is not None:
                 self.addItem(item)
 
-    def mode(self):
-        return self.mode_
+    def onInserterFinished(self):
+        self.sender().inserterFinished.disconnect(self.onInserterFinished)
+        self.inserter_ = None
 
     def setMode(self, mode):
         print "setMode :", mode
-        self.mode_ = mode
 
-        if self.mode_ == None:
-            self.inserter_ = None
-            return
+        # Abort current inserter
+        if self.inserter_ is not None:
+            self.inserter_.abort()
 
-        inserter = self.inserterfactory_.create(self.mode_['type'], self)
-        if inserter is None:
-            raise InvalidArgumentException("Invalid mode")
-
-        self.inserter_ = inserter
-        self.inserter_.setMode(self.mode_)
+        # Add new inserter
+        if mode is not None:
+            inserter = self.inserterfactory_.create(mode['type'], self.labeltool_, self, mode)
+            if inserter is None:
+                raise InvalidArgumentException("Invalid mode")
+            inserter.inserterFinished.connect(self.onInserterFinished)
+            self.inserter_ = inserter
 
     #
     # common methods
