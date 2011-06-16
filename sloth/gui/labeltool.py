@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import os
-import functools, importlib
+import functools
 import fnmatch
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -14,7 +14,6 @@ from sloth.conf import config
 from sloth.core.utils import import_callable
 from sloth.annotations.model import *
 from sloth import APP_NAME, ORGANIZATION_DOMAIN, VERSION
-import okapy.videoio as okv
 
 GUIDIR=os.path.join(os.path.dirname(__file__))
 
@@ -122,6 +121,9 @@ class MainWindow(QMainWindow):
         self.treeview.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
         self.ui.dockInformation.setWidget(self.treeview)
 
+        # Show the UI.  It is important that this comes *after* the above 
+        # adding of custom widgets, especially the central widget.  Otherwise the
+        # dock widgets would be far to large.
         self.ui.show()
 
         ## connect action signals

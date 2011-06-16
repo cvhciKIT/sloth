@@ -6,8 +6,6 @@ This is the core labeltool module.
 """
 
 import sys, os
-import fnmatch
-from optparse import OptionParser
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from sloth.annotations.model import *
