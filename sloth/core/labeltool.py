@@ -66,6 +66,7 @@ class LabelTool(QObject):
         self.container_ = AnnotationContainer()
         self._current_image = None
         self._model = AnnotationModel([])
+        self._mainwindow = None
 
     def main_help_text(self):
         """
@@ -329,3 +330,18 @@ class LabelTool(QObject):
             i += 1
 
         self._model._root.appendFileItem(fileitem)
+
+    ###
+    ### Scene functions
+    ###___________________________________________________________________________________________
+    def selectNextAnnotation(self):
+        if self._mainwindow is not None:
+            return self._mainwindow.scene.selectNextItem()
+
+    def selectPreviousAnnotation(self):
+        if self._mainwindow is not None:
+            return self._mainwindow.scene.selectNextItem(reverse=True)
+
+    def exitInsertMode(self):
+        if self._mainwindow is not None:
+            return self._mainwindow.buttonarea.exitInsertMode()

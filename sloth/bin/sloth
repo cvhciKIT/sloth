@@ -15,6 +15,7 @@ if __name__ == '__main__':
     labeltool.execute_from_commandline(sys.argv)
 
     wnd = MainWindow(labeltool)
+    labeltool._mainwindow = wnd
     wnd.show()
 
     sys.exit(app.exec_())
