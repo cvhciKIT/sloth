@@ -2,6 +2,7 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from sloth.items import *
+from sloth.annotations.model import TypeRole
 from sloth.core.exceptions import InvalidArgumentException
 import okapy
 
