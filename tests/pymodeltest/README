@@ -1,0 +1,28 @@
+ModelTest provides a way to check for common errors in implementations of  <a href="QAbstractItemModel">http://doc.trolltech.com/4/qabstractitemmodel.html</a>.
+
+
+ModelTest continuously checks a model as it changes, helping to verify the state and catching many common errors the moment they show up such as:
+<ul>
+<li>Verifing X number of rows have been inserted in the correct place after the signal rowsAboutToBeInserted() says X rows will be inserted.</li>
+<li>The parent of the first index of the first row is a QModelIndex()</li>
+<li>Calling index() twice in a row with the same values will return the same QModelIndex</li>
+<li>If rowCount() says there are X number of rows, model test will verify that is true.
+<li>Many possible off by one bugs</li>
+<li>hasChildren() returns true if rowCount() is greater then zero.</li>
+<li>and many more...</li>
+</ul>
+
+---
+
+To Use the model test do the following:
+
+1) Include the modeltest.py file in your project directory
+
+2) Then in your source import "modeltest" and instantiate ModelTest with your model so the test can live for the lifetime of your model.  For example:  
+
+from modeltest import ModelTest
+
+self.model = QDirModel(self)
+self.modeltest = ModelTest(self.model, self);
+
+3) That is it.  When the test finds a problem it will throw an AssertionError.  modeltest.py contains some hints on how to fix problems that the test finds.
