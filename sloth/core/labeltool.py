@@ -284,6 +284,8 @@ class LabelTool(QObject):
     def setCurrentImage(self, image):
         if isinstance(image, QModelIndex):
             image = self._model.itemFromIndex(image)
+        if isinstance(image, RootModelItem):
+            return
         while (image is not None) and (not isinstance(image, ImageModelItem)):
             image = image.parent()
         if image is None:
