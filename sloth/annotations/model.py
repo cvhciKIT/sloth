@@ -1,8 +1,8 @@
 """
 The annotationmodel module contains the classes for the AnnotationModel.
 """
-from PyQt4.QtGui import QTreeView, QItemSelection, QItemSelectionModel, QSortFilterProxyModel, QAbstractItemView
-from PyQt4.QtCore import QModelIndex, QPersistentModelIndex, QAbstractItemModel, QVariant, Qt, pyqtSignal
+from PyQt4.QtGui import QTreeView, QItemSelection, QItemSelectionModel, QSortFilterProxyModel
+from PyQt4.QtCore import QModelIndex, QAbstractItemModel, QVariant, Qt, pyqtSignal
 import os.path
 import copy
 from collections import MutableMapping
@@ -13,16 +13,14 @@ class ModelItem(MutableMapping):
     def __init__(self):
         if not hasattr(self, "_children"):
             self._children = []
-        if not hasattr(self, "_pindex"):
-            self._pindex   = []
         if not hasattr(self, "_model"):
             self._model    = None
         if not hasattr(self, "_parent"):
             self._parent   = None
-        if not hasattr(self, "_columns"):
-            self._columns  = 1
         if not hasattr(self, "_dict"):
             self._dict     = {}
+        if not hasattr(self, "_row"):
+            self._row      = -1
 
     # Methods for MutableMapping
     def __len__(self):
@@ -70,10 +68,12 @@ class ModelItem(MutableMapping):
         return self._parent
 
     def data(self, role=Qt.DisplayRole, column=0):
+        if role == Qt.DisplayRole:
+            return ""
         if role == ItemRole:
             return QVariant(self)
         else:
-            return QVariant()
+            return None
 
     def flags(self, column):
         return Qt.ItemIsEnabled | Qt.ItemIsSelectable
@@ -81,72 +81,54 @@ class ModelItem(MutableMapping):
     def setData(self, value, role=Qt.DisplayRole, column=0):
         return False
 
-    def getPosOfChild(self, item):
-        return self._children.index(item)
-
     def getChildAt(self, pos):
         return self._children[pos]
 
     def getPreviousSibling(self):
         p = self.parent()
         if p is not None:
-            row = p.getPosOfChild(self)
-            if row > 0:
-                return p.getChildAt(row-1)
+            if self._row > 0:
+                return p.getChildAt(self._row-1)
         return None
 
     def getNextSibling(self):
         p = self.parent()
         if p is not None:
-            row = p.getPosOfChild(self)
-            if row < len(p.children()) - 1:
-                return p.getChildAt(row+1)
+            if self._row < len(p.children()) - 1:
+                return p.getChildAt(self._row+1)
         return None
 
-    def _attachToModel(self, model, indices):
+    def _attachToModel(self, model):
         assert self.model() is None
-        assert not self._pindex
         assert self.parent() is not None
         assert self.parent().model() is not None
 
         self._model = model
-
-        for i in range(self.model().columnCount()):
-            if i < self._columns:
-                ind = indices[i]
-            else:
-                ind = QModelIndex()
-            self._pindex.append(QPersistentModelIndex(ind))
-
-        # Recurse
-        for i in range(len(self.children())):
-            item = self.children()[i]
-            cindices = [self.model().createIndex(i, j, item) for j in range(item._columns)]
-            item._attachToModel(model, cindices)
-
-    def pindex(self, column=0):
-        assert self._pindex
-        return self._pindex[column]
+        for item in self.children():
+            item._attachToModel(model)
 
     def index(self, column=0):
-        assert self._pindex
-        return QModelIndex(self._pindex[column])
+        if self.parent() is None:
+            return QModelIndex()
+        if column >= self.model().columnCount():
+            return QModelIndex()
+        return self.model().createIndex(self._row, column, self)
 
     def appendChild(self, item):
         assert isinstance(item, ModelItem)
         assert item.model() is None
         assert item.parent() is None
 
+        next_row = len(self._children)
         if self.model() is not None:
-            next_row = len(self._children)
             self.model().beginInsertRows(self.index(), next_row, next_row)
 
         item._parent = self
+        item._row    = next_row
         self.children().append(item)
 
         if self.model() is not None:
-            indices = [self.model().createIndex(next_row, i, item) for i in range(item._columns)]
-            item._attachToModel(self.model(), indices)
+            item._attachToModel(self.model())
             self.model().endInsertRows()
 
     def appendChildren(self, items):
@@ -155,29 +137,19 @@ class ModelItem(MutableMapping):
             assert item.model() is None
             assert item.parent() is None
 
+        next_row = len(self._children)
         if self.model() is not None:
-            next_row = len(self._children)
             self.model().beginInsertRows(self.index(), next_row, next_row + len(items) - 1)
 
-        for item in items:
+        for i, item in enumerate(items):
             item._parent = self
+            item._row    = next_row + i
             self.children().append(item)
 
         if self.model() is not None:
-            for i in range(len(items)):
-                item = items[i]
-                indices = [self.model().createIndex(next_row+i, j, item) for j in range(item._columns)]
-                item._attachToModel(self.model(), indices)
-
+            for item in items:
+                item._attachToModel(self.model())
             self.model().endInsertRows()
-
-    def deleteAllChildren(self):
-        for child in self._children:
-            child.deleteAllChildren()
-
-        self._model.beginRemoveRows(self.index(), 0, len(self._children) - 1)
-        self._children = []
-        self._model.endRemoveRows()
 
     def delete(self):
         if self.parent() is None:
@@ -186,21 +158,38 @@ class ModelItem(MutableMapping):
             self.parent().deleteChild(self)
 
     def deleteChild(self, arg):
+        # Grandchildren are considered deleted automatically
         if isinstance(arg, ModelItem):
-            self.deleteChild(self._children.index(arg))
+            return self.deleteChild(self._children.index(arg))
         else:
             if arg < 0 or arg >= len(self._children):
                 raise IndexError("child index out of range")
-            self._children[arg].deleteAllChildren()
-            self._model.beginRemoveRows(self.index(), arg, arg)
+
+            if self.model() is not None:
+                self._model.beginRemoveRows(self.index(), arg, arg)
+
             del self._children[arg]
+
+            # Update cached row numbers
+            for i, c in enumerate(self._children):
+                c._row = i
+
+            if self.model() is not None:
+                self._model.endRemoveRows()
+
+    def deleteAllChildren(self):
+        if self.model() is not None:
+            self._model.beginRemoveRows(self.index(), 0, len(self._children) - 1)
+
+        self._children = []
+
+        if self.model() is not None:
             self._model.endRemoveRows()
 
 class RootModelItem(ModelItem):
     def __init__(self, model):
         ModelItem.__init__(self)
         self._model = model
-        self._pindex = [QPersistentModelIndex() for i in range(model.columnCount())]
 
     def appendChild(self, item):
         if isinstance(item, FileModelItem):
@@ -357,8 +346,11 @@ class AnnotationModelItem(KeyValueModelItem):
 
     # Delegated from QAbstractItemModel
     def data(self, role=Qt.DisplayRole, column=0):
-        if role == Qt.DisplayRole and column == 0:
-            return self['type']
+        if role == Qt.DisplayRole:
+            if column == 0:
+                return self['type']
+            else:
+                return ""
         elif role == TypeRole:
             return self['type']
         elif role == DataRole:
@@ -369,7 +361,6 @@ class KeyValueRowModelItem(ModelItem):
     def __init__(self, key):
         ModelItem.__init__(self)
         self._key = key
-        self._columns = 2
 
     def key(self):
         return self._key
@@ -404,6 +395,9 @@ class AnnotationModel(QAbstractItemModel):
         return 2
 
     def rowCount(self, index=QModelIndex()):
+        # Only items with column==1 can have children
+        if index.column() > 0:
+            return 0
         item = self.itemFromIndex(index)
         return len(item.children())
 
@@ -417,10 +411,25 @@ class AnnotationModel(QAbstractItemModel):
         return parent.index()
 
     def index(self, row, column, parent_idx=QModelIndex()):
-        parent = self.itemFromIndex(parent_idx)
-        if row >= len(parent.children()):
+        # Handle invalid rows/columns
+        if row < 0 or column < 0:
             return QModelIndex()
-        return parent.children()[row].index(column)
+
+        # Only items with column == 0 can have children
+        if parent_idx.isValid() and parent_idx.column() > 0:
+            return QModelIndex()
+
+        # Handle root item
+        if parent_idx == QModelIndex():
+            parent = self._root
+        # Handle normal items
+        else:
+            parent = self.itemFromIndex(parent_idx)
+        if row < 0 or row >= len(parent.children()):
+            return QModelIndex()
+        if column < 0 or column >= self.columnCount():
+            return QModelIndex()
+        return self.createIndex(row, column, parent.children()[row])
 
     def data(self, index, role=Qt.DisplayRole):
         if not index.isValid():
@@ -512,7 +521,7 @@ class AnnotationTreeView(QTreeView):
 
         self.setUniformRowHeights(True)
         self.setSelectionMode(QTreeView.ExtendedSelection)
-        self.setSelectionBehavior(QTreeView.SelectItems)
+        self.setSelectionBehavior(QTreeView.SelectRows)
         self.setAllColumnsShowFocus(True)
         self.setAlternatingRowColors(True)
         #self.setEditTriggers(QAbstractItemView.SelectedClicked)
