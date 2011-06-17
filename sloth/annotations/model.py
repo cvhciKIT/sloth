@@ -288,8 +288,8 @@ class ImageFileModelItem(FileModelItem, ImageModelItem, KeyValueModelItem):
 
     def data(self, role=Qt.DisplayRole, column=0):
         if role == DataRole:
-            return self._fileinfo
-        return FileModelItem.data(self, role)
+            return self._dict
+        return FileModelItem.data(self, role, column)
 
     def getAnnotations(self):
         fi = copy.deepcopy(self._fileinfo)
