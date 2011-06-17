@@ -1,14 +1,18 @@
 .. highlight:: python
 
+========
 Concepts
 ========
+
+In this section, we will introduces some high-level concepts in sloth.
+
 
 Labels
 ------
 
-The label tool is designed for labeling a set of image files or videos.  Each image, or video frame,
-can contain any number of labels.  The labels itself are expected to be sets key-value pairs.  We can
-therefore represent a label for example in the following way::
+Sloth is designed for labeling a set of images or videos.  Each image, or video frame,
+can contain any number of labels.  The labels itself are represented as key-value pairs,
+for example::
 
     {
         type:   "rect",
@@ -20,16 +24,17 @@ therefore represent a label for example in the following way::
     }
 
 The only required key a label *has* to have is the "type" key.  It will be used by the label tool
-to determine the appropriate visualization for this label (in our example it will draw a rect).
-We will later see, how you can customize the mapping between type and visualization and how to
+to determine the appropriate visualization for this label (in our example it will draw a rectangle).
+You will later see, how you can customize the mapping between type and visualization and how to
 write your own visualizations.
+
 
 Label type conventions
 ----------------------
 
-The label tool provides support for a range of standard shape label (for example `rect`, `point`, `polygon` etc.).
+Sloth provides support for a range of standard shape labels (for example `rect`, `point`, `polygon` etc.).
 In order for the label tool to correctly visualize these labels, the labels have to follow
-a convention, which the keys are for `x`- and `y`-coordinates, `width` and `height` and so on.
+a convention, which keys represent the `x`- and `y`-coordinates, `width` and `height` and so on.
 
 The following types are supported out of the box, i.e. corresponding visualization items
 and inserters will be avaible in the default configuration.
@@ -66,10 +71,11 @@ Polygon
         "yn":     "20;30;40",
     }
 
+
 User defined labels
 -------------------
 
-In most cases, it will not be sufficient for your labeling need to stick to those simple types.  Or
+In many cases, it will not be sufficient for your labeling needs to stick to those simple types.  Or
 your might want to add further information.  Since each label is just a set of key-value pairs, this
 is easily possible.  For example, by adding an additional ``class`` key, denoting that these points
 are the left and right eye, respectively::
@@ -105,13 +111,13 @@ configuration how to display this type as well.  See section
 Representation is not storage
 -----------------------------
 
-In the sections above we introduced the labels as sets of key-value pairs with a textual representation.
-The storage on disk of the labels however can be very different.
-The label tool does not have *the one* in which way to store the labels.  Again,
-there are some default formats with which the label tool can deal out of the
-box (among others yaml and json, which resemble the textual representation
-above).  However, you are free to define your own loading and saving routines
-for your labels (see :doc:`Containers`). This allows you for example to support
-legacy third-party label formats without the need of converting them to yaml
-first.
+In the sections above we introduced the labels as sets of key-value pairs with
+a textual representation.  The storage on disk of the labels however can be
+very different.  Sloth does not have *the one* way in which way to store the
+labels.  Again, there are some default formats which the label tool can deal
+with out of the box (among others YAML and JSON, which resemble the textual
+representation above).  However, you are free to define your own loading and
+saving routines for your labels (see :doc:`Containers`). This allows you for
+example to support legacy third-party label formats without the need of
+converting them to JSON first.
 
