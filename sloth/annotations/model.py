@@ -171,13 +171,14 @@ class ModelItem(MutableMapping):
 
             self.model().endInsertRows()
 
-    def deleteAllChildren(self):
+    def deleteAllChildren(self, notifyModel=True):
+        if notifyModel and self._model is not None:
+            self._model.beginRemoveRows(self.index(), 0, len(self._children) - 1)
         for child in self._children:
-            child.deleteAllChildren()
-
-        self._model.beginRemoveRows(self.index(), 0, len(self._children) - 1)
+            child.deleteAllChildren(notifyModel=False)
         self._children = []
-        self._model.endRemoveRows()
+        if notifyModel and self._model is not None:
+            self._model.endRemoveRows()
 
     def delete(self):
         if self.parent() is None:
@@ -185,16 +186,18 @@ class ModelItem(MutableMapping):
         else:
             self.parent().deleteChild(self)
 
-    def deleteChild(self, arg):
+    def deleteChild(self, arg, notifyModel=True):
         if isinstance(arg, ModelItem):
             self.deleteChild(self._children.index(arg))
         else:
             if arg < 0 or arg >= len(self._children):
                 raise IndexError("child index out of range")
-            self._children[arg].deleteAllChildren()
-            self._model.beginRemoveRows(self.index(), arg, arg)
+            if notifyModel and self._model is not None:
+                self._model.beginRemoveRows(self.index(), arg, arg)
+            self._children[arg].deleteAllChildren(notifyModel=False)
             del self._children[arg]
-            self._model.endRemoveRows()
+            if notifyModel and self._model is not None:
+                self._model.endRemoveRows()
 
 class RootModelItem(ModelItem):
     def __init__(self, model):
