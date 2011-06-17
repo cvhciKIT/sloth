@@ -530,14 +530,6 @@ class AnnotationTreeView(QTreeView):
         QTreeView.setModel(self, model)
         self.resizeColumns()
 
-    def keyPressEvent(self, event):
-        ## handle deletions of items
-        if event.key() == Qt.Key_Delete:
-            self.model().itemFromIndex(self.currentindex()).delete()
-
-        ## it is important to use the keyPressEvent of QAbstractItemView, not QTreeView
-        QAbstractItemView.keyPressEvent(self, event)
-
     def rowsInserted(self, index, start, end):
         QTreeView.rowsInserted(self, index, start, end)
         self.resizeColumns()
