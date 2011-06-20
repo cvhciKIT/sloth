@@ -183,44 +183,6 @@ class RootModelItem(ModelItem):
     def getAnnotations(self):
         return [child.getAnnotations() for child in self.children()]
 
-class FileModelItem(ModelItem):
-    def __init__(self, fileinfo):
-        ModelItem.__init__(self)
-        self.update(fileinfo)
-
-    def data(self, role=Qt.DisplayRole, column=0):
-        if role == Qt.DisplayRole and column == 0:
-            return os.path.basename(self['filename'])
-        return ModelItem.data(self, role, column)
-
-    @staticmethod
-    def create(fileinfo):
-        if fileinfo['type'] == 'image':
-            return ImageFileModelItem(fileinfo)
-        elif fileinfo['type'] == 'video':
-            return VideoFileModelItem(fileinfo)
-
-class ImageModelItem(ModelItem):
-    def __init__(self, annotations):
-        ModelItem.__init__(self)
-        for ann in annotations:
-            self.addAnnotation(ann)
-
-    def addAnnotation(self, ann):
-        self.appendChild(AnnotationModelItem(ann))
-
-    def removeAnnotation(self, pos):
-        self.deleteChild(pos)
-
-    def updateAnnotation(self, ann):
-        for child in self._children:
-            if child.type() == ann['type']:
-                if (child.has_key('id') and ann.has_key('id') and child['id'] == ann['id']) or (not child.has_key('id') and not ann.has_key('id')):
-                    ann[None] = None
-                    child.setData(QVariant(ann), DataRole, 1)
-                    return
-        raise Exception("No AnnotationModelItem found that could be updated!")
-
 class KeyValueModelItem(ModelItem, MutableMapping):
     def __init__(self, hidden=[]):
         ModelItem.__init__(self)
@@ -268,12 +230,54 @@ class KeyValueModelItem(ModelItem, MutableMapping):
         if len(self._dict) > 0:
             MutableMapping.clear(self)
 
-class ImageFileModelItem(FileModelItem, ImageModelItem, KeyValueModelItem):
+    def getAnnotations(self):
+        res = copy.deepcopy(self._dict)
+        if None in res: del res[None]
+        return res
+
+class FileModelItem(KeyValueModelItem):
+    def __init__(self, fileinfo, hidden=['filename', 'type']):
+        KeyValueModelItem.__init__(self, hidden=hidden)
+        self.update(fileinfo)
+
+    def data(self, role=Qt.DisplayRole, column=0):
+        if role == Qt.DisplayRole and column == 0:
+            return os.path.basename(self['filename'])
+        return ModelItem.data(self, role, column)
+
+    @staticmethod
+    def create(fileinfo):
+        if fileinfo['type'] == 'image':
+            return ImageFileModelItem(fileinfo)
+        elif fileinfo['type'] == 'video':
+            return VideoFileModelItem(fileinfo)
+
+class ImageModelItem(ModelItem):
+    def __init__(self, annotations):
+        ModelItem.__init__(self)
+        for ann in annotations:
+            self.addAnnotation(ann)
+
+    def addAnnotation(self, ann):
+        self.appendChild(AnnotationModelItem(ann))
+
+    def removeAnnotation(self, pos):
+        self.deleteChild(pos)
+
+    def updateAnnotation(self, ann):
+        for child in self._children:
+            if child.type() == ann['type']:
+                if (child.has_key('id') and ann.has_key('id') and child['id'] == ann['id']) or (not child.has_key('id') and not ann.has_key('id')):
+                    ann[None] = None
+                    child.setData(QVariant(ann), DataRole, 1)
+                    return
+        raise Exception("No AnnotationModelItem found that could be updated!")
+
+class ImageFileModelItem(FileModelItem, ImageModelItem):
     def __init__(self, fileinfo):
         annotations = fileinfo.get("annotations", [])
         if fileinfo.has_key("annotations"):
             del fileinfo["annotations"]
-        KeyValueModelItem.__init__(self, hidden=['filename', 'type'])
         FileModelItem.__init__(self, fileinfo)
         ImageModelItem.__init__(self, annotations)
 
@@ -283,7 +287,7 @@ class ImageFileModelItem(FileModelItem, ImageModelItem, KeyValueModelItem):
         return FileModelItem.data(self, role, column)
 
     def getAnnotations(self):
-        fi = copy.deepcopy(self._fileinfo)
+        fi = KeyValueModelItem.getAnnotations(self)
         fi['annotations'] = [child.getAnnotations() for child in self.children()]
         return fi
 
@@ -298,7 +302,7 @@ class VideoFileModelItem(FileModelItem):
             self.appendChild(FrameModelItem(frameinfo))
 
     def getAnnotations(self):
-        fi = copy.deepcopy(self._fileinfo)
+        fi = KeyValueModelItem.getAnnotations(self)
         fi['frames'] = [child.getAnnotations() for child in self.children()]
         return fi
 
@@ -323,7 +327,7 @@ class FrameModelItem(ImageModelItem, KeyValueModelItem):
         return ImageModelItem.data(self, role, column)
 
     def getAnnotations(self):
-        fi = copy.deepcopy(self._frameinfo)
+        fi = KeyValueModelItem.getAnnotations(self)
         fi['annotations'] = [child.getAnnotations() for child in self.children()]
         return fi
 
