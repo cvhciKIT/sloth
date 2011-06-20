@@ -6,6 +6,9 @@ from PyQt4.QtCore import QModelIndex, QAbstractItemModel, QVariant, Qt, pyqtSign
 import os.path
 import copy
 from collections import MutableMapping
+import time
+import logging
+LOG = logging.getLogger(__name__)
 
 ItemRole, TypeRole, DataRole, ImageRole = [Qt.UserRole + i + 1 for i in range(4)]
 
@@ -385,10 +388,13 @@ class AnnotationModel(QAbstractItemModel):
 
     def __init__(self, annotations, parent=None):
         QAbstractItemModel.__init__(self, parent)
+        start = time.time()
         self._annotations = annotations
         self._dirty       = False
         self._root        = RootModelItem(self)
         self._root.appendFileItems(annotations)
+        diff = time.time() - start
+        LOG.info("Created AnnotationModel in %.2fs" % (diff, ))
 
     # QAbstractItemModel overloads
     def columnCount(self, index=QModelIndex()):
