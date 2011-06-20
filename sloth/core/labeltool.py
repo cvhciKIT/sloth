@@ -212,7 +212,6 @@ class LabelTool(QObject):
 
         try:
             self.container_ = self.container_factory_.create(fname)
-            self.container_.load(fname)
             self._model = AnnotationModel(self.container_.load(fname))
             msg = "Successfully loaded %s (%d files, %d annotations)" % \
                     (fname, self._model.root().numFiles(), self._model.root().numAnnotations())
