@@ -1,5 +1,6 @@
 import os
 import fnmatch
+import time
 from sloth.core.exceptions import ImproperlyConfigured, NotImplementedException, InvalidArgumentException
 from sloth.core.utils import import_callable
 try:
@@ -15,6 +16,8 @@ try:
 except:
     pass
 import okapy
+import logging
+LOG = logging.getLogger(__name__)
 
 class AnnotationContainerFactory:
     def __init__(self, containers):
@@ -78,7 +81,11 @@ class AnnotationContainer:
         if not filename:
             raise InvalidArgumentException("filename cannot be empty")
         self.filename_ = filename
-        return self.parseFromFile(filename)
+        start = time.time()
+        ann = self.parseFromFile(filename)
+        diff = time.time() - start
+        LOG.info("Loaded annotations from %s in %.2fs" % (filename, diff))
+        return ann
 
     def parseFromFile(self, filename):
         """
