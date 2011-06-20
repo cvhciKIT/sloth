@@ -55,11 +55,20 @@ class MainWindow(QMainWindow):
         self.scene.setRoot(index)
 
         new_image = self.labeltool.currentImage()
+        img = self.labeltool.getImage(new_image)
+
+        h = img.shape[0]
+        w = img.shape[1]
+        self.image_resolution.setText("%dx%d" % (w, h))
+
         # TODO: This info should be obtained from AnnotationModel or LabelTool
         if isinstance(new_image, FrameModelItem):
             self.controls.setFrameNumAndTimestamp(item.framenum(), item.timestamp())
         elif isinstance(new_image, ImageFileModelItem):
             self.controls.setFilename(os.path.basename(new_image['filename']))
+
+    def onScaleChanged(self, scale):
+        self.zoominfo.setText("%.2f%%" % (100 * scale, ))
 
     def initShortcuts(self, HOTKEYS):
         self.shortcuts = []
@@ -123,6 +132,14 @@ class MainWindow(QMainWindow):
 
         self.scene.selectionChanged.connect(self.scene.onSelectionChanged)
         self.treeview.selectedItemsChanged.connect(self.scene.onSelectionChangedInTreeView)
+
+        self.image_resolution = QLabel("[no image]")
+        self.statusBar().addPermanentWidget(self.image_resolution)
+
+        self.zoominfo = QLabel()
+        self.statusBar().addPermanentWidget(self.zoominfo)
+        self.view.scaleChanged.connect(self.onScaleChanged)
+        self.onScaleChanged(self.view.getScale())
 
         # Show the UI.  It is important that this comes *after* the above 
         # adding of custom widgets, especially the central widget.  Otherwise the
