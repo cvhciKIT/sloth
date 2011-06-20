@@ -81,9 +81,9 @@ class BaseCommand(object):
     """
     # Metadata about this command.
     option_list = (
-        #make_option('-v', '--verbosity', action='store', dest='verbosity', default='1',
-            #type='choice', choices=['0', '1', '2', '3'],
-            #help='Verbosity level; 0=minimal output, 1=normal output, 2=all output'),
+        make_option('-v', '--verbosity', action='store', dest='verbosity', default='2',
+            type='choice', choices=['0', '1', '2', '3', '4'],
+            help='Verbosity level; 0=critical, 1=error, 2=warning, 3=info, 4=debug'),
         make_option('-c', '--config',
             help='The Python path to a configuration file, e.g. "myconfig". If this isn\'t provided, sloth\'s default configuration will be used.'),
         make_option('--pythonpath',

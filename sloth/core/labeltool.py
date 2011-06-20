@@ -5,7 +5,7 @@ This is the core labeltool module.
 
 """
 
-import sys, os
+import sys, os, logging
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from sloth.annotations.model import *
@@ -98,6 +98,13 @@ class LabelTool(QObject):
             handle_default_options(options)
         except:
             pass  # Ignore any option errors at this point.
+
+        # Initialize logging
+        loglevel = (logging.CRITICAL, logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG)[int(options.verbosity)]
+        logging.basicConfig(level=loglevel)
+
+        # Disable PyQt log messages
+        logging.getLogger("PyQt4").setLevel(logging.WARNING)
 
         # Handle options common for all commands
         # and initialize the labeltool object from
