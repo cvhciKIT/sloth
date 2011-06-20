@@ -12,53 +12,13 @@ LOG = logging.getLogger(__name__)
 
 ItemRole, TypeRole, DataRole, ImageRole = [Qt.UserRole + i + 1 for i in range(4)]
 
-class ModelItem(MutableMapping):
+class ModelItem:
     def __init__(self):
+        self._model    = None
+        self._parent   = None
+        self._row      = -1
         if not hasattr(self, "_children"):
             self._children = []
-        if not hasattr(self, "_model"):
-            self._model    = None
-        if not hasattr(self, "_parent"):
-            self._parent   = None
-        if not hasattr(self, "_dict"):
-            self._dict     = {}
-        if not hasattr(self, "_row"):
-            self._row      = -1
-
-    # Methods for MutableMapping
-    def __len__(self):
-        return len(self._dict)
-
-    def __iter__(self):
-        return self._dict.iterkeys()
-
-    def __getitem__(self, key):
-        return self._dict[key]
-
-    def __setitem__(self, key, value):
-        if key not in self._dict or self._dict[key] != value:
-            self._dict[key] = value
-            self._valueChanged()
-
-    def __delitem__(self, key):
-        del self._dict[key]
-        self._valueChanged()
-
-    def has_key(self, key):
-        return self.__contains__(key)
-
-    def clear(self):
-        if len(self) > 0:
-            MutableMapping.clear(self)
-            self._valueChanged()
-
-    def update(self, other=None, **kwargs):
-        MutableMapping.update(self, other, **kwargs)
-        # TODO: Only call _valueChanged, if anything actually changed...
-        self._valueChanged()
-
-    def _valueChanged(self):
-        pass
 
     def children(self):
         return self._children
@@ -205,8 +165,13 @@ class RootModelItem(ModelItem):
         self.appendChild(item)
 
     def appendFileItems(self, fileinfos):
+        start1 = time.time()
         items = [FileModelItem.create(fi) for fi in fileinfos]
+        diff1 = time.time() - start1
+        start2 = time.time()
         self.appendChildren(items)
+        diff2 = time.time() - start2
+        LOG.debug("Creation of ModelItems: %.2fs, addition to model: %.2fs" % (diff1, diff2))
 
     def numFiles(self):
         return len(self.children())
@@ -256,36 +221,59 @@ class ImageModelItem(ModelItem):
                     return
         raise Exception("No AnnotationModelItem found that could be updated!")
 
-class KeyValueModelItem(ModelItem):
+class KeyValueModelItem(ModelItem, MutableMapping):
     def __init__(self, hidden=[]):
         ModelItem.__init__(self)
-        self._items = {}
-        self._hidden = hidden
+        self._dict   = {}
+        self._items  = {}
+        self._hidden = hidden + [None]
         # dummy key/value so that pyqt does not convert the dict
         # into a QVariantMap while communicating with the Views
         self[None] = None
 
-    def _valueChanged(self):
-        # Keep self._dict and self._items in sync
-        for key, val in self._items.iteritems():
-            if not key in self:
-                self.deleteChild(val)
+    # Methods for MutableMapping
+    def __len__(self):
+        return len(self._dict)
 
-        for key, val in self.iteritems():
-            if not key in self._items and key is not None and key not in self._hidden:
+    def __iter__(self):
+        return self._dict.iterkeys()
+
+    def __getitem__(self, key):
+        return self._dict[key]
+
+    def _emitDataChanged(self):
+        if self.model() is not None:
+            self.model().dataChanged.emit(self.index(), self.index())
+
+    def __setitem__(self, key, value):
+        if key not in self._dict:
+            self._dict[key] = value
+            if key not in self._hidden:
                 self._items[key] = KeyValueRowModelItem(key)
                 self.appendChild(self._items[key])
-
-        if self.model() is not None:
+        elif self._dict[key] != value:
+            self._dict[key] = value
             # TODO: Emit for hidden key/values?
-            self.model().dataChanged.emit(self.index(), self.index())
+            self._emitDataChanged()
+
+    def __delitem__(self, key):
+        del self._dict[key]
+        if key in self._items:
+            self.deleteChild(self._items[key])
+
+    def has_key(self, key):
+        return key in self._dict
+
+    def clear(self):
+        if len(self._dict) > 0:
+            MutableMapping.clear(self)
 
 class ImageFileModelItem(FileModelItem, ImageModelItem, KeyValueModelItem):
     def __init__(self, fileinfo):
         annotations = fileinfo.get("annotations", [])
         if fileinfo.has_key("annotations"):
             del fileinfo["annotations"]
-        KeyValueModelItem.__init__(self, hidden=('filename', 'type'))
+        KeyValueModelItem.__init__(self, hidden=['filename', 'type'])
         FileModelItem.__init__(self, fileinfo)
         ImageModelItem.__init__(self, annotations)
 
