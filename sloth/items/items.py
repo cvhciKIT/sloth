@@ -1,6 +1,5 @@
 from PyQt4.QtGui import *
 from PyQt4.Qt import *
-from sloth.annotations.model import DataRole
 
 
 class BaseItem(QAbstractGraphicsShapeItem):
