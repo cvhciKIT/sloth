@@ -221,16 +221,8 @@ class RectItem(BaseItem):
     def _dataToRect(self, model_item):
         if model_item is None:
             return QRectF()
-        if model_item.has_key('w'):
-            w = model_item['w']
-        if model_item.has_key('width'):
-            w = model_item['width']
-        if model_item.has_key('h'):
-            h = model_item['h']
-        if model_item.has_key('height'):
-            h = model_item['height']
         return QRectF(float(model_item['x']), float(model_item['y']),
-                      float(w), float (h))
+                      float(model_item['width']), float(model_item['height']))
 
     def _updateRect(self, rect):
         if not rect.isValid():
@@ -244,16 +236,10 @@ class RectItem(BaseItem):
 
     def updateModel(self):
         self.rect_ = QRectF(self.scenePos(), self.rect_.size())
-        self._model_item['x'] = self.rect_.topLeft().x()
-        self._model_item['y'] = self.rect_.topLeft().y()
-        if self._model_item.has_key('width'):
-            self._model_item['width'] = float(self.rect_.width())
-        if self._model_item.has_key('w'):
-            self._model_item['w'] = float(self.rect_.width())
-        if self._model_item.has_key('height'):
-            self._model_item['height'] = float(self.rect_.height())
-        if self._model_item.has_key('h'):
-            self._model_item['h'] = float(self.rect_.height())
+        self._model_item['x'] = float(self.rect_.topLeft().x())
+        self._model_item['y'] = float(self.rect_.topLeft().y())
+        self._model_item['width'] = float(self.rect_.width())
+        self._model_item['height'] = float(self.rect_.height())
 
     def boundingRect(self):
         return QRectF(QPointF(0, 0), self.rect_.size())
@@ -286,7 +272,7 @@ class RectItem(BaseItem):
             else:
                 rect = self.rect_.adjusted(*(ds + ds))
             self._updateRect(rect)
-            # Need self.updateModel() ?
+            self.updateModel()
             event.accept()
 
 
