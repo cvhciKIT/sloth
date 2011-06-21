@@ -21,6 +21,9 @@ class GraphicsView(QGraphicsView):
         self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform | QPainter.TextAntialiasing);
         self.setStyleSheet("QFrame { border: 3px solid black }");
         self.active_ = False
+        self._pan = False
+        self._panStartX = -1
+        self._panStartY = -1
 
     def setScene(self, scene):
         QGraphicsView.setScene(self, scene)
@@ -84,6 +87,34 @@ class GraphicsView(QGraphicsView):
         #if self.getScale() > self.getMaxScale():
         #    self.setScaleAbsolute(self.getMaxScale())
         QGraphicsView.resizeEvent(self, event)
+
+    def mousePressEvent(self, event):
+        if event.button() & Qt.RightButton != 0:
+            self._pan = True
+            self._panStartX = event.x()
+            self._panStartY = event.y()
+            self.setCursor(Qt.ClosedHandCursor)
+            event.accept()
+        else:
+            return QGraphicsView.mousePressEvent(self, event)
+
+    def mouseReleaseEvent(self, event):
+        if event.button() & Qt.RightButton != 0:
+            self._pan = False
+            self.setCursor(Qt.ArrowCursor)
+            event.accept()
+        else:
+            return QGraphicsView.mouseReleaseEvent(self, event)
+
+    def mouseMoveEvent(self, event):
+        if self._pan:
+            self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() - (event.x() - self._panStartX))
+            self.verticalScrollBar()  .setValue(self.verticalScrollBar().value()   - (event.y() - self._panStartY));
+            self._panStartX = event.x()
+            self._panStartY = event.y()
+            event.accept()
+        else:
+            return QGraphicsView.mouseMoveEvent(self, event)
 
 class FrameViewer(QWidget):
     # Signals
