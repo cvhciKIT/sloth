@@ -1,7 +1,8 @@
 import os
 import fnmatch
 import time
-from sloth.core.exceptions import ImproperlyConfigured, NotImplementedException, InvalidArgumentException
+from sloth.core.exceptions import \
+    ImproperlyConfigured, NotImplementedException, InvalidArgumentException
 from sloth.core.utils import import_callable
 try:
     import cPickle as pickle
@@ -18,6 +19,7 @@ except:
 import okapy
 import logging
 LOG = logging.getLogger(__name__)
+
 
 class AnnotationContainerFactory:
     def __init__(self, containers):
@@ -131,21 +133,22 @@ class AnnotationContainer:
 
     def loadImage(self, filename):
         """
-        Load the image referenced to by the filename.  In the default
-        implementation this will try to load the image from a path
-        relative to the label files directory.
+        Load and return the image referenced to by the filename.  In the
+        default implementation this will try to load the image from a path
+        relative to the label file's directory.
         """
         fullpath = self._fullpath(filename)
         return okapy.loadImage(fullpath)
 
-    def loadVideo(self, filename):
+    def loadFrame(self, filename, frame_number):
         """
-        Load the video referenced to by the filename.  In the default
-        implementation this will try to load the video from a path
-        relative to the label files directory.
+        Load the video referenced to by the filename, and return frame
+        ``frame_number``.  In the default implementation this will try to load
+        the video from a path relative to the label files directory.
         """
         fullpath = self._fullpath(filename)
         #TODO load video
+
 
 class PickleContainer(AnnotationContainer):
     """
@@ -233,7 +236,9 @@ class FileNameListContainer(AnnotationContainer):
         return annotations
 
     def serializeToFile(self, filename, annotations):
-        raise NotImplemented("FileNameListContainer.save() is not implemented yet.")
+        raise NotImplemented(
+                "FileNameListContainer.save() is not implemented yet.")
+
 
 class FeretContainer(AnnotationContainer):
     """

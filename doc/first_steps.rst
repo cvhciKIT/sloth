@@ -4,14 +4,16 @@
 First Steps
 ===========
 
-In this section, you will learn with a simple example, how to load labels and write a simple configuration file.
-The full configuration options will be covered in the next section :doc:`configuration`.
+In this section, you will learn with a simple example, how to load labels and
+write a simple configuration file.  The full configuration options will be
+covered in the next section :doc:`configuration`.
 
 Using the default configuration
 ===============================
 
-The easiest way to start sloth is by using a supported label format and supported label types only.  In this case
-we just need to start sloth and supply the label file on the command line::
+The easiest way to start sloth is by using a supported label format and
+supported label types only.  In this case we just need to start sloth and
+supply the label file on the command line::
 
     sloth examples/example1_labels.json
 
@@ -51,75 +53,106 @@ Let's take look at the example label file::
         }
     ]
 
-We have labeled two images, with two rectangles in image1 and one point in image 2.  Since we launched
-sloth without a custom configuration, the standard visualizations for ``rect`` and ``point`` will be used. Sloth
-displays two rectangles at the labeled positions in image1, and a point in image2.
+We have labeled two images, with two rectangles in image1 and one point in
+image 2.  Since we launched sloth without a custom configuration, the standard
+visualizations for ``rect`` and ``point`` will be used. Sloth displays two
+rectangles at the labeled positions in image1, and a point in image2.
+
+Adding and editing annotation in the GUI
+========================================
+
+TODO
 
 Writing a custom configuration
 ==============================
 
-The configuration file is a python module where the module-level variables represent the settings.  The
-most important variables are
+The configuration file is a python module where the module-level variables
+represent the settings.  The most important variable is
 
-* :ref:`ITEMS`:     This defines how a given label is visualized by the label tool.
-* :ref:`LABELS`:    This defines *which* new labels can be created interactively by the user.
-* :ref:`INSERTERS`: This defines *how* new labels are created by the user.
+* :ref:`LABELS`:    This defines how sloth will display annotations and how the
+  user can insert new ones.
 
 We start with a quick example::
 
-    ITEMS = {
-        'rect':  'items.RectItem',
-        'point': 'items.PointItem',
-        'bbox':  'items.RectItem',
-    }
-
     LABELS = (
-        ("Rect",          {"type":  "rect",
-                           "class": "head",
-                           "id":    ["Martin", "Mika"]}),
-        ("Bounding Box",  {"type":  "bbox",
-                           "class": "body",
-                           "id":    ["Martin", "Mika"]}),
+        {"attributes": {"type":  "rect",
+                        "class": "head",
+                        "id":    ["Martin", "Mika"]},
+         "item":     "sloth.items.RectItem",
+         "inserter": "sloth.items.RectItemInserter",
+         "text:      "Head"
+        },
+
+        {"attributes": {"type":  "point",
+                        "class": "left_eye",
+                        "id":    ["Martin", "Mika"]},
+         "item":     "sloth.items.PointItem",
+         "inserter": "sloth.items.PointItemInserter",
+         "text:      "Left Eye"
+        },
+
+        {"attributes": {"type":  "point",
+                        "class": "right_eye",
+                        "id":    ["Martin", "Mika"]},
+         "item":     "sloth.items.PointItem",
+         "inserter": "sloth.items.PointItemInserter",
+         "text:      "Right Eye"
+        },
     )
 
-In ``ITEMS`` we specify that all labels of type ``rect`` will be visualized by the class ``items.RectItem``
-(which is one of the predefined visualization items that comes with the label tool).  All labels of type
-``point`` will be visualized by ``items.PointItem``.  Note that we can use any type basically.  The type 
-``bbox`` will also be visualized by a ``items.RectItem``.
+``LABELS`` is a tuple/list of dictionaries.  Each dictionary describe how one
+annotation type is visualized, newly inserted and modified.  Let's go over the
+different keys of the dictionary in detail:
 
-In ``LABELS`` we defined which `new` labels the user can create with the label tool.  The variable is
-expected to be a list/tuple of tuples.  Each of the inner tuples contains first a description of the
-label (this will be on the button displayed to the user), and the a description of the label to be 
-created.  In our case, we create a label of type ``rect`` if the user hits the ``Rect`` button.  Further,
-the newly created label will have the class ``head`` (which is fixed), and the user can choose between
-one of the ids from the given list.
+* ``text``:  This is a text that describes the label type, and will be
+  displayed to the user in the GUI.
 
-Similarly, the user now can create Bounding Box labels of type ``bbox`` with class ``body``.
+* ``item`` specifies which class is responsible for visualizing the annotation.
+  For the first annotation type we chose to use the predefined
+  ``sloth.items.RectItem`` class, which will draw a rectangle as given by the
+  coordinates in the annotation.  Sloth comes with several predefined
+  visualization classes, such as ``sloth.items.RectItem`` and
+  ``sloth.items.PointItem`` (see :ref:`items` for a full list).  However, it is
+  also very easy to define your own visualization class (see :ref:`items`).
 
-There is a difference between the visualization items and the way the labels are created by the user 
-interactively.  For example, the label tool does *not* know out of the box how to create a label of
-type ``bbox``.  We have to explicitly specify how to insert this type.  We can do this by setting
-the ``INSERTERS`` variable::
+* ``inserter`` specifies which class is responsible for creating new
+  annotations based on user input.  When the user enters insert mode with a
+  given label type, the corresponding inserter is instantiated and captures all
+  user input for the creation of a new annotation.  The inserter is passed the
+  current state of the button area.
 
-    INSERTERS = {
-        'rect':  'items.inserters.RectItemInserter',
-        'bbox':  'items.inserters.RectItemInserter',
-    }
+* ``attributes`` has three functions:
+  1. It defines how a new annotation can be initialized.  Fixed
+     key-value pairs are used directly.  If the value is a list of items, the
+     user can choose interactively which one of the values he wants to use for
+     a new label.  The current state is then passed to the inserter.
 
-The ``RectItemInserter`` lets the user draw a rectangle with the mouse, and then sets the ``x``,
-``y``, ``width`` and ``height`` members of the label accordingly.  By mapping the type ``bbox``
-to ``RectItemInserter``, the user will be able to draw a rectangle each time a new Bounding Box
-label is created.  Note that we also have to add the ``RectItemInserter`` for the type ``rect``
-as well (which would also be in the default configuration)  due to the fact that we override
-the ``INSERTERS`` variable completely.  Otherwise the label tool would not know anymore, how
-to insert labels of type ``rect``.
+  2. It defines how a existing annotations can be edited.  Fixed
+     key-value are not allowed to be edited.  If the value is a list of items, the
+     user can choose interactively between the values for the corresponding key.
+     The annotation is then updated accordingly.
 
-In order to extend the default configuration and avoid overriding the default values, you can
-first import the default configuration and then append your custom mappings (remember that
-the configuration is a python module, you can basically execute any valid python code)::
+  3. It defines how to match an existing annotation to one of the entries in ``LABELS``.
+     Sloth uses a soft matching based on the two keys ``class`` and ``type``.  It checks
+     each item in ``LABELS`` starting from the beginning and stops if it finds the first
+     match.  An entry matches an annotation if:
 
-    from conf.default_configuration import INSERTERS
-    INSERTERS['bbox'] = 'items.inserters.RectItemInserter'
+       * the values for both keys match, or
+       * the value for one of keys matches and the other key is not present in
+         either ``attributes`` or the annotation.
+
+You need to save your custom configuration in a file ending with ".py".  To use it
+pass it to sloth using the ``--config`` command line parameter::
+
+    sloth --config myconfig.py examples/example1_labels.json
+
+You can now start labeling head locations and eye positions.  You'll see that for each 
+depending on the chosen annotation, you can either insert a rectangle (this is internally
+done by the ``RectItemInserter``) or points (using the ``PointItemInserter``).  For
+each annotation you can choose an identity between the two supplied options.
+
+Next steps
+==========
 
 You can now continue by reading about :doc:`all available configuration options <configuration>`,
 how to write your own :doc:`visualization items <items>` or how to write :doc:`custom inserters <inserters>`.
