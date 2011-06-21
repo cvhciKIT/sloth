@@ -69,6 +69,8 @@ class MainWindow(QMainWindow):
         elif isinstance(new_image, ImageFileModelItem):
             self.controls.setFilename(os.path.basename(new_image['filename']))
 
+        self.selectionmodel.setCurrentIndex(index, QItemSelectionModel.ClearAndSelect|QItemSelectionModel.Rows)
+
     def onScaleChanged(self, scale):
         self.zoominfo.setText("%.2f%%" % (100 * scale, ))
 
