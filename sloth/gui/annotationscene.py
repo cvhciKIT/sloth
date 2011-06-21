@@ -264,13 +264,14 @@ class AnnotationScene(QGraphicsScene):
         if not self.root_.isValid():
             return
 
-        if self.root_ != indexFrom.parent() or self.root_ != indexTo.parent():
+        annotation_item_index= indexFrom.parent()
+
+        if self.root_ != annotation_item_index.parent():
             return
 
-        for row in range(indexFrom.row(), indexTo.row()+1):
-            item = self.itemFromIndex(indexFrom.sibling(row, 0))
-            if item is not None:
-                item.dataChanged()
+        item = self.itemFromIndex(annotation_item_index)
+        if item is not None:
+            item.dataChanged()
 
     def rowsInserted(self, index, first, last):
         if self.root_ != index:

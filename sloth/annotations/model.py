@@ -203,9 +203,11 @@ class KeyValueModelItem(ModelItem, MutableMapping):
     def __getitem__(self, key):
         return self._dict[key]
 
-    def _emitDataChanged(self):
+    def _emitDataChanged(self, key):
         if self.model() is not None:
-            self.model().dataChanged.emit(self.index(), self.index())
+            index_tl = self._items[key].index()
+            index_br = self._items[key].index(1)
+            self.model().dataChanged.emit(index_tl, index_br)
 
     def __setitem__(self, key, value):
         if key not in self._dict:
@@ -216,7 +218,7 @@ class KeyValueModelItem(ModelItem, MutableMapping):
         elif self._dict[key] != value:
             self._dict[key] = value
             # TODO: Emit for hidden key/values?
-            self._emitDataChanged()
+            self._emitDataChanged(key)
 
     def __delitem__(self, key):
         del self._dict[key]
