@@ -10,6 +10,7 @@ API Reference
    labeltool
    containers
    model
-   scene
    items
+   inserters
+   scene
 

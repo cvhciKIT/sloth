@@ -4,9 +4,9 @@ Items
 
 This details the default visualization items that come with sloth.
 
-The following items are available in :mod:`sloth.items.items`:
+The following items are available in :mod:`sloth.items`:
 
-.. automodule:: sloth.items
+.. module:: sloth.items
 
 .. autoclass:: BaseItem
     :members:
@@ -23,14 +23,3 @@ The following items are available in :mod:`sloth.items.items`:
 .. .. autoclass:: PolygonItem
     :members:
 
-.. autoclass:: PointItemInserter
-    :members:
-    :undoc-members:
-
-.. autoclass:: RectItemInserter
-    :members:
-    :undoc-members:
-
-.. .. autoclass:: PolygonItemInserter
-    :members:
-    :undoc-members:

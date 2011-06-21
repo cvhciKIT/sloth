@@ -54,6 +54,8 @@ Usage:
   * Can be moved by Left/Right/Up/Down keys.  If Shift is pressed, step is increased.  If Control is pressed,
     width and height are modified instead of position.
 
+.. _CUSTOM_ITEMS:
+
 Write your own visualization item
 =================================
 

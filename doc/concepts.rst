@@ -105,7 +105,7 @@ Of course, you can also change the type::
 
 However, if you do this you will need to tell the label tool in the
 configuration how to display this type as well.  See section
-:doc:`Configuration` on how to do that.
+:doc:`configuration` on how to do that.
 
 
 Representation is not storage
@@ -117,7 +117,7 @@ very different.  Sloth does not have *the one* way in which way to store the
 labels.  Again, there are some default formats which the label tool can deal
 with out of the box (among others YAML and JSON, which resemble the textual
 representation above).  However, you are free to define your own loading and
-saving routines for your labels (see :doc:`Containers`). This allows you for
+saving routines for your labels (see :doc:`containers`). This allows you for
 example to support legacy third-party label formats without the need of
 converting them to JSON first.
 

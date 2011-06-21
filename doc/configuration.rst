@@ -49,8 +49,8 @@ different keys of the dictionary in detail:
   ``sloth.items.RectItem`` class, which will draw a rectangle as given by the
   coordinates in the annotation.  Sloth comes with several predefined
   visualization classes, such as ``sloth.items.RectItem`` and
-  ``sloth.items.PointItem`` (see :ref:`items` for a full list).  However, it is
-  also very easy to define your own visualization class (see :ref:`items`).
+  ``sloth.items.PointItem`` (see :doc:`items` for a full list).  However, it is
+  also very easy to define your own visualization class (see :ref:`CUSTOM_ITEMS`).
 
 * ``inserter`` specifies which class is responsible for creating new
   annotations based on user input.  When the user enters insert mode with a
@@ -145,7 +145,7 @@ the default values, you can first import the default configuration and then
 append your custom mappings (remember that the configuration is a python
 module, you can basically execute any valid python code)::
 
-    from conf.default_config import LABELS
+    from sloth.conf.default_config import LABELS
 
     MYLABLES = ({
        ...

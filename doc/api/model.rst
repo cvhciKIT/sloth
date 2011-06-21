@@ -5,6 +5,7 @@ Model
 This details the model API.
 
 .. automodule:: sloth.annotations.model
+
 .. autoclass:: AnnotationModel
     :members:
     :undoc-members:

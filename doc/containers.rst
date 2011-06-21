@@ -72,7 +72,7 @@ Writes and reads annotations in YAML format (needs the python module ``yaml``
 to be installed).
 
 PickleContainer
--------------
+---------------
 
 Default pattern: ``*.pickle``
 
@@ -91,7 +91,7 @@ used for saving though, otherwise the labels will be lost. (write support
 not implemented yet anyway)
 
 FeretContainer
--------------
+--------------
 
 Reads annotations in the Feret format (no write support implemented yet).
 This container is not included in the default configuration.
