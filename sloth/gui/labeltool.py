@@ -25,11 +25,8 @@ class MainWindow(QMainWindow):
         QMainWindow.__init__(self, parent)
 
         self.labeltool = labeltool
-
         self.setupGui()
-
         self.loadApplicationSettings()
-
         self.onAnnotationsLoaded()
 
     # Slots
@@ -39,12 +36,17 @@ class MainWindow(QMainWindow):
     def onStatusMessage(self, message=''):
         self.statusBar().showMessage(message, 5000)
 
-    def onAnnotationsLoaded(self):
+    def onModelDirtyChanged(self, dirty):
+        postfix = "[+]" if dirty else ""
         if self.labeltool.getCurrentFilename() is not None:
-            self.setWindowTitle("%s - %s[*]" % \
-                (APP_NAME, QFileInfo(self.labeltool.getCurrentFilename()).fileName()))
+            self.setWindowTitle("%s - %s %s" % \
+                (APP_NAME, QFileInfo(self.labeltool.getCurrentFilename()).fileName(), postfix))
         else:
-            self.setWindowTitle("%s - Unnamed[*]" % APP_NAME)
+            self.setWindowTitle("%s - Unnamed %s" % (APP_NAME, postfix))
+
+    def onAnnotationsLoaded(self):
+        self.labeltool.model().dirtyChanged.connect(self.onModelDirtyChanged)
+        self.onModelDirtyChanged(self.labeltool.model().dirty())
         self.treeview.setModel(self.labeltool.model())
         self.scene.setModel(self.labeltool.model())
         self.selectionmodel = QItemSelectionModel(self.labeltool.model())

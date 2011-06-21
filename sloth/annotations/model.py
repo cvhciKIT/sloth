@@ -387,6 +387,9 @@ class AnnotationModel(QAbstractItemModel):
         self._root.appendFileItems(annotations)
         diff = time.time() - start
         LOG.info("Created AnnotationModel in %.2fs" % (diff, ))
+        self.dataChanged.connect(self.onDataChanged)
+        self.rowsInserted.connect(self.onDataChanged)
+        self.rowsRemoved.connect(self.onDataChanged)
 
     # QAbstractItemModel overloads
     def columnCount(self, index=QModelIndex()):
@@ -460,11 +463,14 @@ class AnnotationModel(QAbstractItemModel):
     def dirty(self):
         return self._dirty
 
-    # TODO: This might need to be updated from within the ModelItems when they change
     def setDirty(self, dirty=True):
         if dirty != self._dirty:
+            LOG.debug("Setting model state to dirty")
             self._dirty = dirty
             self.dirtyChanged.emit(self._dirty)
+
+    def onDataChanged(self, *args):
+        self.setDirty()
 
     def itemFromIndex(self, index):
         index = QModelIndex(index)  # explicitly convert from QPersistentModelIndex
