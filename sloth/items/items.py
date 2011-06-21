@@ -87,7 +87,7 @@ class BaseItem(QAbstractGraphicsShapeItem):
             text_lines.append(self.text_)
         for key in self.auto_text_keys_:
             text_lines.append("%s: %s" % \
-                    (key, self.annotation().get(key, "")))
+                    (key, self._model_item.get(key, "")))
         return '\n'.join(text_lines)
 
     def dataChanged(self):
