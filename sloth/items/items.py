@@ -161,8 +161,10 @@ class PointItem(BaseItem):
         self.updatePoint()
 
     def updateModel(self):
-        self._model_item['x'] = self.scenePos().x()
-        self._model_item['y'] = self.scenePos().y()
+        self._model_item.update({
+            'x': self.scenePos().x(),
+            'y': self.scenePos().y(),
+        })
 
     def updatePoint(self):
         if self._model_item is None:
@@ -235,10 +237,12 @@ class RectItem(BaseItem):
 
     def updateModel(self):
         self.rect_ = QRectF(self.scenePos(), self.rect_.size())
-        self._model_item['x'] = float(self.rect_.topLeft().x())
-        self._model_item['y'] = float(self.rect_.topLeft().y())
-        self._model_item['width'] = float(self.rect_.width())
-        self._model_item['height'] = float(self.rect_.height())
+        self._model_item.update({
+            'x':      float(self.rect_.topLeft().x()),
+            'y':      float(self.rect_.topLeft().y()),
+            'width':  float(self.rect_.width()),
+            'height': float(self.rect_.height()),
+        })
 
     def boundingRect(self):
         return QRectF(QPointF(0, 0), self.rect_.size())
