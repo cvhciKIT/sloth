@@ -40,7 +40,7 @@ class LabelTool(QObject):
                 "Type '%s help <subcommand>' for help on a specific subcommand.\n\n"
 
     # Signals
-    statusMessage       = pyqtSignal(QString)
+    statusMessage       = pyqtSignal(str)
     annotationsLoaded   = pyqtSignal()
     pluginLoaded        = pyqtSignal(QAction)
     # This still emits a QModelIndex, because Qt cannot handle emiting

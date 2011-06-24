@@ -179,19 +179,25 @@ class MainWindow(QMainWindow):
 
     def loadApplicationSettings(self):
         settings = QSettings()
-        self.resize(settings.value("MainWindow/Size", QVariant(QSize(800, 600))).toSize())
-        self.move(settings.value("MainWindow/Position", QVariant(QPoint(10, 10))).toPoint())
-        self.restoreState(settings.value("MainWindow/State").toByteArray())
+        size  = settings.value("MainWindow/Size", QSize(800, 600))
+        pos   = settings.value("MainWindow/Position", QPoint(10, 10))
+        state = settings.value("MainWindow/State")
+        if isinstance(size,  QVariant): size  = size.toSize()
+        if isinstance(pos,   QVariant): pos   = pos.toPoint()
+        if isinstance(state, QVariant): state = state.toByteArray()
+        self.resize(size)
+        self.move(pos)
+        self.restoreState(state)
 
     def saveApplicationSettings(self):
         settings = QSettings()
-        settings.setValue("MainWindow/Size",     QVariant(self.size()))
-        settings.setValue("MainWindow/Position", QVariant(self.pos()))
-        settings.setValue("MainWindow/State",    QVariant(self.saveState()))
+        settings.setValue("MainWindow/Size",     self.size())
+        settings.setValue("MainWindow/Position", self.pos())
+        settings.setValue("MainWindow/State",    self.saveState())
         if self.labeltool.getCurrentFilename() is not None:
-            filename = QVariant(QString(self.labeltool.getCurrentFilename()))
+            filename = self.labeltool.getCurrentFilename()
         else:
-            filename = QVariant()
+            filename = None
         settings.setValue("LastFile", filename)
 
     def okToContinue(self):

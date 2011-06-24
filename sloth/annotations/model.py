@@ -2,7 +2,7 @@
 The annotationmodel module contains the classes for the AnnotationModel.
 """
 from PyQt4.QtGui import QTreeView, QItemSelection, QItemSelectionModel, QSortFilterProxyModel
-from PyQt4.QtCore import QModelIndex, QAbstractItemModel, QVariant, Qt, pyqtSignal
+from PyQt4.QtCore import QModelIndex, QAbstractItemModel, Qt, pyqtSignal
 import os.path
 import copy
 from collections import MutableMapping
@@ -34,7 +34,7 @@ class ModelItem:
         if role == Qt.DisplayRole:
             return ""
         if role == ItemRole:
-            return QVariant(self)
+            return self
         else:
             return None
 
@@ -271,7 +271,7 @@ class ImageModelItem(ModelItem):
             if child.type() == ann['type']:
                 if ('id' in child and 'id' in ann and child['id'] == ann['id']) or ('id' not in child and 'id' not in ann):
                     ann[None] = None
-                    child.setData(QVariant(ann), DataRole, 1)
+                    child.setData(ann, DataRole, 1)
                     return
         raise Exception("No AnnotationModelItem found that could be updated!")
 
@@ -367,9 +367,9 @@ class KeyValueRowModelItem(ModelItem):
             if column == 0:
                 return self._key
             elif column == 1:
-                return QVariant(self.parent()[self._key])
+                return self.parent()[self._key]
             else:
-                return QVariant()
+                return None
         else:
             return ModelItem.data(self, role, column)
 
@@ -436,7 +436,7 @@ class AnnotationModel(QAbstractItemModel):
 
     def data(self, index, role=Qt.DisplayRole):
         if not index.isValid():
-            return QVariant()
+            return None
         item = self.itemFromIndex(index)
         return item.data(role, index.column())
 
@@ -454,9 +454,9 @@ class AnnotationModel(QAbstractItemModel):
 
     def headerData(self, section, orientation, role):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            if section == 0:   return QVariant("File/Type/Key")
-            elif section == 1: return QVariant("Value")
-        return QVariant()
+            if section == 0:   return "File/Type/Key"
+            elif section == 1: return "Value"
+        return None
 
     # Own methods
     def root(self):
