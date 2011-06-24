@@ -1,1 +1,1 @@
-from labeltool import MainWindow
+from .labeltool import MainWindow
