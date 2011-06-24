@@ -19,7 +19,7 @@ class Factory:
         self.items_ = {}
 
         if items is not None:
-            for _type, item in items.iteritems():
+            for _type, item in items.items():
                 self.register(_type, item, replace=True)
 
     def register(self, _type, item, replace=False):

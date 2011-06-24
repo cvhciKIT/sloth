@@ -19,7 +19,7 @@ class Config:
             module_dir, module_name = os.path.split(module_path)
             sys.path = [module_dir, ] + sys.path
             mod = importlib.import_module(module_name)
-        except ImportError, e:
+        except ImportError as e:
             raise ImportError("Could not import configuration '%s' (Is it on sys.path?): %s" % (module_path, e))
         finally:
             sys.path = oldpath

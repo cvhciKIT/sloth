@@ -155,7 +155,7 @@ class BaseCommand(object):
             output = self.handle(*args, **options)
             if output:
                 self.stdout.write(output)
-        except CommandError, e:
+        except CommandError as e:
             self.stderr.write('Error: %s\n' % e)
             sys.exit(1)
 

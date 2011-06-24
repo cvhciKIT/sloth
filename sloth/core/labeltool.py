@@ -15,6 +15,8 @@ from sloth.core.cli import LaxOptionParser, BaseCommand
 from sloth.core.utils import import_callable
 from sloth import VERSION
 from sloth.core.commands import get_commands
+import logging
+LOG = logging.getLogger(__name__)
 
 import okapy.videoio as okv
 
@@ -74,7 +76,7 @@ class LabelTool(QObject):
         """
         usage = self.help_text % self.prog_name
         usage += 'Available subcommands:\n'
-        commands = get_commands().keys()
+        commands = list(get_commands().keys())
         commands.sort()
         for cmd in commands:
             usage += '  %s\n' % cmd
@@ -148,9 +150,8 @@ class LabelTool(QObject):
             if len(args) > 1:
                 try:
                     self.loadAnnotations(args[1], handleErrors=False)
-                except Exception, e:
-                    print "Error loading annotations:", e
-                    raise
+                except Exception as e:
+                    LOG.fatal("Error loading annotations: %s" % e)
                     sys.exit(1)
             else:
                 self.clearAnnotations()
@@ -215,7 +216,7 @@ class LabelTool(QObject):
             self._model = AnnotationModel(self.container_.load(fname))
             msg = "Successfully loaded %s (%d files, %d annotations)" % \
                     (fname, self._model.root().numFiles(), self._model.root().numAnnotations())
-        except Exception, e:
+        except Exception as e:
             if handleErrors:
                 msg = "Error: Loading failed (%s)" % str(e)
             else:

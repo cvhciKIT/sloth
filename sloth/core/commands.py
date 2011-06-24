@@ -48,7 +48,7 @@ class CreateConfigCommand(BaseCommand):
         try:
             shutil.copy(config_template, target)
             _make_writeable(target)
-        except OSError, e:
+        except OSError as e:
             sys.stderr.write("Notice: Couldn't set permission bits on %s.\n" % target)
 
 

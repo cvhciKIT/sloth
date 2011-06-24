@@ -1,7 +1,9 @@
-import sys, os
+import sys
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from sloth.gui.floatinglayout import FloatingLayout
+import logging
+LOG = logging.getLogger(__name__)
 
 def unique_list(seq):
     seen = {}
@@ -102,14 +104,14 @@ class ButtonArea(QWidget):
         self.setLayout(self.vlayout)
 
     def stateHasChanged(self, state):
-        print "stateChanged(object)", state
+        LOG.debug("stateChanged(object) %s", state)
 
     def init_button_lists(self):
         for label_name in self.label_names:
             button = self.label_button_list.add_button(label_name)
         self.label_button_list.selectionChanged.connect(self.clickedLabelButton)
 
-        for key, property_values in self.properties.iteritems():
+        for key, property_values in self.properties.items():
             if key in ["type", "class"]:
                 continue
             button_list = ButtonListWidget(key)
@@ -119,7 +121,7 @@ class ButtonArea(QWidget):
             button_list.selectionChanged.connect(self.clickedButton)
 
             button_list.hide()
-            print key
+            LOG.debug(key)
             self.property_button_lists[key] = button_list
             self.vlayout.addWidget(button_list)
 
@@ -133,8 +135,8 @@ class ButtonArea(QWidget):
             button.setToolTip("[" + str(hotkey) + "]")
 
     def show_only_label_properties(self, label_name):
-        for name, button_list in self.property_button_lists.iteritems():
-            if self.label_properties.has_key(label_name) and name in self.label_properties[label_name].keys():
+        for name, button_list in self.property_button_lists.items():
+            if label_name in self.label_properties and name in self.label_properties[label_name].keys():
                 button_list.show()
             else:
                 button_list.hide()
@@ -142,8 +144,8 @@ class ButtonArea(QWidget):
     def add_label(self, label_name, properties = {}):
         self.label_names.append(label_name)
         self.label_properties[label_name] = properties
-        for key, value in properties.iteritems():
-            if self.properties.has_key(key):
+        for key, value in properties.items():
+            if key in self.properties:
                 self.properties[key] = unique_list(self.properties[key] + value)
 
             else:
@@ -160,12 +162,12 @@ class ButtonArea(QWidget):
         if label_button != None:
             result = {}
             label = str(label_button.text())
-            if self.label_properties.has_key(label):
-                if self.label_properties[label].has_key("type"):
+            if label in self.label_properties:
+                if "type" in self.label_properties[label]:
                     result["type"] = self.label_properties[label]["type"]
-                if self.label_properties[label].has_key("class"):
+                if "class" in self.label_properties[label]:
                     result["class"] = self.label_properties[label]["class"]
-                for name, button_list in self.property_button_lists.iteritems():
+                for name, button_list in self.property_button_lists.items():
                     if button_list.isVisible():
                         checked_button = button_list.get_checked_button()
                         if checked_button != None:
@@ -175,17 +177,17 @@ class ButtonArea(QWidget):
         return None
 
     def clickedButton(self, newselection):
-        print "selectionChanged:", newselection
+        LOG.debug("selectionChanged: %s" % newselection)
         self.stateChanged.emit(self.get_current_state())
 
     def clickedLabelButton(self, label_name):
         #button = self.get_checked_label_button()
         #print button
         if label_name != None:
-            print "ButtonArea:", label_name
+            LOG.debug("ButtonArea: %s" % label_name)
             self.show_only_label_properties(label_name)
         else:
-            print "Selection Mode"
+            LOG.debug("Selection Mode")
             self.show_only_label_properties("")
         self.stateChanged.emit(self.get_current_state())
 

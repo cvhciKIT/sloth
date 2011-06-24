@@ -198,7 +198,7 @@ class KeyValueModelItem(ModelItem, MutableMapping):
         return len(self._dict)
 
     def __iter__(self):
-        return self._dict.iterkeys()
+        return iter(self._dict.keys())
 
     def __getitem__(self, key):
         return self._dict[key]
@@ -269,7 +269,7 @@ class ImageModelItem(ModelItem):
     def updateAnnotation(self, ann):
         for child in self._children:
             if child.type() == ann['type']:
-                if (child.has_key('id') and ann.has_key('id') and child['id'] == ann['id']) or (not child.has_key('id') and not ann.has_key('id')):
+                if ('id' in child and 'id' in ann and child['id'] == ann['id']) or ('id' not in child and 'id' not in ann):
                     ann[None] = None
                     child.setData(QVariant(ann), DataRole, 1)
                     return
@@ -278,7 +278,7 @@ class ImageModelItem(ModelItem):
 class ImageFileModelItem(FileModelItem, ImageModelItem):
     def __init__(self, fileinfo):
         annotations = fileinfo.get("annotations", [])
-        if fileinfo.has_key("annotations"):
+        if "annotations" in fileinfo:
             del fileinfo["annotations"]
         FileModelItem.__init__(self, fileinfo)
         ImageModelItem.__init__(self, annotations)
@@ -296,7 +296,7 @@ class ImageFileModelItem(FileModelItem, ImageModelItem):
 class VideoFileModelItem(FileModelItem):
     def __init__(self, fileinfo):
         frameinfos = fileinfo.get("frames", [])
-        if fileinfo.has_key("frames"):
+        if "frames" in fileinfo:
             del fileinfo["frames"]
         FileModelItem.__init__(self, fileinfo)
 
@@ -311,7 +311,7 @@ class VideoFileModelItem(FileModelItem):
 class FrameModelItem(ImageModelItem, KeyValueModelItem):
     def __init__(self, frameinfo):
         annotations = frameinfo.get("annotations", [])
-        if frameinfo.has_key("annotations"):
+        if "annotations" in frameinfo:
             del frameinfo["annotations"]
         KeyValueModelItem.__init__(self)
         ImageModelItem.__init__(self, annotations)

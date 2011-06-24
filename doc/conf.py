@@ -40,8 +40,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Labeltool'
-copyright = u'2011, cv:hci lab, Institute for Anthropomatics, Karlsruhe Institute of Technology'
+project = 'Labeltool'
+copyright = '2011, cv:hci lab, Institute for Anthropomatics, Karlsruhe Institute of Technology'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -180,8 +180,8 @@ todo_include_todos = True
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'Labeltool.tex', u'Labeltool Documentation',
-   u'cv:hci lab, Institute for Anthropomatics, Karlsruhe Institute of Technology', 'manual'),
+  ('index', 'Labeltool.tex', 'Labeltool Documentation',
+   'cv:hci lab, Institute for Anthropomatics, Karlsruhe Institute of Technology', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -213,6 +213,6 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'labeltool', u'Labeltool Documentation',
-     [u'cv:hci lab'], 1)
+    ('index', 'labeltool', 'Labeltool Documentation',
+     ['cv:hci lab'], 1)
 ]

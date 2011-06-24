@@ -5,6 +5,8 @@ from sloth.items import *
 from sloth.annotations.model import TypeRole
 from sloth.core.exceptions import InvalidArgumentException
 import okapy
+import logging
+LOG = logging.getLogger(__name__)
 
 class AnnotationScene(QGraphicsScene):
     """Dies ist ein Test"""
@@ -114,7 +116,7 @@ class AnnotationScene(QGraphicsScene):
         self.inserter_ = None
 
     def setMode(self, mode):
-        print "setMode :", mode
+        LOG.debug("setMode : %s" % mode)
 
         # Abort current inserter
         if self.inserter_ is not None:
@@ -145,7 +147,7 @@ class AnnotationScene(QGraphicsScene):
     #______________________________________________________________________________________________________
     def mousePressEvent(self, event):
         if self.debug_:
-            print "mousePressEvent", self.sceneRect().contains(event.scenePos()), event.scenePos()
+            LOG.debug("mousePressEvent %s %s" % (self.sceneRect().contains(event.scenePos()), event.scenePos()))
         if self.inserter_ is not None:
             if not self.sceneRect().contains(event.scenePos()) and \
                not self.inserter_.allowOutOfSceneEvents():
@@ -159,7 +161,7 @@ class AnnotationScene(QGraphicsScene):
 
     def mouseReleaseEvent(self, event):
         if self.debug_:
-            print "mouseReleaseEvent", self.sceneRect().contains(event.scenePos()), event.scenePos()
+            LOG.debug("mouseReleaseEvent %s %s" % (self.sceneRect().contains(event.scenePos()), event.scenePos()))
         if self.inserter_ is not None:
             # insert mode
             self.inserter_.mouseReleaseEvent(event, self.image_item_)
@@ -228,7 +230,7 @@ class AnnotationScene(QGraphicsScene):
 
     def keyPressEvent(self, event):
         if self.debug_:
-           print "keyPressEvent", event
+           LOG.debug("keyPressEvent %s" % event)
 
         if self.model_ is None or not self.root_.isValid():
             event.ignore()

@@ -57,7 +57,6 @@ class FaceDetectorPlugin(QObject):
         self.sc_.setEnabled(True)
 
     def doit(self):
-        print "Loading detector..."
         det = BinaryPatternFaceDetector("/cvhci/data/mctcascades/new-detectors/face_frontal_new.xml")
         self.sc_.setEnabled(False)
         model = self.wnd_.model_
@@ -70,7 +69,6 @@ class FaceDetectorPlugin(QObject):
         self.thread.finished.connect(self.on_finished)
         self.thread.valueChanged.connect(self.on_valueChanged)
         self.thread.start()
-        print "Exiting doit()"
 
     def action(self):
         return self.sc_

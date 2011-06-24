@@ -11,7 +11,7 @@ def import_callable(module_path_name):
         raise exceptions.ImproperlyConfigured('%s is not a valid module path' % module_path_name)
     try:
         mod = importlib.import_module(module_path)
-    except ImportError, e:
+    except ImportError as e:
         raise exceptions.ImproperlyConfigured('Error importing module %s: "%s"' % (module_path, e))
     try:
         item_callable = getattr(mod, name)

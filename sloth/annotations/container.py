@@ -221,7 +221,6 @@ class FileNameListContainer(AnnotationContainer):
     def parseFromFile(self, filename):
         self.basedir_ = os.path.dirname(filename)
         f = open(filename, "r")
-        print "Opening", filename
 
         annotations = []
         for line in f:
