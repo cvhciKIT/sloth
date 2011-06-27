@@ -2,18 +2,19 @@
 import os
 import functools
 import fnmatch
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
+from PyQt4.QtGui import QMainWindow, QSizePolicy, QWidget, QVBoxLayout, QAction,\
+        QKeySequence, QLabel, QItemSelectionModel, QMessageBox, QFileDialog
+from PyQt4.QtCore import SIGNAL, QSettings, QSize, QPoint, QVariant, QFileInfo
 import PyQt4.uic as uic
-from sloth.gui import qrc_icons
-from sloth.gui.buttonarea import *
-from sloth.gui.annotationscene import *
-from sloth.gui.frameviewer import *
-from sloth.gui.controlbuttons import *
+from sloth.gui.buttonarea import ButtonArea
+from sloth.gui.propertyeditor import PropertyEditor
+from sloth.gui.annotationscene import AnnotationScene
+from sloth.gui.frameviewer import GraphicsView
+from sloth.gui.controlbuttons import ControlButtonWidget
 from sloth.conf import config
 from sloth.core.utils import import_callable
-from sloth.annotations.model import *
-from sloth import APP_NAME, ORGANIZATION_DOMAIN, VERSION
+from sloth.annotations.model import AnnotationTreeView, FrameModelItem, ImageFileModelItem
+from sloth import APP_NAME, ORGANIZATION_DOMAIN
 
 GUIDIR=os.path.join(os.path.dirname(__file__))
 
@@ -65,7 +66,7 @@ class MainWindow(QMainWindow):
 
         # TODO: This info should be obtained from AnnotationModel or LabelTool
         if isinstance(new_image, FrameModelItem):
-            self.controls.setFrameNumAndTimestamp(item.framenum(), item.timestamp())
+            self.controls.setFrameNumAndTimestamp(new_image.framenum(), new_image.timestamp())
         elif isinstance(new_image, ImageFileModelItem):
             self.controls.setFilename(os.path.basename(new_image['filename']))
 
