@@ -1,10 +1,11 @@
 import sys
+import os
 import sloth
 import shutil
 from pprint import pprint
 from sloth.core.cli import BaseCommand, CommandError
 from sloth.annotations.container import *
-from optparse import make_option, OptionParser
+from optparse import make_option
 
 class ConvertCommand(BaseCommand):
     """
@@ -82,7 +83,12 @@ class AppendFilesCommand(BaseCommand):
 
         self.labeltool.loadAnnotations(args[0])
         for filename in args[1:]:
-            self.labeltool.addImageFile(filename)
+            rel_filename = filename
+            try:
+                rel_filename = os.path.relpath(filename, os.path.dirname(args[0]))
+            except:
+                pass
+            self.labeltool.addImageFile(rel_filename)
         self.labeltool.saveAnnotations(args[0])
 
 
