@@ -34,7 +34,16 @@
 LABELS = (
     {
         'attributes': {
-            'type':      'rect',
+            'class':      'Face',
+         },
+        'inserter': 'sloth.items.RectItemInserter',
+        'item':     'sloth.items.RectItem',
+        'hotkey':   'f',
+        'text':     'Face',
+    },
+    {
+        'attributes': {
+            'class':      'rect',
          },
         'inserter': 'sloth.items.RectItemInserter',
         'item':     'sloth.items.RectItem',
@@ -43,7 +52,7 @@ LABELS = (
     },
     {
         'attributes': {
-            'type':    'point',
+            'class':    'point',
         },
         'inserter': 'sloth.items.PointItemInserter',
         'item':     'sloth.items.PointItem',
