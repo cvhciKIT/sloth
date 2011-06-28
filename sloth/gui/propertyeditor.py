@@ -91,6 +91,8 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
                 if isinstance(val, type):
                     self.addInputField(val)
                 elif val == "*":
+                    # TODO: Add all values currently in model for this attribute
+                    # as buttons...
                     self._insertIndex = self._layout.count()
                 else:
                     if val not in self._values:
@@ -129,7 +131,6 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
         button.setFlat(True)
         button.setCheckable(True)
         self._buttons[v] = button
-        # TODO: Add at proper position
         if pos == -1:
             self._layout.addWidget(button)
         else:
