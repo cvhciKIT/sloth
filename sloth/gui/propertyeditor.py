@@ -4,7 +4,7 @@ from sloth.gui.floatinglayout import FloatingLayout
 from sloth.utils.bind import bind
 import sys
 from PyQt4.QtCore import pyqtSignal, QSize, Qt
-from PyQt4.QtGui import QApplication, QWidget, QGroupBox, QVBoxLayout, QPushButton, QScrollArea
+from PyQt4.QtGui import QApplication, QWidget, QGroupBox, QVBoxLayout, QPushButton, QScrollArea, QLineEdit
 import logging
 LOG = logging.getLogger(__name__)
 
@@ -67,10 +67,12 @@ class AttributeHandlerFactory:
 class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
     def __init__(self, attribute, values, parent=None):
         QGroupBox.__init__(self, attribute, parent)
-        self._attribute     = attribute
-        self._values        = []
-        self._current_items = []
-        self._defaults      = {}
+        self._attribute      = attribute
+        self._values         = []
+        self._current_items  = []
+        self._defaults       = {}
+        self._inputField     = None
+        self._inputFieldType = None
 
         # Setup GUI
         self._layout = FloatingLayout()
@@ -81,13 +83,37 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
         self.updateValues(values)
 
     def updateValues(self, values):
-        # TODO: Properly parse
-        for val in values:
-            if val not in self._values:
-                self.addValue(val)
+        if isinstance(values, type):
+            self.addInputField(values)
+        else:
+            for val in values:
+                if isinstance(val, type):
+                    self.addInputField(val)
+                else:
+                    if val not in self._values:
+                        self.addValue(val)
 
     def defaults(self):
         return self._defaults
+
+    def onInputFieldReturnPressed(self):
+        val = self._inputField.text()
+        for item in self._current_items:
+            item[self._attribute] = val
+
+    def addInputField(self, _type):
+        if self._inputField is None:
+            self._inputFieldType = _type
+            self._inputField = QLineEdit()
+            #TODO: Add validators
+
+            # TODO: Insert at beginning
+            #self._layout.insertWidget(0, self._inputField)
+            self._layout.addWidget(self._inputField)
+            self._inputField.returnPressed.connect(self.onInputFieldReturnPressed)
+        elif self._inputFieldType is not _type:
+            raise ImproperlyConfigured("Input field for attribute '%s' configured twice with different types %s != %s"\
+                    % (self._attribute, self._inputFieldType, _type))
 
     def addValue(self, v):
         self._values.append(v)
@@ -95,6 +121,7 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
         button.setFlat(True)
         button.setCheckable(True)
         self._buttons[v] = button
+        # TODO: Add at proper position
         self._layout.addWidget(button)
         button.clicked.connect(bind(self.onButtonClicked, v))
 
@@ -118,6 +145,8 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
                 self._buttons[val].setFlat(False)
             else:
                 self._buttons[val].setChecked(True)
+
+        # TODO: Set value of input Field
         self._current_items = items
 
     def onButtonClicked(self, val):
