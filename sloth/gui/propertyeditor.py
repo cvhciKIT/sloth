@@ -103,8 +103,13 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
             button.setChecked(False)
             button.setFlat(True)
 
-    def setItems(self, items):
+    def setItems(self, items, title=None):
         self.reset()
+        if title is None:
+            self.setTitle(self._attribute)
+        else:
+            self.setTitle(self._attribute + " (" + title + ")")
+
         selected_values = set([item[self._attribute] for item in items if self._attribute in item])
         for val in selected_values:
             if len(selected_values) > 1:
@@ -147,28 +152,19 @@ class LabelEditor(QScrollArea):
         self._content = QWidget()
         self._content.setLayout(self._layout)
 
-        if n_classes == 0:
-            pass
-        elif n_classes == 1:
-            # Just display all properties
-            lc = self._label_classes.copy().pop()
-            for attr in self._editor.getLabelClassAttributes(lc):
-                handler = self._editor.getHandler(attr)
-                if handler is not None:
-                    handler.setItems(items)
-                    self._layout.addWidget(handler)
-        else:
-            # TODO
-            # Find common properties of all classes
-            properties = None
-            for c in self._label_classes:
-                if properties is None:
-                    properties  = set(self._editor.getLabelClassAttributes(c))
-                else:
-                    properties &= set(self._editor.getLabelClassAttributes(c))
+        attributes = set()
+        for lc in self._label_classes:
+            attributes |= set(self._editor.getLabelClassAttributes(lc))
 
-            # TODO: Remove properties with per-class value lists if more than one class selected
-            # TODO: Order this somehow
+        for attr in attributes:
+            handler = self._editor.getHandler(attr)
+            if handler is not None:
+                if len(items) > 1:
+                    valid_items = [item for item in items if attr in self._editor.getLabelClassAttributes(item['class'])]
+                    handler.setItems(valid_items, ", ".join(set([item['class'] for item in valid_items])))
+                else:
+                    handler.setItems(items)
+                self._layout.addWidget(handler)
 
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setWidgetResizable(True)
@@ -263,10 +259,7 @@ class PropertyEditor(QWidget):
             return None
 
     def getLabelClassAttributes(self, label_class):
-        return self._class_config[label_class]['attributes']
-
-    def getLabelClassAttributeChoices(self, label_class, attribute):
-        return self._class_config[label_class]['attributes'][attribute]
+        return self._class_config[label_class]['attributes'].keys()
 
     def onClassButtonPressed(self):
         if self.sender().isChecked():
