@@ -4,7 +4,7 @@ from sloth.gui.floatinglayout import FloatingLayout
 from sloth.utils.bind import bind
 import sys
 from PyQt4.QtCore import pyqtSignal, QSize, Qt
-from PyQt4.QtGui import QApplication, QWidget, QGroupBox, QVBoxLayout, QPushButton, QButtonGroup, QScrollArea
+from PyQt4.QtGui import QApplication, QWidget, QGroupBox, QVBoxLayout, QPushButton, QScrollArea
 import logging
 LOG = logging.getLogger(__name__)
 
@@ -37,24 +37,99 @@ class MyVBoxLayout(QVBoxLayout):
         except Exception:
             pass
 
+class AttributeHandlerFactory:
+    def create(self, attribute, values):
+        # At the moment we always create a DefaultAttributeHandler
+        # But in the future this could also create user-defined attribute editors
+        return DefaultAttributeHandler(attribute, values)
+
+class AbstractAttributeHandler:
+    def defaults(self):
+        pass
+    def updateValues(self, values):
+        pass
+    def setItems(self, items):
+        pass
+
+class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
+    def __init__(self, attribute, values, parent=None):
+        QGroupBox.__init__(self, attribute, parent)
+        self._attribute     = attribute
+        self._values        = []
+        self._current_items = []
+        self._defaults      = {}
+
+        self._layout = FloatingLayout()
+        self._buttons = {}
+
+        # TODO: Properly parse
+        for v in values:
+            self.addValue(v)
+
+        self.setLayout(self._layout)
+
+    def defaults(self):
+        return self._defaults
+
+    def addValue(self, v):
+        button = QPushButton(v, self)
+        button.setFlat(True)
+        button.setCheckable(True)
+        self._buttons[v] = button
+        self._layout.addWidget(button)
+        button.clicked.connect(bind(self.onButtonClicked, v))
+
+    def updateValues(self, values):
+        for val in values:
+            if val not in self._values:
+                self.addValue(val)
+
+    def reset(self):
+        self._current_items = []
+        for v, button in self._buttons.items():
+            button.setChecked(False)
+            button.setFlat(True)
+
+    def setItems(self, items):
+        self.reset()
+        for item in items:
+            for v, button in self._buttons.items():
+                if self._attribute in item and item[self._attribute] == v:
+                    button.setChecked(True)
+        self._current_items = items
+
+    def onButtonClicked(self, val):
+        attr = self._attribute
+        LOG.debug("Button %s: %s clicked" % (attr, val))
+        button = self._buttons[val]
+
+        # Unpress all other buttons
+        for v, but in self._buttons.items():
+            if but is not button:
+                but.setChecked(False)
+
+        # Update model item
+        for item in self._current_items:
+            if button.isChecked():
+                item[attr] = val
+            else:
+                item[attr] = None
+
 class LabelEditor(QScrollArea):
     def __init__(self, items, parent=None):
         QScrollArea.__init__(self, parent)
-        self._content = QWidget()
         self._editor = parent
         self._items = items
 
         # Find all classes
-        self._label_classes = set([item.get('class', item['type']) for item in items])
+        self._label_classes = set([item['class'] for item in items if 'class' in item])
         n_classes = len(self._label_classes)
         LOG.debug("Creating editor for %d item classes: %s" % (n_classes, ", ".join(list(self._label_classes))))
 
         # Widget layout
         self._layout = QVBoxLayout()
+        self._content = QWidget()
         self._content.setLayout(self._layout)
-        self._boxes   = {}
-        self._layouts = {}
-        self._buttons = {}
 
         if n_classes == 0:
             pass
@@ -62,8 +137,10 @@ class LabelEditor(QScrollArea):
             # Just display all properties
             lc = self._label_classes.copy().pop()
             for attr in self._editor.getLabelClassAttributes(lc):
-                if attr == 'class' or attr == 'type': continue
-                self.addAttributeEditor(item, lc, attr, self._editor.getLabelClassAttributeChoices(lc, attr))
+                if attr == 'class': continue
+                handler = self._editor.getHandler(attr)
+                handler.setItems(items)
+                self._layout.addWidget(handler)
         else:
             # TODO
             # Find common properties of all classes
@@ -87,39 +164,6 @@ class LabelEditor(QScrollArea):
         left, top, right, bottom = self.getContentsMargins()
         return QSize(max(minsz.width(), sz.width() + left + right), max(minsz.height(), sz.height() + top + bottom))
 
-    def onButtonClicked(self, attr, val):
-        LOG.debug("Button %s: %s clicked" % (attr, val))
-        button = self._buttons[attr][val]
-
-        # Unpress all other buttons
-        for v, but in self._buttons[attr].items():
-            if but is not button:
-                but.setChecked(False)
-
-        # Update model item
-        for item in self._items:
-            if button.isChecked():
-                item[attr] = val
-            else:
-                item[attr] = None
-
-    def addAttributeEditor(self, item, lc, attr, vals):
-        box = QGroupBox(attr, self)
-        layout = FloatingLayout()
-        box.setLayout(layout)
-        self._boxes[attr] = box
-        self._layouts[attr] = layout
-        self._buttons[attr] = {}
-        for v in vals:
-            button = QPushButton(v, box)
-            button.setFlat(True)
-            button.setCheckable(True)
-            button.setChecked(attr in item and item[attr] == v)
-            self._buttons[attr][v] = button
-            layout.addWidget(button)
-            button.clicked.connect(bind(self.onButtonClicked, attr, v))
-        self._layout.addWidget(box)
-
     def labelClasses(self):
         return self._label_classes
 
@@ -138,8 +182,11 @@ class PropertyEditor(QWidget):
 
     def __init__(self, config, parent=None):
         QWidget.__init__(self, parent)
-        self._class_config  = {}
-        self._class_items   = {}
+        self._class_config       = {}
+        self._class_items        = {}
+        self._class_prototypes   = {}
+        self._attribute_handlers = {}
+        self._handler_factory    = AttributeHandlerFactory()
 
         self._setupGUI()
 
@@ -152,22 +199,17 @@ class PropertyEditor(QWidget):
         if 'attributes' not in label_config:
             raise ImproperlyConfigured("Label with no 'attributes' dict found")
         attrs = label_config['attributes']
-        if 'type' not in attrs:
-            raise ImproperlyConfigured("Labels must have an attribute 'type'")
-        # TODO: Maybe don't do this?
         if 'class' not in attrs:
-            attrs['class'] = attrs['type']
+            raise ImproperlyConfigured("Labels must have an attribute 'class'")
         label_class = attrs['class']
         if label_class in self._class_config:
             raise ImproperlyConfigured("Label with class '%s' defined more than once" % label_class)
 
         # Store config
-        # TODO: Handle special properties
         self._class_config[label_class] = label_config
 
-        # Add dummy item for insertion
-        # TODO: Put stuff into dict first
-        self._class_items[label_class]  = AnnotationModelItem(label_config['attributes'])
+        # Parse configuration and create handlers and item
+        self.parseConfiguration(label_class, label_config)
 
         # Add label class button
         button = QPushButton(label_class, self)
@@ -176,6 +218,26 @@ class PropertyEditor(QWidget):
         button.clicked.connect(self.onClassButtonPressed)
         self._class_buttons[label_class] = button
         self._classbox_layout.addWidget(button)
+
+    def parseConfiguration(self, label_class, label_config):
+        attrs = label_config['attributes']
+
+        # Create attribute handler widgets or update their values
+        for attr, vals in attrs.items():
+            if attr == 'class': continue
+            if attr in self._attribute_handlers:
+                self._attribute_handlers[attr].updateValues(vals)
+            else:
+                self._attribute_handlers[attr] = self._handler_factory.create(attr, vals)
+
+        # Add prototype item for insertion
+        self._class_items[label_class] = AnnotationModelItem({ 'class': label_class })
+        for attr in attrs:
+            if attr == 'class': continue
+            self._class_items[label_class].update(self._attribute_handlers[attr].defaults())
+
+    def getHandler(self, attribute):
+        return self._attribute_handlers[attribute]
 
     def getLabelClassAttributes(self, label_class):
         return self._class_config[label_class]['attributes']
