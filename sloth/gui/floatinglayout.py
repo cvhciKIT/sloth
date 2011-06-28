@@ -1,5 +1,5 @@
 from PyQt4.QtCore import Qt, QRect, QSize, QPoint
-from PyQt4.QtGui  import QLayout, QSizePolicy
+from PyQt4.QtGui  import QLayout, QSizePolicy, QWidgetItem
 
 class FloatingLayout(QLayout):
     def __init__(self, parent=None):
@@ -65,6 +65,13 @@ class FloatingLayout(QLayout):
                 wid.updateGeometry()
                 wid = wid.parentWidget()
                 i += 1
+
+    def insertItem(self, pos, item):
+        self._items.insert(pos, item)
+        self.invalidate()
+
+    def insertWidget(self, pos, wid):
+        self.insertItem(pos, QWidgetItem(wid))
 
     def addItem(self, item):
         self._items.append(item)
