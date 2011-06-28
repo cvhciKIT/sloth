@@ -1,72 +1,35 @@
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
+from PyQt4.QtCore import Qt, QRect, QSize, QPoint
+from PyQt4.QtGui  import QLayout, QSizePolicy
 
 class FloatingLayout(QLayout):
     def __init__(self, parent=None):
         QLayout.__init__(self, parent)
         self._items = []
-        self._last_min_size = self.minimumSize()
+        self._updateMinimumSize()
 
-    def addItem(self, item):
-        self._items.append(item)
-
-    def count(self):
-        return len(self._items)
-
-    def itemAt(self, index):
-        if index < 0 or index >= len(self._items):
-            return None
-        return self._items[index]
-
-    def takeAt(self, index):
-        if index < 0 or index >= len(self._items):
-            return None
-        else:
-            item = self._items[index]
-            del self._items[index]
-            return item
-
-    def sizeHint(self):
-        return self.minimumSize()
-
-    def setGeometry(self, r):
-        QLayout.setGeometry(self, r)
-        self.layoutChildren(r)
-        min_size = self.minimumSize()
-        if self._last_min_size != min_size:
-            self._last_min_size = min_size
-            self.parentWidget().updateGeometry()
-
-    def minimumSize(self):
-        w = 0
-        h = 0
+    def _updateMinimumSize(self, height=None):
+        w, h = 0, 0
         for item in self._items:
             w = max(w, item.minimumSize().width())
             h = max(h, item.minimumSize().height())
 
         left, top, right, bottom = self.getContentsMargins()
-        current_width = self.contentsRect().width() - left - right
-        if current_width > 0:
-            h = self.heightForWidth(current_width)
-
         w += left + right
         h += top + bottom
 
-        return QSize(w, h)
+        if height is None:
+            current_width = self.contentsRect().width()
+            if current_width > 0:
+                height = self.heightForWidth(current_width + left + right)
+        if height is not None:
+            h = max(h, height)
 
-    def hasHeightForWidth(self):
-        return True
+        self._min_w, self._min_h = w, h
 
-    def heightForWidth(self, width):
-        height = self.layoutChildren(QRect(0, 0, width, 0), False)
-        left, top, right, bottom = self.getContentsMargins()
-        return height + top + bottom
-
-    def layoutChildren(self, rect, appl=True):
+    def _layoutChildren(self, rect, appl=True):
         left, top, right, bottom = self.getContentsMargins()
         r = rect.adjusted(+left, +top, -right, -bottom)
-        x = r.x();
-        y = r.y();
+        x, y = r.x(), r.y()
         lineHeight = 0
 
         for item in self._items:
@@ -86,4 +49,48 @@ class FloatingLayout(QLayout):
             x += sz_hint.width() + spaceX
             lineHeight = max(lineHeight, sz_hint.height())
 
-        return y + lineHeight - r.y()
+        return y + lineHeight - r.y() + top + bottom
+
+    def heightForWidth(self, width):
+        return self._layoutChildren(QRect(0, 0, width, 0), False)
+
+    def setGeometry(self, r):
+        QLayout.setGeometry(self, r)
+        new_height = self._layoutChildren(r)
+        if new_height != self._min_h:
+            self._updateMinimumSize(new_height)
+            i = 0
+            wid = self.parentWidget()
+            while wid is not None:
+                wid.updateGeometry()
+                wid = wid.parentWidget()
+                i += 1
+
+    def addItem(self, item):
+        self._items.append(item)
+
+    def count(self):
+        return len(self._items)
+
+    def hasHeightForWidth(self):
+        return True
+
+    def itemAt(self, index):
+        if index < 0 or index >= len(self._items):
+            return None
+        return self._items[index]
+
+    def minimumSize(self):
+        return QSize(self._min_w, self._min_h)
+
+    def takeAt(self, index):
+        if index < 0 or index >= len(self._items):
+            return None
+        else:
+            item = self._items[index]
+            del self._items[index]
+            return item
+
+    def sizeHint(self):
+        return self.minimumSize()
+

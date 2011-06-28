@@ -2,42 +2,30 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from sloth.items import *
-from sloth.annotations.model import TypeRole
 from sloth.core.exceptions import InvalidArgumentException
 import okapy
 import logging
 LOG = logging.getLogger(__name__)
 
 class AnnotationScene(QGraphicsScene):
-    """Dies ist ein Test"""
-
-    # TODO signal itemadded
-
     def __init__(self, labeltool, items=None, inserters=None, parent=None):
         super(AnnotationScene, self).__init__(parent)
 
-        self.model_     = None
-        self.mode_      = None
-        self.inserter_  = None
-        self.debug_     = True
-        self.message_   = ""
-        self.last_key_  = None
-        self.labeltool_ = labeltool
+        self.model_      = None
+        self.image_item_ = None
+        self.inserter_   = None
+        self.message_    = ""
+        self.labeltool_  = labeltool
 
         self.itemfactory_     = Factory(items)
         self.inserterfactory_ = Factory(inserters)
 
         self.setBackgroundBrush(Qt.darkGray)
-
-        self.setMode(None)
         self.reset()
 
     #
     # getters/setters
     #______________________________________________________________________________________________________
-    def model(self):
-        return self.model_
-
     def setModel(self, model):
         if model == self.model_:
             # same model as the current one
@@ -66,79 +54,78 @@ class AnnotationScene(QGraphicsScene):
         # reset caches, invalidate root
         self.reset()
 
-    def root(self):
-        return self.root_
-
-    def setRoot(self, root):
+    def setCurrentImage(self, current_image):
         """
         Set the index of the model which denotes the current image to be
         displayed by the scene.  This can be either the index to a frame in a
         video, or to an image.
         """
-        self.image_item_ = None
-        self.image_      = None
-        self.pixmap_     = None
-
-        self.root_ = root
-        self.clear()
-        if not root.isValid():
+        if current_image == self.image_item_:
             return
+        elif current_image is None:
+            self.clear()
+            self.image_item_ = None
+            self.image_      = None
+            self.pixmap_     = None
+        else:
+            self.clear()
+            self.image_item_ = current_image
+            assert self.image_item_.model() == self.model_
+            self.image_      = self.labeltool_.getImage(self.image_item_)
+            self.pixmap_     = QPixmap(okapy.guiqt.toQImage(self.image_))
+            item             = QGraphicsPixmapItem(self.pixmap_)
+            item.setZValue(-1)
+            self.setSceneRect(0, 0, self.pixmap_.width(), self.pixmap_.height())
+            self.addItem(item)
 
-        assert self.root_.model() == self.model_
-        self.image_item_ = self.model_.itemFromIndex(root)
-        self.image_      = self.labeltool_.getImage(self.image_item_)
-        self.pixmap_     = QPixmap(okapy.guiqt.toQImage(self.image_))
-        item             = QGraphicsPixmapItem(self.pixmap_)
-        item.setZValue(-1)
-        self.setSceneRect(0, 0, self.pixmap_.width(), self.pixmap_.height())
-        self.addItem(item)
-
-        num_items = self.model_.rowCount(self.root_)
-        self.insertItems(0, num_items)
-        self.update()
+            self.insertItems(0, len(self.image_item_.children())-1)
+            self.update()
 
     def insertItems(self, first, last):
-        if not self.root_.isValid():
+        if self.image_item_ is None:
             return
 
         assert self.model_ is not None
 
         # create a graphics item for each model index
         for row in range(first, last+1):
-            child = self.root_.child(row, 0) # get index
-            t = child.data(TypeRole) # get type from index
-            if isinstance(t, QVariant):
-                t = t.toPyObject()
-            _type = str(t)
-            item = self.itemfactory_.create(_type, self.model_.itemFromIndex(child))    # create graphics item from factory
+            child = self.image_item_.childAt(row)
+            label_class = child['class']
+            item = self.itemfactory_.create(label_class, child)
             if item is not None:
                 self.addItem(item)
+            else:
+                LOG.warn("Could not find item for annotation with class '%s'" % label_class)
 
     def onInserterFinished(self):
         self.sender().inserterFinished.disconnect(self.onInserterFinished)
         self.inserter_ = None
 
-    def setMode(self, mode):
-        LOG.debug("setMode : %s" % mode)
-
+    def onInsertionModeStarted(self, label_class):
         # Abort current inserter
         if self.inserter_ is not None:
             self.inserter_.abort()
 
+        self.deselectAllItems()
+
         # Add new inserter
-        if mode is not None:
-            inserter = self.inserterfactory_.create(mode['type'], self.labeltool_, self, mode)
-            if inserter is None:
-                raise InvalidArgumentException("Invalid mode")
-            inserter.inserterFinished.connect(self.onInserterFinished)
-            self.inserter_ = inserter
+        default_properties = self.labeltool_.propertyeditor().currentEditorProperties()
+        inserter = self.inserterfactory_.create(label_class, self.labeltool_, self, default_properties)
+        if inserter is None:
+            raise InvalidArgumentException("Invalid mode")
+        inserter.inserterFinished.connect(self.onInserterFinished)
+        self.inserter_ = inserter
+
+    def onInsertionModeEnded(self):
+        if self.inserter_ is not None:
+            self.inserter_.abort()
 
     #
     # common methods
     #______________________________________________________________________________________________________
     def reset(self):
         self.clear()
-        self.setRoot(QModelIndex())
+        self.setCurrentImage(None)
         self.clearMessage()
 
     def addItem(self, item):
@@ -149,8 +136,7 @@ class AnnotationScene(QGraphicsScene):
     # mouse event handlers
     #______________________________________________________________________________________________________
     def mousePressEvent(self, event):
-        if self.debug_:
-            LOG.debug("mousePressEvent %s %s" % (self.sceneRect().contains(event.scenePos()), event.scenePos()))
+        LOG.debug("mousePressEvent %s %s" % (self.sceneRect().contains(event.scenePos()), event.scenePos()))
         if self.inserter_ is not None:
             if not self.sceneRect().contains(event.scenePos()) and \
                not self.inserter_.allowOutOfSceneEvents():
@@ -163,8 +149,7 @@ class AnnotationScene(QGraphicsScene):
             QGraphicsScene.mousePressEvent(self, event)
 
     def mouseReleaseEvent(self, event):
-        if self.debug_:
-            LOG.debug("mouseReleaseEvent %s %s" % (self.sceneRect().contains(event.scenePos()), event.scenePos()))
+        LOG.debug("mouseReleaseEvent %s %s" % (self.sceneRect().contains(event.scenePos()), event.scenePos()))
         if self.inserter_ is not None:
             # insert mode
             self.inserter_.mouseReleaseEvent(event, self.image_item_)
@@ -173,8 +158,7 @@ class AnnotationScene(QGraphicsScene):
             QGraphicsScene.mouseReleaseEvent(self, event)
 
     def mouseMoveEvent(self, event):
-        #if self.debug_:
-        #   print "mouseMoveEvent", self.sceneRect().contains(event.scenePos()), event.scenePos()
+        # print "mouseMoveEvent", self.sceneRect().contains(event.scenePos()), event.scenePos()
         if self.inserter_ is not None:
             # insert mode
             self.inserter_.mouseMoveEvent(event, self.image_item_)
@@ -182,10 +166,14 @@ class AnnotationScene(QGraphicsScene):
             # selection mode
             QGraphicsScene.mouseMoveEvent(self, event)
 
+    def deselectAllItems(self):
+        for item in self.items():
+            item.setSelected(False)
 
     def onSelectionChanged(self):
         model_items = [item.modelItem() for item in self.selectedItems()]
         self.labeltool_.treeview().setSelectedItems(model_items)
+        self.editSelectedItems()
 
     def onSelectionChangedInTreeView(self, items):
         block = self.blockSignals(True)
@@ -196,6 +184,13 @@ class AnnotationScene(QGraphicsScene):
             if item is not None:
                 item.setSelected(True)
         self.blockSignals(block)
+        self.editSelectedItems()
+
+    def editSelectedItems(self):
+        scene_items = self.selectedItems()
+        if self.inserter_ is None or len(scene_items) > 0:
+            items = [item.modelItem() for item in scene_items]
+            self.labeltool_.propertyeditor().startEditMode(items)
 
     #
     # key event handlers
@@ -232,10 +227,9 @@ class AnnotationScene(QGraphicsScene):
                 break
 
     def keyPressEvent(self, event):
-        if self.debug_:
-           LOG.debug("keyPressEvent %s" % event)
+        LOG.debug("keyPressEvent %s" % event)
 
-        if self.model_ is None or not self.root_.isValid():
+        if self.model_ is None or self.image_item_ is None:
             event.ignore()
             return
 
@@ -266,12 +260,12 @@ class AnnotationScene(QGraphicsScene):
     # this is the implemenation of the scene as a view of the model
     #______________________________________________________________________________________________________
     def dataChanged(self, indexFrom, indexTo):
-        if not self.root_.isValid():
+        if self.image_item_ is None:
             return
 
-        annotation_item_index= indexFrom.parent()
+        annotation_item_index = indexFrom.parent()
 
-        if self.root_ != annotation_item_index.parent():
+        if self.image_item_.index() != annotation_item_index.parent():
             return
 
         item = self.itemFromIndex(annotation_item_index)
@@ -279,14 +273,13 @@ class AnnotationScene(QGraphicsScene):
             item.dataChanged()
 
     def rowsInserted(self, index, first, last):
-        if self.root_ != index:
+        if self.image_item_.index() != index:
             return
 
         self.insertItems(first, last)
 
-
     def rowsAboutToBeRemoved(self, index, first, last):
-        if self.root_ != index:
+        if self.image_item_.index() != index:
             return
 
         for row in range(first, last+1):

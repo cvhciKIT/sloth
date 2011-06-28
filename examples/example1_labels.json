@@ -7,14 +7,16 @@
                 "width": 46.0, 
                 "y": 105.0, 
                 "x": 346.0, 
-                "type": "rect"
+                "type": "rect",
+                "class": "Face"
             }, 
             {
                 "height": 58.0, 
                 "width": 56.0, 
                 "y": 119.0, 
                 "x": 636.0, 
-                "type": "rect"
+                "type": "rect",
+                "class": "Face"
             }
         ], 
         "filename": "image1.jpg"

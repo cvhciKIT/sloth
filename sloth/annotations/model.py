@@ -10,7 +10,7 @@ import time
 import logging
 LOG = logging.getLogger(__name__)
 
-ItemRole, TypeRole, DataRole, ImageRole = [Qt.UserRole + i + 1 for i in range(4)]
+ItemRole, DataRole, ImageRole = [Qt.UserRole + i + 1 for i in range(3)]
 
 class ModelItem:
     def __init__(self):
@@ -44,21 +44,21 @@ class ModelItem:
     def setData(self, value, role=Qt.DisplayRole, column=0):
         return False
 
-    def getChildAt(self, pos):
+    def childAt(self, pos):
         return self._children[pos]
 
     def getPreviousSibling(self):
         p = self.parent()
         if p is not None:
             if self._row > 0:
-                return p.getChildAt(self._row-1)
+                return p.childAt(self._row-1)
         return None
 
     def getNextSibling(self):
         p = self.parent()
         if p is not None:
             if self._row < len(p.children()) - 1:
-                return p.getChildAt(self._row+1)
+                return p.childAt(self._row+1)
         return None
 
     def _attachToModel(self, model):
@@ -348,8 +348,6 @@ class AnnotationModelItem(KeyValueModelItem):
                 return self['type']
             else:
                 return ""
-        elif role == TypeRole:
-            return self['type']
         elif role == DataRole:
             return self._annotation
         return ModelItem.data(self, role, column)

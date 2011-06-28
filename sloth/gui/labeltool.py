@@ -6,7 +6,6 @@ from PyQt4.QtGui import QMainWindow, QSizePolicy, QWidget, QVBoxLayout, QAction,
         QKeySequence, QLabel, QItemSelectionModel, QMessageBox, QFileDialog
 from PyQt4.QtCore import SIGNAL, QSettings, QSize, QPoint, QVariant, QFileInfo
 import PyQt4.uic as uic
-from sloth.gui.buttonarea import ButtonArea
 from sloth.gui.propertyeditor import PropertyEditor
 from sloth.gui.annotationscene import AnnotationScene
 from sloth.gui.frameviewer import GraphicsView
@@ -54,10 +53,10 @@ class MainWindow(QMainWindow):
         self.treeview.setSelectionModel(self.selectionmodel)
         self.treeview.selectionModel().currentChanged.connect(self.labeltool.setCurrentImage)
 
-    def onCurrentImageChanged(self, index):
-        self.scene.setRoot(index)
-
+    def onCurrentImageChanged(self):
         new_image = self.labeltool.currentImage()
+        self.scene.setCurrentImage(new_image)
+
         img = self.labeltool.getImage(new_image)
 
         h = img.shape[0]
@@ -70,7 +69,7 @@ class MainWindow(QMainWindow):
         elif isinstance(new_image, ImageFileModelItem):
             self.controls.setFilename(os.path.basename(new_image['filename']))
 
-        self.selectionmodel.setCurrentIndex(index, QItemSelectionModel.ClearAndSelect|QItemSelectionModel.Rows)
+        self.selectionmodel.setCurrentIndex(new_image.index(), QItemSelectionModel.ClearAndSelect|QItemSelectionModel.Rows)
 
     def onScaleChanged(self, scale):
         self.zoominfo.setText("%.2f%%" % (100 * scale, ))
@@ -103,17 +102,27 @@ class MainWindow(QMainWindow):
 
         # get inserters and items from labels
         # FIXME for handling the new-style config correctly
-        inserters = dict([(label['attributes']['type'], label['inserter']) 
+        inserters = dict([(label['attributes']['class'], label['inserter']) 
                           for label in config.LABELS
-                          if 'type' in label.get('attributes', {}) and 'inserter' in label])
-        items = dict([(label['attributes']['type'], label['item']) 
+                          if 'class' in label.get('attributes', {}) and 'inserter' in label])
+        items = dict([(label['attributes']['class'], label['item']) 
                       for label in config.LABELS
-                      if 'type' in label.get('attributes', {}) and 'item' in label])
+                      if 'class' in label.get('attributes', {}) and 'item' in label])
 
+        # Property Editor
+        self.property_editor = PropertyEditor(config.LABELS)
+        self.ui.dockAnnotationButtons.setWidget(self.property_editor)
+
+        # Scene
         self.scene = AnnotationScene(self.labeltool, items=items, inserters=inserters)
+        self.property_editor.insertionModeStarted.connect(self.scene.onInsertionModeStarted)
+        self.property_editor.insertionModeEnded.connect(self.scene.onInsertionModeEnded)
+
+        # SceneView
         self.view = GraphicsView(self)
         self.view.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
         self.view.setScene(self.scene)
+
         self.central_widget = QWidget()
         self.central_layout = QVBoxLayout()
         self.controls = ControlButtonWidget()
@@ -126,10 +135,6 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.central_widget)
 
         self.initShortcuts(config.HOTKEYS)
-
-        self.buttonarea = ButtonArea(config.LABELS)
-        self.ui.dockAnnotationButtons.setWidget(self.buttonarea)
-        self.buttonarea.stateChanged.connect(self.scene.setMode)
 
         self.treeview = AnnotationTreeView()
         self.treeview.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)

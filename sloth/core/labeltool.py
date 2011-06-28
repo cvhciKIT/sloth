@@ -46,7 +46,7 @@ class LabelTool(QObject):
     # This still emits a QModelIndex, because Qt cannot handle emiting
     # a derived class instead of a base class, i.e. ImageFileModelItem
     # instead of ModelItem
-    currentImageChanged = pyqtSignal(QModelIndex)
+    currentImageChanged = pyqtSignal()
 
     # TODO clean up --> prefix all members with _
     def __init__(self, parent=None):
@@ -299,7 +299,7 @@ class LabelTool(QObject):
             raise RuntimeError("Tried to set current image to item that has no Image or Frame as parent!")
         if image != self._current_image:
             self._current_image = image
-            self.currentImageChanged.emit(self._current_image.index())
+            self.currentImageChanged.emit()
 
     def getImage(self, item):
         # TODO: Also handle video frames
@@ -340,6 +340,15 @@ class LabelTool(QObject):
         self._model._root.appendFileItem(fileitem)
 
     ###
+    ### PropertyEditor functions
+    ###___________________________________________________________________________________________
+    def propertyeditor(self):
+        if self._mainwindow is None:
+            return None
+        else:
+            return self._mainwindow.property_editor
+
+    ###
     ### Scene functions
     ###___________________________________________________________________________________________
     def scene(self):
@@ -363,7 +372,7 @@ class LabelTool(QObject):
 
     def exitInsertMode(self):
         if self._mainwindow is not None:
-            return self._mainwindow.buttonarea.exitInsertMode()
+            return self._mainwindow.property_editor.endInsertionMode()
 
     ###
     ### TreeView functions

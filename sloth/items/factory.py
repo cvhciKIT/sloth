@@ -1,4 +1,3 @@
-from sloth.core import exceptions
 from sloth.core.utils import import_callable
 
 class Factory:
@@ -77,7 +76,7 @@ class Factory:
         Newly created object. If for the given type no mapping exists, this
         function returns ``None``.
         """
-        _type = _type.lower()
+        _type = str(_type).lower()
 
         if _type not in self.items_:
             return None
