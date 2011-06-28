@@ -6,6 +6,7 @@ from PyQt4.QtGui import QMainWindow, QSizePolicy, QWidget, QVBoxLayout, QAction,
         QKeySequence, QLabel, QItemSelectionModel, QMessageBox, QFileDialog
 from PyQt4.QtCore import SIGNAL, QSettings, QSize, QPoint, QVariant, QFileInfo
 import PyQt4.uic as uic
+from sloth.gui import qrc_icons  # needed for toolbar icons
 from sloth.gui.propertyeditor import PropertyEditor
 from sloth.gui.annotationscene import AnnotationScene
 from sloth.gui.frameviewer import GraphicsView
