@@ -4,7 +4,7 @@ from sloth.gui.floatinglayout import FloatingLayout
 from sloth.utils.bind import bind
 import sys
 from PyQt4.QtCore import pyqtSignal, QSize, Qt
-from PyQt4.QtGui import QApplication, QWidget, QGroupBox, QVBoxLayout, QPushButton, QScrollArea, QLineEdit
+from PyQt4.QtGui import QApplication, QWidget, QGroupBox, QVBoxLayout, QPushButton, QScrollArea, QLineEdit, QDoubleValidator, QIntValidator
 import logging
 LOG = logging.getLogger(__name__)
 
@@ -105,11 +105,12 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
         if self._inputField is None:
             self._inputFieldType = _type
             self._inputField = QLineEdit()
-            #TODO: Add validators
+            if _type is float:
+                self._inputField.setValidator(QDoubleValidator())
+            elif _type is int:
+                self._inputField.setValidator(QIntValidator())
 
-            # TODO: Insert at beginning
-            #self._layout.insertWidget(0, self._inputField)
-            self._layout.addWidget(self._inputField)
+            self._layout.insertWidget(0, self._inputField)
             self._inputField.returnPressed.connect(self.onInputFieldReturnPressed)
         elif self._inputFieldType is not _type:
             raise ImproperlyConfigured("Input field for attribute '%s' configured twice with different types %s != %s"\
@@ -141,6 +142,7 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
 
         selected_values = set([item[self._attribute] for item in items if self._attribute in item])
         for val in selected_values:
+            if val not in self._buttons: continue
             if len(selected_values) > 1:
                 self._buttons[val].setFlat(False)
             else:
