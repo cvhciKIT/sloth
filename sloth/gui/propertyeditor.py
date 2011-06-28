@@ -42,7 +42,7 @@ class AbstractAttributeHandler:
         pass
     def updateValues(self, values):
         pass
-    def setItems(self, items):
+    def setItems(self, items, showItemClasses=False):
         pass
 
 class AttributeHandlerFactory:
@@ -103,12 +103,13 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
             button.setChecked(False)
             button.setFlat(True)
 
-    def setItems(self, items, title=None):
+    def setItems(self, items, showItemClasses=False):
         self.reset()
-        if title is None:
-            self.setTitle(self._attribute)
-        else:
+        if showItemClasses:
+            title = ", ".join(set([item['class'] for item in items]))
             self.setTitle(self._attribute + " (" + title + ")")
+        else:
+            self.setTitle(self._attribute)
 
         selected_values = set([item[self._attribute] for item in items if self._attribute in item])
         for val in selected_values:
@@ -161,7 +162,7 @@ class LabelEditor(QScrollArea):
             if handler is not None:
                 if len(items) > 1:
                     valid_items = [item for item in items if attr in self._editor.getLabelClassAttributes(item['class'])]
-                    handler.setItems(valid_items, ", ".join(set([item['class'] for item in valid_items])))
+                    handler.setItems(valid_items, True)
                 else:
                     handler.setItems(items)
                 self._layout.addWidget(handler)
