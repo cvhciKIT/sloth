@@ -140,7 +140,7 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
         else:
             self.setTitle(self._attribute)
 
-        selected_values = set([item[self._attribute] for item in items if self._attribute in item])
+        selected_values = set([str(item[self._attribute]) for item in items if self._attribute in item])
         for val in selected_values:
             if val not in self._buttons: continue
             if len(selected_values) > 1:
@@ -148,7 +148,13 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
             else:
                 self._buttons[val].setChecked(True)
 
-        # TODO: Set value of input Field
+        if self._inputField is not None:
+            self._inputField.clear()
+            if len(selected_values) > 1:
+                self._inputField.setPlaceholderText(", ".join(selected_values))
+            elif len(selected_values) == 1:
+                self._inputField.setText(list(selected_values)[0])
+
         self._current_items = items
 
     def onButtonClicked(self, val):
