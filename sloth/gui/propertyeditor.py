@@ -41,6 +41,14 @@ class AttributeHandlerFactory:
     def create(self, attribute, values):
         # At the moment we always create a DefaultAttributeHandler
         # But in the future this could also create user-defined attribute editors
+
+        # Class attribute cannot be changed
+        if attribute == 'class':
+            return None
+
+        # Just a value. No attribute editor needed, we just add it to the item to be inserted...
+        if isinstance(values, str) or isinstance(values, float) or isinstance(values, int):
+            return None
         return DefaultAttributeHandler(attribute, values)
 
 class AbstractAttributeHandler:
@@ -140,10 +148,10 @@ class LabelEditor(QScrollArea):
             # Just display all properties
             lc = self._label_classes.copy().pop()
             for attr in self._editor.getLabelClassAttributes(lc):
-                if attr == 'class': continue
                 handler = self._editor.getHandler(attr)
-                handler.setItems(items)
-                self._layout.addWidget(handler)
+                if handler is not None:
+                    handler.setItems(items)
+                    self._layout.addWidget(handler)
         else:
             # TODO
             # Find common properties of all classes
@@ -225,22 +233,29 @@ class PropertyEditor(QWidget):
     def parseConfiguration(self, label_class, label_config):
         attrs = label_config['attributes']
 
+        # Add prototype item for insertion
+        self._class_items[label_class] = AnnotationModelItem({ 'class': label_class })
+
         # Create attribute handler widgets or update their values
         for attr, vals in attrs.items():
-            if attr == 'class': continue
             if attr in self._attribute_handlers:
                 self._attribute_handlers[attr].updateValues(vals)
             else:
-                self._attribute_handlers[attr] = self._handler_factory.create(attr, vals)
+                handler = self._handler_factory.create(attr, vals)
+                if handler is None:
+                    self._class_items[label_class][attr] = vals
+                else:
+                    self._attribute_handlers[attr] = handler
 
-        # Add prototype item for insertion
-        self._class_items[label_class] = AnnotationModelItem({ 'class': label_class })
         for attr in attrs:
-            if attr == 'class': continue
-            self._class_items[label_class].update(self._attribute_handlers[attr].defaults())
+            if attr in self._attribute_handlers:
+                self._class_items[label_class].update(self._attribute_handlers[attr].defaults())
 
     def getHandler(self, attribute):
-        return self._attribute_handlers[attribute]
+        if attribute in self._attribute_handlers:
+            return self._attribute_handlers[attribute]
+        else:
+            return None
 
     def getLabelClassAttributes(self, label_class):
         return self._class_config[label_class]['attributes']
