@@ -71,6 +71,7 @@ class FloatingLayout(QLayout):
         self.invalidate()
 
     def insertWidget(self, pos, wid):
+        self.addChildWidget(wid)
         self.insertItem(pos, QWidgetItem(wid))
 
     def addItem(self, item):
