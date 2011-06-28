@@ -59,14 +59,19 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
         self._current_items = []
         self._defaults      = {}
 
+        # Setup GUI
         self._layout = FloatingLayout()
+        self.setLayout(self._layout)
         self._buttons = {}
 
-        # TODO: Properly parse
-        for v in values:
-            self.addValue(v)
+        # Add interface elements
+        self.updateValues(values)
 
-        self.setLayout(self._layout)
+    def updateValues(self, values):
+        # TODO: Properly parse
+        for val in values:
+            if val not in self._values:
+                self.addValue(val)
 
     def defaults(self):
         return self._defaults
@@ -79,11 +84,6 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
         self._layout.addWidget(button)
         button.clicked.connect(bind(self.onButtonClicked, v))
 
-    def updateValues(self, values):
-        for val in values:
-            if val not in self._values:
-                self.addValue(val)
-
     def reset(self):
         self._current_items = []
         for v, button in self._buttons.items():
@@ -92,10 +92,12 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
 
     def setItems(self, items):
         self.reset()
-        for item in items:
-            for v, button in self._buttons.items():
-                if self._attribute in item and item[self._attribute] == v:
-                    button.setChecked(True)
+        selected_values = set([item[self._attribute] for item in items if self._attribute in item])
+        for val in selected_values:
+            if len(selected_values) > 1:
+                self._buttons[val].setFlat(False)
+            else:
+                self._buttons[val].setChecked(True)
         self._current_items = items
 
     def onButtonClicked(self, val):
@@ -105,6 +107,7 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
 
         # Unpress all other buttons
         for v, but in self._buttons.items():
+            but.setFlat(True)
             if but is not button:
                 but.setChecked(False)
 
