@@ -73,6 +73,7 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
         self._defaults       = {}
         self._inputField     = None
         self._inputFieldType = None
+        self._insertIndex    = -1
 
         # Setup GUI
         self._layout = FloatingLayout()
@@ -89,6 +90,8 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
             for val in values:
                 if isinstance(val, type):
                     self.addInputField(val)
+                elif val == "*":
+                    self._insertIndex = self._layout.count()
                 else:
                     if val not in self._values:
                         self.addValue(val)
@@ -97,9 +100,13 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
         return self._defaults
 
     def onInputFieldReturnPressed(self):
-        val = self._inputField.text()
+        val = str(self._inputField.text())
+        if self._insertIndex >= 0 and val not in self._buttons:
+            self.addValue(val, self._insertIndex)
         for item in self._current_items:
             item[self._attribute] = val
+        self.updateButtons()
+        self.updateInputField()
 
     def addInputField(self, _type):
         if self._inputField is None:
@@ -110,20 +117,23 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
             elif _type is int:
                 self._inputField.setValidator(QIntValidator())
 
-            self._layout.insertWidget(0, self._inputField)
+            self._layout.addWidget(self._inputField)
             self._inputField.returnPressed.connect(self.onInputFieldReturnPressed)
         elif self._inputFieldType is not _type:
             raise ImproperlyConfigured("Input field for attribute '%s' configured twice with different types %s != %s"\
                     % (self._attribute, self._inputFieldType, _type))
 
-    def addValue(self, v):
+    def addValue(self, v, pos=-1):
         self._values.append(v)
         button = QPushButton(v, self)
         button.setFlat(True)
         button.setCheckable(True)
         self._buttons[v] = button
         # TODO: Add at proper position
-        self._layout.addWidget(button)
+        if pos == -1:
+            self._layout.addWidget(button)
+        else:
+            self._layout.insertWidget(pos, button)
         button.clicked.connect(bind(self.onButtonClicked, v))
 
     def reset(self):
@@ -131,6 +141,32 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
         for v, button in self._buttons.items():
             button.setChecked(False)
             button.setFlat(True)
+
+    def getSelectedValues(self):
+        return set([str(item[self._attribute]) for item in self._current_items if self._attribute in item and item[self._attribute] is not None])
+
+    def updateInputField(self):
+        if self._inputField is not None:
+            self._inputField.clear()
+            selected_values = self.getSelectedValues()
+            if len(selected_values) > 1:
+                self._inputField.setPlaceholderText(", ".join(selected_values))
+            elif len(selected_values) == 1:
+                self._inputField.setText(iter(selected_values).next())
+
+    def updateButtons(self):
+        selected_values = self.getSelectedValues()
+        for val, button in self._buttons.items():
+            if val in selected_values:
+                if len(selected_values) > 1:
+                    button.setFlat(False)
+                    button.setChecked(False)
+                else:
+                    button.setFlat(True)
+                    button.setChecked(True)
+            else:
+                button.setFlat(True)
+                button.setChecked(False)
 
     def setItems(self, items, showItemClasses=False):
         self.reset()
@@ -140,33 +176,15 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
         else:
             self.setTitle(self._attribute)
 
-        selected_values = set([str(item[self._attribute]) for item in items if self._attribute in item])
-        for val in selected_values:
-            if val not in self._buttons: continue
-            if len(selected_values) > 1:
-                self._buttons[val].setFlat(False)
-            else:
-                self._buttons[val].setChecked(True)
-
-        if self._inputField is not None:
-            self._inputField.clear()
-            if len(selected_values) > 1:
-                self._inputField.setPlaceholderText(", ".join(selected_values))
-            elif len(selected_values) == 1:
-                self._inputField.setText(list(selected_values)[0])
-
         self._current_items = items
+
+        self.updateButtons()
+        self.updateInputField()
 
     def onButtonClicked(self, val):
         attr = self._attribute
         LOG.debug("Button %s: %s clicked" % (attr, val))
         button = self._buttons[val]
-
-        # Unpress all other buttons
-        for v, but in self._buttons.items():
-            but.setFlat(True)
-            if but is not button:
-                but.setChecked(False)
 
         # Update model item
         for item in self._current_items:
@@ -174,6 +192,16 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
                 item[attr] = val
             else:
                 item[attr] = None
+
+        # Unpress all other buttons
+        for v, but in self._buttons.items():
+            but.setFlat(True)
+            if but is not button:
+                but.setChecked(False)
+
+        # Update input field
+        self.updateInputField()
+
 
 class LabelEditor(QScrollArea):
     def __init__(self, items, parent=None):
