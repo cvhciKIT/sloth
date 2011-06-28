@@ -37,6 +37,14 @@ class MyVBoxLayout(QVBoxLayout):
         except Exception:
             pass
 
+class AbstractAttributeHandler:
+    def defaults(self):
+        pass
+    def updateValues(self, values):
+        pass
+    def setItems(self, items):
+        pass
+
 class AttributeHandlerFactory:
     def create(self, attribute, values):
         # At the moment we always create a DefaultAttributeHandler
@@ -49,15 +57,12 @@ class AttributeHandlerFactory:
         # Just a value. No attribute editor needed, we just add it to the item to be inserted...
         if isinstance(values, str) or isinstance(values, float) or isinstance(values, int):
             return None
-        return DefaultAttributeHandler(attribute, values)
-
-class AbstractAttributeHandler:
-    def defaults(self):
-        pass
-    def updateValues(self, values):
-        pass
-    def setItems(self, items):
-        pass
+        # If it's already a handler, just return it
+        elif isinstance(values, AbstractAttributeHandler):
+            return values
+        # Else, we create our own default handler
+        else:
+            return DefaultAttributeHandler(attribute, values)
 
 class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
     def __init__(self, attribute, values, parent=None):
