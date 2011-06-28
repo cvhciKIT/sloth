@@ -90,6 +90,7 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
         return self._defaults
 
     def addValue(self, v):
+        self._values.append(v)
         button = QPushButton(v, self)
         button.setFlat(True)
         button.setCheckable(True)
