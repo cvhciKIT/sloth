@@ -83,8 +83,10 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
     def updateValues(self, values):
         # TODO: Properly parse
         for val in values:
-            if val not in self._values:
-                self.addValue(val)
+            if isinstance(val, str) or isinstance(val, float) or isinstance(val, int):
+                val = str(val)
+                if val not in self._values:
+                    self.addValue(val)
 
     def defaults(self):
         return self._defaults
