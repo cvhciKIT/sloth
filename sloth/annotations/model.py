@@ -265,18 +265,6 @@ class ImageModelItem(ModelItem):
     def addAnnotation(self, ann):
         self.appendChild(AnnotationModelItem(ann))
 
-    def removeAnnotation(self, pos):
-        self.deleteChild(pos)
-
-    def updateAnnotation(self, ann):
-        for child in self._children:
-            if child.type() == ann['type']:
-                if ('id' in child and 'id' in ann and child['id'] == ann['id']) or ('id' not in child and 'id' not in ann):
-                    ann[None] = None
-                    child.setData(ann, DataRole, 1)
-                    return
-        raise Exception("No AnnotationModelItem found that could be updated!")
-
 class ImageFileModelItem(FileModelItem, ImageModelItem):
     def __init__(self, fileinfo):
         annotations = fileinfo.get("annotations", [])
