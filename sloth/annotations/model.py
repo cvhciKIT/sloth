@@ -240,7 +240,7 @@ class KeyValueModelItem(ModelItem, MutableMapping):
         return res
 
 class FileModelItem(KeyValueModelItem):
-    def __init__(self, fileinfo, hidden=['filename', 'type']):
+    def __init__(self, fileinfo, hidden=['filename', 'class']):
         KeyValueModelItem.__init__(self, hidden=hidden)
         self.update(fileinfo)
 
@@ -251,9 +251,9 @@ class FileModelItem(KeyValueModelItem):
 
     @staticmethod
     def create(fileinfo):
-        if fileinfo['type'] == 'image':
+        if fileinfo['class'] == 'image':
             return ImageFileModelItem(fileinfo)
-        elif fileinfo['type'] == 'video':
+        elif fileinfo['class'] == 'video':
             return VideoFileModelItem(fileinfo)
 
 class ImageModelItem(ModelItem):

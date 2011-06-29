@@ -1,6 +1,6 @@
 [
     {
-        "type": "image", 
+        "class": "image", 
         "annotations": [
             {
                 "height": 60.0, 
@@ -20,7 +20,7 @@
         "filename": "image1.jpg"
     }, 
     {
-        "type": "image", 
+        "class": "image", 
         "annotations": [
             {
                 "y": 155.0, 

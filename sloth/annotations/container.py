@@ -227,7 +227,7 @@ class FileNameListContainer(AnnotationContainer):
             line = line.strip()
             fileitem = {
                 'filename':    line,
-                'type':        'image',
+                'class':        'image',
                 'annotations': [],
             }
             annotations.append(fileitem)
@@ -255,7 +255,7 @@ class FeretContainer(AnnotationContainer):
             s = line.split()
             fileitem = {
                 'filename': s[0] + ".bmp",
-                'type': 'image',
+                'class': 'image',
             }
             fileitem['annotations'] = [
                 {'class': 'left_eye',
