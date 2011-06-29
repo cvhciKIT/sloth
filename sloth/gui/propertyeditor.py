@@ -5,6 +5,7 @@ from sloth.gui.utils import MyVBoxLayout
 from sloth.utils.bind import bind
 from PyQt4.QtCore import pyqtSignal, QSize, Qt
 from PyQt4.QtGui import QWidget, QGroupBox, QVBoxLayout, QPushButton, QScrollArea, QLineEdit, QDoubleValidator, QIntValidator, QShortcut, QKeySequence
+import time
 import logging
 LOG = logging.getLogger(__name__)
 
@@ -300,18 +301,22 @@ class PropertyEditor(QWidget):
 
     def onModelChanged(self, new_model):
         attrs = set([k for k, v in self._attribute_handlers.items() if v.autoAddEnabled()])
-        attr2vals = {}
-        for item in new_model.iterator(AnnotationModelItem):
-            for attr in attrs:
-                if attr in item:
-                    if attr not in attr2vals:
-                        attr2vals[attr] = set((item[attr], ))
-                    else:
-                        attr2vals[attr] |= set((item[attr], ))
-        for attr, vals in attr2vals.items():
-            h = self._attribute_handlers[attr]
-            for val in vals:
-                h.addValue(val, True)
+        if len(attrs) > 0:
+            start = time.time()
+            attr2vals = {}
+            for item in new_model.iterator(AnnotationModelItem):
+                for attr in attrs:
+                    if attr in item:
+                        if attr not in attr2vals:
+                            attr2vals[attr] = set((item[attr], ))
+                        else:
+                            attr2vals[attr] |= set((item[attr], ))
+            diff = time.time() - start
+            LOG.info("Extracted annotation values from model in %.2fs" % diff)
+            for attr, vals in attr2vals.items():
+                h = self._attribute_handlers[attr]
+                for val in vals:
+                    h.addValue(val, True)
 
     def addLabelClass(self, label_config):
         # Check label configuration
