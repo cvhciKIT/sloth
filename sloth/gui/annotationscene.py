@@ -115,7 +115,7 @@ class AnnotationScene(QGraphicsScene):
         default_properties = self.labeltool_.propertyeditor().currentEditorProperties()
         inserter = self.inserterfactory_.create(label_class, self.labeltool_, self, default_properties)
         if inserter is None:
-            raise InvalidArgumentException("Invalid mode")
+            raise InvalidArgumentException("Could not find inserter for class '%s' with default properties '%s'" % (label_class, default_properties))
         inserter.inserterFinished.connect(self.onInserterFinished)
         self.inserter_ = inserter
         LOG.debug("Created inserter for class '%s' with default properties '%s'" % (label_class, default_properties))
