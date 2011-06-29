@@ -44,6 +44,7 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
         self._inputField     = None
         self._inputFieldType = None
         self._insertIndex    = -1
+        self._insertAtEnd    = False
         self._shortcuts      = {}
 
         # Setup GUI
@@ -100,10 +101,11 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
                         raise ImproperlyConfigured("Input field with type '%s' not supported" % v)
 
                 # * marks the position where buttons for new values will be insered
-                elif val == "*":
-                    # TODO: Listen to model changes and add all values currently
-                    # in model for this attribute as buttons...
+                elif val == "*" or val == "<*":
                     self._insertIndex = self._layout.count()
+                elif val == "*>":
+                    self._insertIndex = self._layout.count()
+                    self._insertAtEnd = True
 
                 # Add the value button
                 else:
@@ -153,6 +155,8 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
         self._buttons[v] = button
         if autoAddValue:
             self._layout.insertWidget(self._insertIndex, button)
+            if self._insertAtEnd:
+                self._insertIndex += 1
         else:
             self._layout.addWidget(button)
         button.clicked.connect(bind(self.onButtonClicked, v))
