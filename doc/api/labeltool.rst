@@ -11,4 +11,5 @@ It provides the following API:
 
 .. autoclass:: LabelTool
     :members:
+    :undoc-members:
 

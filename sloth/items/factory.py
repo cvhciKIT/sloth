@@ -32,8 +32,6 @@ class Factory:
         item: python callable or string
             Reference to the callable which creates the new object.
         """
-        _type = _type.lower()
-
         if _type in self.items_ and not replace:
             raise Exception("Type %s already has an item: %s" % \
                              (_type, str(self.items_[_type])))
@@ -55,7 +53,6 @@ class Factory:
         if _type is None:
             self.items_     = {}
         else:
-            _type = _type.lower()
             if _type in self.items_:
                 del self.items_[_type]
 
@@ -76,8 +73,6 @@ class Factory:
         Newly created object. If for the given type no mapping exists, this
         function returns ``None``.
         """
-        _type = str(_type).lower()
-
         if _type not in self.items_:
             return None
         item = self.items_[_type]
