@@ -27,7 +27,8 @@
             {
                 "y": 155.0, 
                 "x": 409.0, 
-                "type": "point"
+                "type": "point",
+                "class": "mouth"
             }
         ], 
         "filename": "image2.jpg"
