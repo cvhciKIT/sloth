@@ -230,10 +230,11 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
 
 
 class LabelEditor(QScrollArea):
-    def __init__(self, items, parent=None):
+    def __init__(self, items, parent, insertionMode=False):
         QScrollArea.__init__(self, parent)
         self._editor = parent
         self._items = items
+        self._insertion_mode = insertionMode
 
         # Find all classes
         self._label_classes = set([item['class'] for item in items if 'class' in item])
@@ -273,10 +274,13 @@ class LabelEditor(QScrollArea):
         return self._label_classes
 
     def currentProperties(self):
-        if len(self._items) > 1:
-            return {}
-        else:
+        if len(self._items) == 1:
             return self._items[0]
+        else:
+            return {}
+
+    def insertionMode(self):
+        return self._insertion_mode
 
 class PropertyEditor(QWidget):
     # Signals
@@ -339,7 +343,7 @@ class PropertyEditor(QWidget):
         button = QPushButton(label_class, self)
         button.setCheckable(True)
         button.setFlat(True)
-        button.clicked.connect(self.onClassButtonPressed)
+        button.clicked.connect(bind(self.onClassButtonPressed, label_class))
         self._class_buttons[label_class] = button
         self._classbox_layout.addWidget(button)
 
@@ -373,9 +377,9 @@ class PropertyEditor(QWidget):
     def getLabelClassAttributes(self, label_class):
         return self._class_config[label_class]['attributes'].keys()
 
-    def onClassButtonPressed(self):
-        if self.sender().isChecked():
-            self.startInsertionMode(str(self.sender().text()))
+    def onClassButtonPressed(self, label_class):
+        if self._class_buttons[label_class].isChecked():
+            self.startInsertionMode(label_class)
         else:
             self.endInsertionMode()
 
@@ -384,17 +388,18 @@ class PropertyEditor(QWidget):
         for lc, button in self._class_buttons.items():
             button.setChecked(lc == label_class)
         LOG.debug("Starting insertion mode for %s" % label_class)
-        self._label_editor = LabelEditor([self._class_items[label_class]], self)
+        self._label_editor = LabelEditor([self._class_items[label_class]], self, True)
         self._layout.insertWidget(1, self._label_editor, 0)
         self.insertionModeStarted.emit(label_class)
 
     def endInsertionMode(self, uncheck_buttons=True):
         if self._label_editor is not None:
-            LOG.debug("Ending insertion mode")
+            LOG.debug("Ending insertion/edit mode")
             self._label_editor.hide()
             self._layout.removeWidget(self._label_editor)
             self._label_editor = None
-            self.uncheckAllButtons()
+            if uncheck_buttons:
+                self.uncheckAllButtons()
             self.insertionModeEnded.emit()
 
     def uncheckAllButtons(self):
@@ -412,6 +417,11 @@ class PropertyEditor(QWidget):
             return self._label_editor.currentProperties()
 
     def startEditMode(self, model_items):
+        # If we're in insertion mode, ignore empty edit requests
+        if self._label_editor is not None and self._label_editor.insertionMode() \
+                and len(model_items) == 0:
+            return
+
         self.endInsertionMode()
         LOG.debug("Starting edit mode for items: %s" % model_items)
         self._label_editor = LabelEditor(model_items, self)

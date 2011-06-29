@@ -118,6 +118,7 @@ class AnnotationScene(QGraphicsScene):
             raise InvalidArgumentException("Invalid mode")
         inserter.inserterFinished.connect(self.onInserterFinished)
         self.inserter_ = inserter
+        LOG.debug("Created inserter for class '%s' with default properties '%s'" % (label_class, default_properties))
 
     def onInsertionModeEnded(self):
         if self.inserter_ is not None:
