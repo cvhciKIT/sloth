@@ -3,9 +3,8 @@ from sloth.annotations.model import AnnotationModelItem
 from sloth.gui.floatinglayout import FloatingLayout
 from sloth.gui.utils import MyVBoxLayout
 from sloth.utils.bind import bind
-import sys
 from PyQt4.QtCore import pyqtSignal, QSize, Qt
-from PyQt4.QtGui import QApplication, QWidget, QGroupBox, QVBoxLayout, QPushButton, QScrollArea, QLineEdit, QDoubleValidator, QIntValidator
+from PyQt4.QtGui import QWidget, QGroupBox, QVBoxLayout, QPushButton, QScrollArea, QLineEdit, QDoubleValidator, QIntValidator, QShortcut, QKeySequence
 import logging
 LOG = logging.getLogger(__name__)
 
@@ -19,9 +18,6 @@ class AbstractAttributeHandler:
 
 class AttributeHandlerFactory:
     def create(self, attribute, values):
-        # At the moment we always create a DefaultAttributeHandler
-        # But in the future this could also create user-defined attribute editors
-
         # Class attribute cannot be changed
         if attribute == 'class':
             return None
@@ -29,12 +25,13 @@ class AttributeHandlerFactory:
         # Just a value. No attribute editor needed, we just add it to the item to be inserted...
         if isinstance(values, str) or isinstance(values, float) or isinstance(values, int):
             return None
+
         # If it's already a handler, just return it
-        elif isinstance(values, AbstractAttributeHandler):
+        if isinstance(values, AbstractAttributeHandler):
             return values
+
         # Else, we create our own default handler
-        else:
-            return DefaultAttributeHandler(attribute, values)
+        return DefaultAttributeHandler(attribute, values)
 
 class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
     def __init__(self, attribute, values, parent=None):
@@ -46,6 +43,7 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
         self._inputField     = None
         self._inputFieldType = None
         self._insertIndex    = -1
+        self._shortcuts      = {}
 
         # Setup GUI
         self._layout = FloatingLayout()
@@ -55,20 +53,67 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
         # Add interface elements
         self.updateValues(values)
 
+    def focusInputField(self, selectInput=True):
+        if self._inputField is not None:
+            if selectInput:
+                self._inputField.selectAll()
+            self._inputField.setFocus(Qt.ShortcutFocusReason)
+
+    def addShortcut(self, shortcut, widget, value):
+        if widget is not None:
+            if shortcut not in self._shortcuts:
+                sc = QShortcut(QKeySequence(shortcut), self)
+                self._shortcuts[shortcut] = sc
+                if isinstance(widget, QPushButton):
+                    sc.activated.connect(bind(lambda w: w.click() if not w.isChecked() else None, widget))
+                elif isinstance(widget, QLineEdit):
+                    sc.activated.connect(self.focusInputField)
+            else:
+                raise ImproperlyConfigured("Shortcut '%s' defined more than once" % shortcut)
+        else:
+            raise ImproperlyConfigured("Shortcut '%s' defined for value '%s' which is hidden" % (shortcut, value))
+
+
     def updateValues(self, values):
         if isinstance(values, type):
             self.addInputField(values)
         else:
             for val in values:
-                if isinstance(val, type):
-                    self.addInputField(val)
+                v = val
+                shortcut = None
+                widget = None
+
+                # Handle the case of the value being a 2-tuple consisting of (value, shortcut)
+                if type(val) is tuple or type(val) is list:
+                    if len(val) == 2:
+                        v = val[0]
+                        shortcut = val[1]
+                    else:
+                        raise ImproperlyConfigured("Values must be types, strings, numbers, or tuples of length 2: '%s'" % str(val))
+
+                # Handle the case where value is a Python type
+                if isinstance(v, type):
+                    if v is float or v is int or v is str:
+                        self.addInputField(v)
+                        widget = self._inputField
+                    else:
+                        raise ImproperlyConfigured("Input field with type '%s' not supported" % v)
+
+                # * marks the position where buttons for new values will be insered
                 elif val == "*":
-                    # TODO: Add all values currently in model for this attribute
-                    # as buttons...
+                    # TODO: Listen to model changes and add all values currently
+                    # in model for this attribute as buttons...
                     self._insertIndex = self._layout.count()
+
+                # Add the value button
                 else:
-                    if val not in self._values:
-                        self.addValue(val)
+                    if v not in self._values:
+                        self.addValue(v)
+                    widget = self._buttons[v]
+
+                # If defined, add the specified shortcut
+                if shortcut is not None:
+                    self.addShortcut(shortcut, widget, v)
 
     def defaults(self):
         return self._defaults
@@ -81,6 +126,7 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
             item[self._attribute] = val
         self.updateButtons()
         self.updateInputField()
+        self._inputField.clearFocus()
 
     def addInputField(self, _type):
         if self._inputField is None:
