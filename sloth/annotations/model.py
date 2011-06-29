@@ -27,7 +27,6 @@ class ModelItem:
         return self._model
 
     def parent(self):
-        assert self._parent is not self
         return self._parent
 
     def data(self, role=Qt.DisplayRole, column=0):
@@ -48,77 +47,77 @@ class ModelItem:
         return self._children[pos]
 
     def getPreviousSibling(self):
-        p = self.parent()
-        if p is not None:
+        if self._parent is not None:
             if self._row > 0:
-                return p.childAt(self._row-1)
+                return self._parent._children[self._row-1]
         return None
 
     def getNextSibling(self):
-        p = self.parent()
-        if p is not None:
-            if self._row < len(p.children()) - 1:
-                return p.childAt(self._row+1)
+        if self._parent is not None:
+            try:
+                return self._parent._children[self._row+1]
+            except:
+                pass
         return None
 
     def _attachToModel(self, model):
-        assert self.model() is None
-        assert self.parent() is not None
-        assert self.parent().model() is not None
+        #assert self.model() is None
+        #assert self.parent() is not None
+        #assert self.parent().model() is not None
 
         self._model = model
-        for item in self.children():
+        for item in self._children:
             item._attachToModel(model)
 
     def index(self, column=0):
-        if self.parent() is None:
+        if self._parent is None:
             return QModelIndex()
-        if column >= self.model().columnCount():
+        if column >= self._model.columnCount():
             return QModelIndex()
-        return self.model().createIndex(self._row, column, self)
+        return self._model.createIndex(self._row, column, self)
 
     def appendChild(self, item):
-        assert isinstance(item, ModelItem)
-        assert item.model() is None
-        assert item.parent() is None
+        #assert isinstance(item, ModelItem)
+        #assert item.model() is None
+        #assert item.parent() is None
 
         next_row = len(self._children)
-        if self.model() is not None:
-            self.model().beginInsertRows(self.index(), next_row, next_row)
+        if self._model is not None:
+            self._model.beginInsertRows(self.index(), next_row, next_row)
 
         item._parent = self
         item._row    = next_row
-        self.children().append(item)
+        self._children.append(item)
 
-        if self.model() is not None:
-            item._attachToModel(self.model())
-            self.model().endInsertRows()
+        if self._model is not None:
+            item._attachToModel(self._model)
+            self._model.endInsertRows()
 
     def appendChildren(self, items):
-        for item in items:
-            assert isinstance(item, ModelItem)
-            assert item.model() is None
-            assert item.parent() is None
+        #for item in items:
+            #assert isinstance(item, ModelItem)
+            #assert item.model() is None
+            #assert item.parent() is None
 
         next_row = len(self._children)
-        if self.model() is not None:
-            self.model().beginInsertRows(self.index(), next_row, next_row + len(items) - 1)
+        if self._model is not None:
+            self._model.beginInsertRows(self.index(), next_row, next_row + len(items) - 1)
 
         for i, item in enumerate(items):
             item._parent = self
             item._row    = next_row + i
-            self.children().append(item)
+            self._children.append(item)
 
-        if self.model() is not None:
+        if self._model is not None:
             for item in items:
-                item._attachToModel(self.model())
-            self.model().endInsertRows()
+                item._attachToModel(self._model)
+            self._model.endInsertRows()
 
     def delete(self):
-        if self.parent() is None:
+        if self._parent is None:
             raise RuntimeError("Trying to delete orphan")
         else:
-            self.parent().deleteChild(self)
+            self._parent.deleteChild(self)
 
     def deleteChild(self, arg):
         # Grandchildren are considered deleted automatically
@@ -128,7 +127,7 @@ class ModelItem:
             if arg < 0 or arg >= len(self._children):
                 raise IndexError("child index out of range")
 
-            if self.model() is not None:
+            if self._model is not None:
                 self._model.beginRemoveRows(self.index(), arg, arg)
 
             del self._children[arg]
@@ -137,16 +136,16 @@ class ModelItem:
             for i, c in enumerate(self._children):
                 c._row = i
 
-            if self.model() is not None:
+            if self._model is not None:
                 self._model.endRemoveRows()
 
     def deleteAllChildren(self):
-        if self.model() is not None:
+        if self._model is not None:
             self._model.beginRemoveRows(self.index(), 0, len(self._children) - 1)
 
         self._children = []
 
-        if self.model() is not None:
+        if self._model is not None:
             self._model.endRemoveRows()
 
 class RootModelItem(ModelItem):
@@ -186,14 +185,21 @@ class RootModelItem(ModelItem):
         return [child.getAnnotations() for child in self.children()]
 
 class KeyValueModelItem(ModelItem, MutableMapping):
-    def __init__(self, hidden=[]):
+    def __init__(self, hidden=[], properties=None):
         ModelItem.__init__(self)
         self._dict   = {}
         self._items  = {}
         self._hidden = hidden + [None]
         # dummy key/value so that pyqt does not convert the dict
         # into a QVariantMap while communicating with the Views
-        self[None] = None
+        self._dict[None] = None
+        if properties is not None:
+            self._dict.update(properties)
+            for key in self._dict.keys():
+                if key not in self._hidden:
+                    item = KeyValueRowModelItem(key)
+                    self._items[key] = item
+                    self.appendChild(item)
 
     # Methods for MutableMapping
     def __len__(self):
@@ -241,8 +247,7 @@ class KeyValueModelItem(ModelItem, MutableMapping):
 
 class FileModelItem(KeyValueModelItem):
     def __init__(self, fileinfo, hidden=['filename', 'class']):
-        KeyValueModelItem.__init__(self, hidden=hidden)
-        self.update(fileinfo)
+        KeyValueModelItem.__init__(self, hidden=hidden, properties=fileinfo)
 
     def data(self, role=Qt.DisplayRole, column=0):
         if role == Qt.DisplayRole and column == 0:
@@ -303,9 +308,8 @@ class FrameModelItem(ImageModelItem, KeyValueModelItem):
         annotations = frameinfo.get("annotations", [])
         if "annotations" in frameinfo:
             del frameinfo["annotations"]
-        KeyValueModelItem.__init__(self)
+        KeyValueModelItem.__init__(self, properties=frameinfo)
         ImageModelItem.__init__(self, annotations)
-        self.update(frameinfo)
 
     def framenum(self):
         return int(self.get('num', -1))
