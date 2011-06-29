@@ -361,17 +361,3 @@ class PropertyEditor(QWidget):
         self._layout.addWidget(self._classbox, 0)
         self._layout.addStretch(1)
 
-def main():
-    from sloth.conf import config
-    config.update("/home/mfischer/videmo_config_new_simple")
-
-    app = QApplication(sys.argv)
-    ba = PropertyEditor(config.LABELS)
-    ba.show()
-
-    return app.exec_()
-
-if __name__ == '__main__':
-    sys.exit(main())
-
-
