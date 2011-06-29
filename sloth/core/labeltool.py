@@ -15,6 +15,7 @@ from sloth.core.cli import LaxOptionParser, BaseCommand
 from sloth.core.utils import import_callable
 from sloth import VERSION
 from sloth.core.commands import get_commands
+from sloth.gui import MainWindow
 import logging
 LOG = logging.getLogger(__name__)
 
@@ -156,6 +157,13 @@ class LabelTool(QObject):
             else:
                 self.clearAnnotations()
 
+            # Setup GUI
+            self._mainwindow = MainWindow(self)
+            self._mainwindow.show()
+
+            # Load plugins
+            self.loadPlugins(config.PLUGINS)
+
     def fetch_command(self, subcommand):
         """
         Tries to fetch the given subcommand, printing a message with the
@@ -191,9 +199,6 @@ class LabelTool(QObject):
 
         # Instatiate container factory
         self.container_factory_ = AnnotationContainerFactory(config.CONTAINERS)
-
-        # Load plugins
-        self.loadPlugins(config.PLUGINS)
 
     def loadPlugins(self, plugins):
         self.plugins_ = []
@@ -338,6 +343,12 @@ class LabelTool(QObject):
             i += 1
 
         self._model._root.appendFileItem(fileitem)
+
+    ###
+    ### GUI functions
+    ###___________________________________________________________________________________________
+    def mainWindow(self):
+        return self._mainwindow
 
     ###
     ### PropertyEditor functions
