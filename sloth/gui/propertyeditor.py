@@ -10,11 +10,13 @@ LOG = logging.getLogger(__name__)
 
 class AbstractAttributeHandler:
     def defaults(self):
-        pass
+        return {}
     def updateValues(self, values):
         pass
     def setItems(self, items, showItemClasses=False):
         pass
+    def autoAddEnabled(self):
+        return False
 
 class AttributeHandlerFactory:
     def create(self, attribute, values):
@@ -37,7 +39,6 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
     def __init__(self, attribute, values, parent=None):
         QGroupBox.__init__(self, attribute, parent)
         self._attribute      = attribute
-        self._values         = []
         self._current_items  = []
         self._defaults       = {}
         self._inputField     = None
@@ -73,7 +74,6 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
         else:
             raise ImproperlyConfigured("Shortcut '%s' defined for value '%s' which is hidden" % (shortcut, value))
 
-
     def updateValues(self, values):
         if isinstance(values, type):
             self.addInputField(values)
@@ -107,8 +107,7 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
 
                 # Add the value button
                 else:
-                    if v not in self._values:
-                        self.addValue(v)
+                    self.addValue(v)
                     widget = self._buttons[v]
 
                 # If defined, add the specified shortcut
@@ -118,10 +117,12 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
     def defaults(self):
         return self._defaults
 
+    def autoAddEnabled(self):
+        return self._insertIndex >= 0
+
     def onInputFieldReturnPressed(self):
         val = str(self._inputField.text())
-        if self._insertIndex >= 0 and val not in self._buttons:
-            self.addValue(val, self._insertIndex)
+        self.addValue(val, True)
         for item in self._current_items:
             item[self._attribute] = val
         self.updateButtons()
@@ -143,16 +144,17 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
             raise ImproperlyConfigured("Input field for attribute '%s' configured twice with different types %s != %s"\
                     % (self._attribute, self._inputFieldType, _type))
 
-    def addValue(self, v, pos=-1):
-        self._values.append(v)
+    def addValue(self, v, autoAddValue=False):
+        if v in self._buttons: return
+        if autoAddValue and self._insertIndex < 0: return
         button = QPushButton(v, self)
         button.setFlat(True)
         button.setCheckable(True)
         self._buttons[v] = button
-        if pos == -1:
-            self._layout.addWidget(button)
+        if autoAddValue:
+            self._layout.insertWidget(self._insertIndex, button)
         else:
-            self._layout.insertWidget(pos, button)
+            self._layout.addWidget(button)
         button.clicked.connect(bind(self.onButtonClicked, v))
 
     def reset(self):
@@ -291,6 +293,21 @@ class PropertyEditor(QWidget):
         # Add label classes from config
         for label in config:
             self.addLabelClass(label)
+
+    def onModelChanged(self, new_model):
+        attrs = set([k for k, v in self._attribute_handlers.items() if v.autoAddEnabled()])
+        attr2vals = {}
+        for item in new_model.iterator(AnnotationModelItem):
+            for attr in attrs:
+                if attr in item:
+                    if attr not in attr2vals:
+                        attr2vals[attr] = set((item[attr], ))
+                    else:
+                        attr2vals[attr] |= set((item[attr], ))
+        for attr, vals in attr2vals.items():
+            h = self._attribute_handlers[attr]
+            for val in vals:
+                h.addValue(val, True)
 
     def addLabelClass(self, label_config):
         # Check label configuration

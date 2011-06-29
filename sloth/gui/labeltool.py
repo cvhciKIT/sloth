@@ -53,6 +53,7 @@ class MainWindow(QMainWindow):
         self.selectionmodel = QItemSelectionModel(self.labeltool.model())
         self.treeview.setSelectionModel(self.selectionmodel)
         self.treeview.selectionModel().currentChanged.connect(self.labeltool.setCurrentImage)
+        self.property_editor.onModelChanged(self.labeltool.model())
 
     def onCurrentImageChanged(self):
         new_image = self.labeltool.currentImage()
