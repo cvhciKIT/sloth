@@ -1,47 +1,47 @@
-from sloth.annotations.model import ImageRole
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
+from sloth.annotations.model import ImageModelItem
 from okapy import BinaryPatternFaceDetector
 
 class Worker(QThread):
     valueChanged = pyqtSignal(int)
-    def __init__(self, n_images, model, det):
+    def __init__(self, labeltool, det):
         QThread.__init__(self)
-        self.n_images = n_images
-        self.model    = model
-        self.det      = det
-        self.canceled = False
+        self.labeltool = labeltool
+        self.model     = labeltool.model()
+        self.det       = det
+        self.canceled  = False
 
     def cancel(self):
         self.canceled = True
 
     def run(self):
-        for i in range(self.n_images):
-            index = self.model.index(i, 0)
-            item = self.model.itemFromIndex(index)
-            img = item.data(index, ImageRole)
+        for i, item in enumerate(self.model.iterator(ImageModelItem)):
+            print i, item
+            img = self.labeltool.getImage(item)
             faces = self.det.detectFaces(img)
+            print faces
             for face in faces:
                 ann = {
-                        'type':       'rect',
-                        'class':      'face',
-                        'x':          face.box.x,
-                        'y':          face.box.y,
-                        'width':      face.box.width,
-                        'height':     face.box.height,
-                        'confidence': face.conf,
+                        'class':    'face',
+                        'x':        face.box.x,
+                        'y':        face.box.y,
+                        'width':    face.box.width,
+                        'height':   face.box.height,
+                        'det_conf': face.conf,
                         }
-                self.model.addAnnotation(index, ann)
+                item.addAnnotation(ann)
             self.valueChanged.emit(i+1)
             if self.canceled:
                 return
 
 class FaceDetectorPlugin(QObject):
-    def __init__(self, wnd):
-        QObject.__init__(self, wnd)
-        self.wnd_ = wnd
-        self.sc_  = QAction("Detect faces", wnd)
-        self.sc_.triggered.connect(self.doit)
+    def __init__(self, labeltool):
+        QObject.__init__(self)
+        self._labeltool = labeltool
+        self._wnd = labeltool.mainWindow()
+        self._sc  = QAction("Detect faces", self._wnd)
+        self._sc.triggered.connect(self.doit)
         self.progress = None
         self.thread   = None
 
@@ -54,21 +54,21 @@ class FaceDetectorPlugin(QObject):
         self.progress.hide()
         self.progress = None
         self.thread   = None
-        self.sc_.setEnabled(True)
+        self._sc.setEnabled(True)
 
     def doit(self):
         det = BinaryPatternFaceDetector("/cvhci/data/mctcascades/new-detectors/face_frontal_new.xml")
-        self.sc_.setEnabled(False)
-        model = self.wnd_.model_
+        self._sc.setEnabled(False)
+        model = self._labeltool.model()
         n_images = model.rowCount()
-        self.progress = QProgressDialog("Detecting faces...", "Abort", 0, n_images, self.wnd_);
+        self.progress = QProgressDialog("Detecting faces...", "Abort", 0, n_images, self._wnd);
         self.progress.setWindowModality(Qt.WindowModal)
         self.progress.show()
-        self.thread = Worker(n_images, model, det)
+        self.thread = Worker(self._labeltool, det)
         self.progress.canceled.connect(self.thread.cancel)
         self.thread.finished.connect(self.on_finished)
         self.thread.valueChanged.connect(self.on_valueChanged)
         self.thread.start()
 
     def action(self):
-        return self.sc_
+        return self._sc
