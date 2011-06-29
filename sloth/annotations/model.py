@@ -478,6 +478,35 @@ class AnnotationModel(QAbstractItemModel):
             return index.internalPointer()
         return self._root
 
+    def iterator(self, _class=None, predicate=None):
+        return model_iterator(self, _class, predicate)
+
+def model_iterator(model, _class=None, predicate=None):
+    # Visit all nodes
+    item = model.root()
+    while item is not None:
+        # Return item
+        if _class is None or isinstance(item, _class):
+            if predicate is None or predicate(item):
+                yield item
+
+        # Get next item
+        if len(item.children()) > 0:
+            item = item.children()[0]
+        else:
+            next_sibling = item.getNextSibling()
+            if next_sibling is not None:
+                item = next_sibling
+            else:
+                ancestor = item.parent()
+                item = None
+                while ancestor is not None:
+                    ancestor_sibling = ancestor.getNextSibling()
+                    if ancestor_sibling is not None:
+                        item = ancestor_sibling
+                        break
+                    ancestor = ancestor.parent()
+
 
 #######################################################################################
 # proxy model
