@@ -7,7 +7,6 @@
                 "width": 46.0, 
                 "y": 105.0, 
                 "x": 346.0, 
-                "type": "rect",
                 "class": "Face"
             }, 
             {
@@ -15,7 +14,6 @@
                 "width": 56.0, 
                 "y": 119.0, 
                 "x": 636.0, 
-                "type": "rect",
                 "class": "Face"
             }
         ], 
@@ -27,7 +25,6 @@
             {
                 "y": 155.0, 
                 "x": 409.0, 
-                "type": "point",
                 "class": "mouth"
             }
         ], 
