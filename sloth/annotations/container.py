@@ -258,11 +258,11 @@ class FeretContainer(AnnotationContainer):
                 'type': 'image',
             }
             fileitem['annotations'] = [
-                {'type': 'point', 'class': 'left_eye',
+                {'class': 'left_eye',
                  'x': int(s[1]), 'y': int(s[2])},
-                {'type': 'point', 'class': 'right_eye',
+                {'class': 'right_eye',
                  'x': int(s[3]), 'y': int(s[4])},
-                {'type': 'point', 'class': 'mouth',
+                {'class': 'mouth',
                  'x': int(s[5]), 'y': int(s[6])}
             ]
             annotations.append(fileitem)

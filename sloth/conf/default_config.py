@@ -11,7 +11,7 @@
 
 # LABLES
 #
-# List/tuple of dictionaries that defines the label types
+# List/tuple of dictionaries that defines the label classes
 # that are handled by sloth.  For each label, there should
 # be one dictionary that contains the following keys:
 #
@@ -20,17 +20,17 @@
 #              implementing the visualization item interface.
 #
 #   - 'inserter' : (optional) Item inserter for this label.
-#                  If the user selects to insert a new label of this type
+#                  If the user selects to insert a new label of this class
 #                  the inserter is responsible to actually 
 #                  capture the users mouse actions and insert
 #                  a new label into the annotation model.
 #
 #   - 'hotkey' : (optional) A keyboard shortcut starting 
-#                the insertion of a new label of this type.
+#                the insertion of a new label of this class.
 #
 #   - 'attributes' : (optional) A dictionary that defines the
 #                    keys and possible values of this label
-#                    type.
+#                    class.
 LABELS = (
     {
         'attributes': {

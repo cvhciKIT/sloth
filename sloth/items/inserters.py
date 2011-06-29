@@ -33,8 +33,7 @@ class ItemInserter(QObject):
 class PointItemInserter(ItemInserter):
     def mousePressEvent(self, event, image_item):
         pos = event.scenePos()
-        ann = {'type': 'point',
-               'x': pos.x(), 'y': pos.y()}
+        ann = {'x': pos.x(), 'y': pos.y()}
         ann.update(self.default_properties_)
         image_item.addAnnotation(ann)
         event.accept()
@@ -67,8 +66,7 @@ class RectItemInserter(ItemInserter):
             if self.current_item_.rect().width() > 1 and \
                self.current_item_.rect().height() > 1:
                 rect = self.current_item_.rect()
-                ann = {'type': 'rect',
-                       'x': rect.x(), 'y': rect.y(),
+                ann = {'x': rect.x(), 'y': rect.y(),
                        'width': rect.width(), 'height': rect.height()}
                 ann.update(self.default_properties_)
                 image_item.addAnnotation(ann)
