@@ -3,6 +3,7 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from sloth.items import *
 from sloth.core.exceptions import InvalidArgumentException
+from sloth.annotations.model import AnnotationModelItem
 import okapy
 import logging
 LOG = logging.getLogger(__name__)
@@ -90,6 +91,8 @@ class AnnotationScene(QGraphicsScene):
         # create a graphics item for each model index
         for row in range(first, last+1):
             child = self.image_item_.childAt(row)
+            if not isinstance(child, AnnotationModelItem):
+                continue
             label_class = child['class']
             item = self.itemfactory_.create(label_class, child)
             if item is not None:
