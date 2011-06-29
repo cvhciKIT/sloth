@@ -177,8 +177,10 @@ class RootModelItem(ModelItem):
         return len(self.children())
 
     def numAnnotations(self):
-        # TODO
-        return 0
+        count = 0
+        for ann in self._model.iterator(AnnotationModelItem):
+            count += 1
+        return count
 
     def getAnnotations(self):
         return [child.getAnnotations() for child in self.children()]
