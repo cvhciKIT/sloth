@@ -17,10 +17,8 @@ class Worker(QThread):
 
     def run(self):
         for i, item in enumerate(self.model.iterator(ImageModelItem)):
-            print i, item
             img = self.labeltool.getImage(item)
             faces = self.det.detectFaces(img)
-            print faces
             for face in faces:
                 ann = {
                         'class':    'face',
