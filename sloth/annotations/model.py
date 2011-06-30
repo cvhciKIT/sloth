@@ -259,8 +259,24 @@ class KeyValueModelItem(ModelItem, MutableMapping):
     def isUnlabeled(self):
         return 'unlabeled' in self._dict and self._dict['unlabeled']
 
+    def setUnlabeled(self, val):
+        if val:
+            self._dict['unlabeled'] = val
+        else:
+            if 'unlabeled' in self._dict:
+                del self['unlabeled']
+                self._emitDataChanged('unlabeled')
+
     def isUnconfirmed(self):
         return 'unconfirmed' in self._dict and self._dict['unconfirmed']
+
+    def setUnconfirmed(self, val):
+        if val:
+            self._dict['unconfirmed'] = val
+        else:
+            if 'unconfirmed' in self._dict:
+                del self['unconfirmed']
+                self._emitDataChanged('unconfirmed')
 
 class FileModelItem(KeyValueModelItem):
     def __init__(self, fileinfo, hidden=['filename']):
@@ -294,6 +310,15 @@ class ImageModelItem(ModelItem):
 
     def addAnnotation(self, ann):
         self.appendChild(AnnotationModelItem(ann))
+
+    def annotations(self):
+        for child in self._children:
+            if isinstance(child, AnnotationModelItem):
+                yield child
+
+    def confirmAll(self):
+        for ann in self.annotations():
+            ann.setUnconfirmed(False)
 
 class ImageFileModelItem(FileModelItem, ImageModelItem):
     def __init__(self, fileinfo):
