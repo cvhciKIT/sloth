@@ -654,6 +654,7 @@ class AnnotationTreeView(QTreeView):
         self.setAlternatingRowColors(True)
         #self.setEditTriggers(QAbstractItemView.SelectedClicked)
         self.setSortingEnabled(True)
+        self.setAnimated(True)
         self.expanded.connect(self.onExpanded)
 
     def resizeColumns(self):
