@@ -165,7 +165,7 @@ class AnnotationScene(QGraphicsScene):
     def mouseMoveEvent(self, event):
         sp = event.scenePos()
         self.mousePositionChanged.emit(sp.x(), sp.y())
-        LOG.debug("mouseMoveEvent %s %s" % (self.sceneRect().contains(event.scenePos()), event.scenePos()))
+        #LOG.debug("mouseMoveEvent %s %s" % (self.sceneRect().contains(event.scenePos()), event.scenePos()))
         if self.inserter_ is not None:
             # insert mode
             self.inserter_.mouseMoveEvent(event, self.image_item_)

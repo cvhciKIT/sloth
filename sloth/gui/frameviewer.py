@@ -18,6 +18,7 @@ class GraphicsView(QGraphicsView):
         QGraphicsView.__init__(self, parent)
         self.setDragMode(QGraphicsView.RubberBandDrag)
         #self.setDragMode(QGraphicsView.ScrollHandDrag)
+        self.setMouseTracking(True)
         self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform | QPainter.TextAntialiasing);
         self.setStyleSheet("QFrame { border: 3px solid black }");
         self.active_ = False
