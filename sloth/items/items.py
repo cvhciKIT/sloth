@@ -1,6 +1,8 @@
 from PyQt4.QtGui import *
 from PyQt4.Qt import *
 
+import logging
+LOG = logging.getLogger(__name__)
 
 class BaseItem(QAbstractGraphicsShapeItem):
     """
@@ -227,6 +229,7 @@ class RectItem(BaseItem):
 
         self.rect_ = None
         self._updateRect(self._dataToRect(self._model_item))
+        LOG.debug("Constructed rect %s for model item %s" % (self.rect_, model_item))
 
     def __call__(self, model_item=None, parent=None):
         item = RectItem(model_item, parent)
@@ -241,8 +244,6 @@ class RectItem(BaseItem):
                       float(model_item['width']), float(model_item['height']))
 
     def _updateRect(self, rect):
-        if not rect.isValid():
-            return
         if rect == self.rect_:
             return
 
