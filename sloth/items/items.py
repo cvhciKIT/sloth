@@ -22,19 +22,29 @@ class BaseItem(QAbstractGraphicsShapeItem):
                       QGraphicsItem.ItemIsMovable | \
                       QGraphicsItem.ItemSendsGeometryChanges | \
                       QGraphicsItem.ItemSendsScenePositionChanges)
-        if model_item is not None:
-            c = model_item.getColor()
-            if c is not None:
-                self.setColor(c)
-            else:
-                self.setColor(Qt.yellow)
 
         self._model_item = model_item
+        if self._model_item is not None:
+            self._model_item.model().dataChanged.connect(self.onDataChanged)
+
+        self.changeColor()
 
         # initialize members
         self.text_ = ""
         self.text_bg_brush_ = None
         self.auto_text_keys_ = []
+
+    def changeColor(self):
+        if self._model_item is not None:
+            c = self._model_item.getColor()
+            if c is not None:
+                self.setColor(c)
+                return
+        self.setColor(Qt.yellow)
+
+    def onDataChanged(self, indexFrom, indexTo):
+        if indexFrom == self._model_item.index():
+            self.changeColor()
 
     def modelItem(self):
         """
