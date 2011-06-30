@@ -267,7 +267,7 @@ class AnnotationScene(QGraphicsScene):
     # this is the implemenation of the scene as a view of the model
     #______________________________________________________________________________________________________
     def dataChanged(self, indexFrom, indexTo):
-        if self.image_item_ is None or self.image_item_.index() != indexFrom.parent():
+        if self.image_item_ is None or self.image_item_.index() != indexFrom.parent().parent():
             return
 
         item = self.itemFromIndex(indexFrom.parent())
