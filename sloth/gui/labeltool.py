@@ -3,7 +3,7 @@ import os
 import functools
 import fnmatch
 from PyQt4.QtGui import QMainWindow, QSizePolicy, QWidget, QVBoxLayout, QAction,\
-        QKeySequence, QLabel, QItemSelectionModel, QMessageBox, QFileDialog
+        QKeySequence, QLabel, QItemSelectionModel, QMessageBox, QFileDialog, QFrame
 from PyQt4.QtCore import SIGNAL, QSettings, QSize, QPoint, QVariant, QFileInfo
 import PyQt4.uic as uic
 from sloth.gui import qrc_icons  # needed for toolbar icons
@@ -44,6 +44,9 @@ class MainWindow(QMainWindow):
                 (APP_NAME, QFileInfo(self.labeltool.getCurrentFilename()).fileName(), postfix))
         else:
             self.setWindowTitle("%s - Unnamed %s" % (APP_NAME, postfix))
+
+    def onMousePositionChanged(self, x, y):
+        self.posinfo.setText("%d, %d" % (x, y))
 
     def onAnnotationsLoaded(self):
         self.labeltool.model().dirtyChanged.connect(self.onModelDirtyChanged)
@@ -144,6 +147,11 @@ class MainWindow(QMainWindow):
 
         self.scene.selectionChanged.connect(self.scene.onSelectionChanged)
         self.treeview.selectedItemsChanged.connect(self.scene.onSelectionChangedInTreeView)
+
+        self.posinfo = QLabel("-1, -1")
+        self.posinfo.setFrameStyle(QFrame.StyledPanel)
+        self.statusBar().addPermanentWidget(self.posinfo)
+        self.scene.mousePositionChanged.connect(self.onMousePositionChanged)
 
         self.image_resolution = QLabel("[no image]")
         self.image_resolution.setFrameStyle(QFrame.StyledPanel)

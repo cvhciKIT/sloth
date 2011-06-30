@@ -9,6 +9,7 @@ import logging
 LOG = logging.getLogger(__name__)
 
 class AnnotationScene(QGraphicsScene):
+    mousePositionChanged = pyqtSignal(float, float)
     def __init__(self, labeltool, items=None, inserters=None, parent=None):
         super(AnnotationScene, self).__init__(parent)
 
@@ -162,7 +163,9 @@ class AnnotationScene(QGraphicsScene):
             QGraphicsScene.mouseReleaseEvent(self, event)
 
     def mouseMoveEvent(self, event):
-        # print "mouseMoveEvent", self.sceneRect().contains(event.scenePos()), event.scenePos()
+        sp = event.scenePos()
+        self.mousePositionChanged.emit(sp.x(), sp.y())
+        LOG.debug("mouseMoveEvent %s %s" % (self.sceneRect().contains(event.scenePos()), event.scenePos()))
         if self.inserter_ is not None:
             # insert mode
             self.inserter_.mouseMoveEvent(event, self.image_item_)
