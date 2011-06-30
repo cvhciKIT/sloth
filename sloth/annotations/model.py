@@ -2,7 +2,7 @@
 The annotationmodel module contains the classes for the AnnotationModel.
 """
 from PyQt4.QtGui import QTreeView, QItemSelection, QItemSelectionModel, QSortFilterProxyModel, QBrush
-from PyQt4.QtCore import QModelIndex, QAbstractItemModel, Qt, pyqtSignal
+from PyQt4.QtCore import QModelIndex, QAbstractItemModel, Qt, pyqtSignal, QVariant
 import os.path
 import copy
 from collections import MutableMapping
@@ -433,9 +433,10 @@ class AnnotationModelItem(KeyValueModelItem):
         return None
 
 class KeyValueRowModelItem(ModelItem):
-    def __init__(self, key):
+    def __init__(self, key, read_only=True):
         ModelItem.__init__(self)
         self._key = key
+        self._read_only = read_only
 
     def key(self):
         return self._key
@@ -452,7 +453,21 @@ class KeyValueRowModelItem(ModelItem):
             return ModelItem.data(self, role, column)
 
     def flags(self, column):
-        return Qt.NoItemFlags
+        if self._read_only:
+            return Qt.NoItemFlags
+        else:
+            if column == 1:
+                return Qt.ItemIsEnabled | Qt.ItemIsEditable
+            else:
+                return Qt.ItemIsEnabled
+
+    def setData(self, value, role=Qt.DisplayRole, column=0):
+        if column == 1:
+            if isinstance(value, QVariant):
+                value = value.toPyObject()
+            self._parent[self._key] = value
+            return True
+        return False
 
 class AnnotationModel(QAbstractItemModel):
     # signals
