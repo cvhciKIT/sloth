@@ -61,6 +61,7 @@ class MainWindow(QMainWindow):
     def onCurrentImageChanged(self):
         new_image = self.labeltool.currentImage()
         self.scene.setCurrentImage(new_image)
+        self.treeview.scrollTo(new_image.index())
 
         img = self.labeltool.getImage(new_image)
 
