@@ -228,6 +228,10 @@ class RectItem(BaseItem):
         BaseItem.__init__(self, model_item, parent)
 
         self.rect_ = None
+        self._resize = False
+        self._resize_start = None
+        self._resize_start_rect = None
+
         self._updateRect(self._dataToRect(self._model_item))
         LOG.debug("Constructed rect %s for model item %s" % (self.rect_, model_item))
 
@@ -275,6 +279,33 @@ class RectItem(BaseItem):
     def dataChange(self):
         rect = self._dataToRect(self._model_item)
         self._updateRect(rect)
+
+    def mousePressEvent(self, event):
+        #if event.modifiers() & Qt.ControlModifier != 0:
+        if event.button() & Qt.RightButton != 0:
+            self._resize = True
+            self._resize_start = event.scenePos()
+            self._resize_start_rect = QRectF(self.rect_)
+            event.accept()
+        else:
+            BaseItem.mousePressEvent(self, event)
+
+    def mouseMoveEvent(self, event):
+        if self._resize:
+            diff = event.scenePos() - self._resize_start
+            rect = QRectF(self._resize_start_rect.topLeft(), self._resize_start_rect.bottomRight() + diff).normalized()
+            self._updateRect(rect)
+            self.updateModel()
+            event.accept()
+        else:
+            BaseItem.mouseMoveEvent(self, event)
+
+    def mouseReleaseEvent(self, event):
+        if self._resize:
+            self._resize = False
+            event.accept()
+        else:
+            BaseItem.mouseReleaseEvent(self, event)
 
     def keyPressEvent(self, event):
         step = 1
