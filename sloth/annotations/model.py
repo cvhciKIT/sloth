@@ -80,18 +80,27 @@ class ModelItem:
             return QModelIndex()
         return self._model.createIndex(self._row, column, self)
 
-    def appendChild(self, item):
-        #assert isinstance(item, ModelItem)
-        #assert item.model() is None
-        #assert item.parent() is None
+    def addChildSorted(self, item):
+        self.insertChild(-1, item)
 
-        next_row = len(self._children)
+    def appendChild(self, item):
+        self.insertChild(-1, item)
+
+    def insertChild(self, pos, item):
+        if pos >= 0:
+            next_row = pos
+        else:
+            next_row = len(self._children)
         if self._model is not None:
             self._model.beginInsertRows(self.index(), next_row, next_row)
 
         item._parent = self
         item._row    = next_row
-        self._children.append(item)
+        self._children.insert(next_row, item)
+
+        if pos >= 0:
+            for i, c in enumerate(self._children):
+                c._row = i
 
         if self._model is not None:
             item._attachToModel(self._model)
@@ -206,7 +215,19 @@ class KeyValueModelItem(ModelItem, MutableMapping):
                 if key not in self._hidden:
                     item = KeyValueRowModelItem(key)
                     self._items[key] = item
-                    self.appendChild(item)
+                    self.addChildSorted(item)
+
+    def addChildSorted(self, item):
+        if isinstance(item, KeyValueRowModelItem):
+            next_row = 0
+            for child in self._children:
+                if not isinstance(child, KeyValueRowModelItem) or child.key() > item.key():
+                    break
+                next_row += 1
+
+            self.insertChild(next_row, item)
+        else:
+            self.appendChild(item)
 
     # Methods for MutableMapping
     def __len__(self):
@@ -233,7 +254,7 @@ class KeyValueModelItem(ModelItem, MutableMapping):
             self._dict[key] = value
             if key not in self._hidden:
                 self._items[key] = KeyValueRowModelItem(key)
-                self.appendChild(self._items[key])
+                self.addChildSorted(self._items[key])
         elif self._dict[key] != value:
             self._dict[key] = value
             # TODO: Emit for hidden key/values?
@@ -309,7 +330,7 @@ class ImageModelItem(ModelItem):
             self.addAnnotation(ann)
 
     def addAnnotation(self, ann):
-        self.appendChild(AnnotationModelItem(ann))
+        self.addChildSorted(AnnotationModelItem(ann))
 
     def annotations(self):
         for child in self._children:
@@ -346,7 +367,7 @@ class VideoFileModelItem(FileModelItem):
         FileModelItem.__init__(self, fileinfo)
 
         for frameinfo in frameinfos:
-            self.appendChild(FrameModelItem(frameinfo))
+            self.addChildSorted(FrameModelItem(frameinfo))
 
     def getAnnotations(self):
         fi = KeyValueModelItem.getAnnotations(self)
