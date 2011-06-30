@@ -267,26 +267,21 @@ class AnnotationScene(QGraphicsScene):
     # this is the implemenation of the scene as a view of the model
     #______________________________________________________________________________________________________
     def dataChanged(self, indexFrom, indexTo):
-        if self.image_item_ is None:
+        if self.image_item_ is None or self.image_item_.index() != indexFrom.parent():
             return
 
-        annotation_item_index = indexFrom.parent()
-
-        if self.image_item_.index() != annotation_item_index.parent():
-            return
-
-        item = self.itemFromIndex(annotation_item_index)
+        item = self.itemFromIndex(indexFrom.parent())
         if item is not None:
             item.dataChanged()
 
     def rowsInserted(self, index, first, last):
-        if self.image_item_.index() != index:
+        if self.image_item_ is None or self.image_item_.index() != index:
             return
 
         self.insertItems(first, last)
 
     def rowsAboutToBeRemoved(self, index, first, last):
-        if self.image_item_.index() != index:
+        if self.image_item_ is None or self.image_item_.index() != index:
             return
 
         for row in range(first, last+1):
