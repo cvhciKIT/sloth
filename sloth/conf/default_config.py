@@ -76,6 +76,8 @@ HOTKEYS = (
     ('Shift+Tab', lambda lt: lt.selectPreviousAnnotation(),  'Select previous annotation'),
     ('Del',       lambda lt: lt.deleteSelectedAnnotations(), 'Delete selected annotations'),
     ('ESC',       lambda lt: lt.exitInsertMode(),            'Exit insert mode'),
+    ('Shift+l',   lambda lt: lt.currentImage().setUnlabeled(False), 'Mark current image as labeled'),
+    ('Shift+c',   lambda lt: lt.currentImage().confirmAll(), 'Mark all annotations in image as confirmed'),
 )
 
 # CONTAINERS
