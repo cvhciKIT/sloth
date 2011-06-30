@@ -496,12 +496,12 @@ class AnnotationModel(QAbstractItemModel):
             return index.internalPointer()
         return self._root
 
-    def iterator(self, _class=None, predicate=None):
+    def iterator(self, _class=None, predicate=None, start=None):
         return model_iterator(self, _class, predicate)
 
-def model_iterator(model, _class=None, predicate=None):
+def model_iterator(model, _class=None, predicate=None, start=None):
     # Visit all nodes
-    item = model.root()
+    item = start if start is not None else model.root()
     while item is not None:
         # Return item
         if _class is None or isinstance(item, _class):
