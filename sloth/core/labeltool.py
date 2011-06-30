@@ -104,7 +104,7 @@ class LabelTool(QObject):
 
         # Initialize logging
         loglevel = (logging.CRITICAL, logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG)[int(options.verbosity)]
-        logging.basicConfig(level=loglevel)
+        logging.basicConfig(level=loglevel, format='%(asctime)s %(levelname)-8s %(name)-30s %(message)s') #, datefmt='%H:%M:%S.%m')
 
         # Disable PyQt log messages
         logging.getLogger("PyQt4").setLevel(logging.WARNING)
@@ -153,7 +153,10 @@ class LabelTool(QObject):
                     self.loadAnnotations(args[1], handleErrors=False)
                 except Exception as e:
                     LOG.fatal("Error loading annotations: %s" % e)
-                    sys.exit(1)
+                    if (int(options.verbosity)) > 1:
+                        raise
+                    else:
+                        sys.exit(1)
             else:
                 self.clearAnnotations()
 
