@@ -220,8 +220,12 @@ class KeyValueModelItem(ModelItem, MutableMapping):
 
     def _emitDataChanged(self, key):
         if self.model() is not None:
-            index_tl = self._items[key].index()
-            index_br = self._items[key].index(1)
+            if key in self._items:
+                index_tl = self._items[key].index()
+                index_br = self._items[key].index(1)
+            else:
+                index_tl = self.index()
+                index_br = self.index(1)
             self.model().dataChanged.emit(index_tl, index_br)
 
     def __setitem__(self, key, value):
