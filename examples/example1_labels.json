@@ -28,6 +28,7 @@
                 "class": "mouth"
             }
         ], 
-        "filename": "image2.jpg"
+        "filename": "image2.jpg",
+        "unlabeled": "true"
     }
 ]

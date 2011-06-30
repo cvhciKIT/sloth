@@ -1,7 +1,7 @@
 """
 The annotationmodel module contains the classes for the AnnotationModel.
 """
-from PyQt4.QtGui import QTreeView, QItemSelection, QItemSelectionModel, QSortFilterProxyModel
+from PyQt4.QtGui import QTreeView, QItemSelection, QItemSelectionModel, QSortFilterProxyModel, QBrush
 from PyQt4.QtCore import QModelIndex, QAbstractItemModel, Qt, pyqtSignal
 import os.path
 import copy
@@ -32,6 +32,8 @@ class ModelItem:
     def data(self, role=Qt.DisplayRole, column=0):
         if role == Qt.DisplayRole:
             return ""
+        if role == Qt.BackgroundRole:
+            return self.getColor()
         if role == ItemRole:
             return self
         else:
@@ -148,6 +150,9 @@ class ModelItem:
         if self._model is not None:
             self._model.endRemoveRows()
 
+    def getColor(self):
+        return None
+
 class RootModelItem(ModelItem):
     def __init__(self, model):
         ModelItem.__init__(self)
@@ -189,7 +194,7 @@ class KeyValueModelItem(ModelItem, MutableMapping):
         ModelItem.__init__(self)
         self._dict   = {}
         self._items  = {}
-        self._hidden = hidden + [None]
+        self._hidden = hidden + [None, 'class', 'unlabeled']
         # dummy key/value so that pyqt does not convert the dict
         # into a QVariantMap while communicating with the Views
         self._dict[None] = None
@@ -245,14 +250,25 @@ class KeyValueModelItem(ModelItem, MutableMapping):
         if None in res: del res[None]
         return res
 
+    def isUnlabeled(self):
+        return 'unlabeled' in self._dict and self._dict['unlabeled']
+
 class FileModelItem(KeyValueModelItem):
-    def __init__(self, fileinfo, hidden=['filename', 'class']):
+    def __init__(self, fileinfo, hidden=['filename']):
         KeyValueModelItem.__init__(self, hidden=hidden, properties=fileinfo)
 
     def data(self, role=Qt.DisplayRole, column=0):
-        if role == Qt.DisplayRole and column == 0:
-            return os.path.basename(self['filename'])
+        if role == Qt.DisplayRole:
+            if column == 0:
+                return os.path.basename(self['filename'])
+            elif column == 1 and self.isUnlabeled():
+                return '[unlabeled]'
         return ModelItem.data(self, role, column)
+
+    def getColor(self):
+        if self.isUnlabeled():
+            return QBrush(Qt.red)
+        return None
 
     @staticmethod
     def create(fileinfo):
@@ -318,9 +334,17 @@ class FrameModelItem(ImageModelItem, KeyValueModelItem):
         return float(self.get('timestamp', -1))
 
     def data(self, role=Qt.DisplayRole, column=0):
-        if role == Qt.DisplayRole and column == 0:
-            return "%d / %.3f" % (self.framenum(), self.timestamp())
+        if role == Qt.DisplayRole:
+            if column == 0:
+                return "%d / %.3f" % (self.framenum(), self.timestamp())
+            elif column == 1 and self.isUnlabeled():
+                return '[unlabeled]'
         return ImageModelItem.data(self, role, column)
+
+    def getColor(self):
+        if self.isUnlabeled():
+            return QBrush(Qt.red)
+        return None
 
     def getAnnotations(self):
         fi = KeyValueModelItem.getAnnotations(self)
