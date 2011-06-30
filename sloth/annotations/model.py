@@ -33,7 +33,9 @@ class ModelItem:
         if role == Qt.DisplayRole:
             return ""
         if role == Qt.BackgroundRole:
-            return self.getColor()
+            c = self.getColor()
+            if c is not None:
+                return QBrush(c)
         if role == ItemRole:
             return self
         else:
@@ -194,7 +196,7 @@ class KeyValueModelItem(ModelItem, MutableMapping):
         ModelItem.__init__(self)
         self._dict   = {}
         self._items  = {}
-        self._hidden = hidden + [None, 'class', 'unlabeled']
+        self._hidden = hidden + [None, 'class', 'unlabeled', 'unconfirmed']
         # dummy key/value so that pyqt does not convert the dict
         # into a QVariantMap while communicating with the Views
         self._dict[None] = None
@@ -253,6 +255,9 @@ class KeyValueModelItem(ModelItem, MutableMapping):
     def isUnlabeled(self):
         return 'unlabeled' in self._dict and self._dict['unlabeled']
 
+    def isUnconfirmed(self):
+        return 'unconfirmed' in self._dict and self._dict['unconfirmed']
+
 class FileModelItem(KeyValueModelItem):
     def __init__(self, fileinfo, hidden=['filename']):
         KeyValueModelItem.__init__(self, hidden=hidden, properties=fileinfo)
@@ -267,7 +272,7 @@ class FileModelItem(KeyValueModelItem):
 
     def getColor(self):
         if self.isUnlabeled():
-            return QBrush(Qt.red)
+            return Qt.red
         return None
 
     @staticmethod
@@ -343,7 +348,7 @@ class FrameModelItem(ImageModelItem, KeyValueModelItem):
 
     def getColor(self):
         if self.isUnlabeled():
-            return QBrush(Qt.red)
+            return Qt.red
         return None
 
     def getAnnotations(self):
@@ -364,11 +369,18 @@ class AnnotationModelItem(KeyValueModelItem):
         if role == Qt.DisplayRole:
             if column == 0:
                 return self['class']
+            elif column == 1 and self.isUnconfirmed():
+                return '[unconfirmed]'
             else:
                 return ""
         elif role == DataRole:
             return self._annotation
         return ModelItem.data(self, role, column)
+
+    def getColor(self):
+        if self.isUnconfirmed():
+            return Qt.red
+        return None
 
 class KeyValueRowModelItem(ModelItem):
     def __init__(self, key):

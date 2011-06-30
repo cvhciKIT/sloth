@@ -22,7 +22,12 @@ class BaseItem(QAbstractGraphicsShapeItem):
                       QGraphicsItem.ItemIsMovable | \
                       QGraphicsItem.ItemSendsGeometryChanges | \
                       QGraphicsItem.ItemSendsScenePositionChanges)
-        self.setColor(Qt.yellow)
+        if model_item is not None:
+            c = model_item.getColor()
+            if c is not None:
+                self.setColor(c)
+            else:
+                self.setColor(Qt.yellow)
 
         self._model_item = model_item
 

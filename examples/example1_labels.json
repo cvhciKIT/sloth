@@ -14,7 +14,8 @@
                 "width": 56.0, 
                 "y": 119.0, 
                 "x": 636.0, 
-                "class": "Face"
+                "class": "Face",
+                "unconfirmed": "true"
             }
         ], 
         "filename": "image1.jpg"
@@ -25,7 +26,8 @@
             {
                 "y": 155.0, 
                 "x": 409.0, 
-                "class": "mouth"
+                "class": "mouth",
+                "unconfirmed": "true"
             }
         ], 
         "filename": "image2.jpg",
