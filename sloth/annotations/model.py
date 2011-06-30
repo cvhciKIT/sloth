@@ -610,7 +610,7 @@ class AnnotationTreeView(QTreeView):
         block = self.blockSignals(True)
         sel = QItemSelection()
         for item in items:
-            sel.merge(QItemSelection(item.index(), item.index()), QItemSelectionModel.SelectCurrent)
+            sel.merge(QItemSelection(item.index(), item.index(1)), QItemSelectionModel.SelectCurrent)
         self.selectionModel().clear()
         self.selectionModel().select(sel, QItemSelectionModel.Select)
         self.blockSignals(block)
