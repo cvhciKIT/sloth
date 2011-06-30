@@ -146,9 +146,11 @@ class MainWindow(QMainWindow):
         self.treeview.selectedItemsChanged.connect(self.scene.onSelectionChangedInTreeView)
 
         self.image_resolution = QLabel("[no image]")
+        self.image_resolution.setFrameStyle(QFrame.StyledPanel)
         self.statusBar().addPermanentWidget(self.image_resolution)
 
         self.zoominfo = QLabel()
+        self.zoominfo.setFrameStyle(QFrame.StyledPanel)
         self.statusBar().addPermanentWidget(self.zoominfo)
         self.view.scaleChanged.connect(self.onScaleChanged)
         self.onScaleChanged(self.view.getScale())
