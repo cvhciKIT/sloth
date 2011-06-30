@@ -90,7 +90,7 @@ class GraphicsView(QGraphicsView):
         QGraphicsView.resizeEvent(self, event)
 
     def mousePressEvent(self, event):
-        if event.button() & Qt.RightButton != 0:
+        if event.button() & Qt.MiddleButton != 0:
             self._pan = True
             self._panStartX = event.x()
             self._panStartY = event.y()
@@ -100,7 +100,7 @@ class GraphicsView(QGraphicsView):
             return QGraphicsView.mousePressEvent(self, event)
 
     def mouseReleaseEvent(self, event):
-        if event.button() & Qt.RightButton != 0:
+        if self._pan:
             self._pan = False
             self.setCursor(Qt.ArrowCursor)
             event.accept()
