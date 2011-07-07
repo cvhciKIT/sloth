@@ -3,7 +3,8 @@ import os
 import functools
 import fnmatch
 from PyQt4.QtGui import QMainWindow, QSizePolicy, QWidget, QVBoxLayout, QAction,\
-        QKeySequence, QLabel, QItemSelectionModel, QMessageBox, QFileDialog, QFrame
+        QKeySequence, QLabel, QItemSelectionModel, QMessageBox, QFileDialog, QFrame, \
+        QDockWidget
 from PyQt4.QtCore import SIGNAL, QSettings, QSize, QPoint, QVariant, QFileInfo
 import PyQt4.uic as uic
 from sloth.gui import qrc_icons  # needed for toolbar icons
@@ -117,7 +118,7 @@ class MainWindow(QMainWindow):
 
         # Property Editor
         self.property_editor = PropertyEditor(config.LABELS)
-        self.ui.dockAnnotationButtons.setWidget(self.property_editor)
+        self.ui.dockProperties.setWidget(self.property_editor)
 
         # Scene
         self.scene = AnnotationScene(self.labeltool, items=items, inserters=inserters)
@@ -144,7 +145,7 @@ class MainWindow(QMainWindow):
 
         self.treeview = AnnotationTreeView()
         self.treeview.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
-        self.ui.dockInformation.setWidget(self.treeview)
+        self.ui.dockAnnotations.setWidget(self.treeview)
 
         self.scene.selectionChanged.connect(self.scene.onSelectionChanged)
         self.treeview.selectedItemsChanged.connect(self.scene.onSelectionChangedInTreeView)
@@ -164,6 +165,10 @@ class MainWindow(QMainWindow):
         self.view.scaleChanged.connect(self.onScaleChanged)
         self.onScaleChanged(self.view.getScale())
 
+        # View menu
+        self.ui.menu_Views.addAction(self.ui.dockProperties.toggleViewAction())
+        self.ui.menu_Views.addAction(self.ui.dockAnnotations.toggleViewAction())
+
         # Show the UI.  It is important that this comes *after* the above 
         # adding of custom widgets, especially the central widget.  Otherwise the
         # dock widgets would be far to large.
@@ -179,6 +184,9 @@ class MainWindow(QMainWindow):
         self.connect(self.ui.actionSave,    SIGNAL("triggered()"), self.fileSave)
         self.connect(self.ui.actionSave_As, SIGNAL("triggered()"), self.fileSaveAs)
         self.connect(self.ui.actionExit,    SIGNAL("triggered()"), self.close)
+
+        ## View menu
+        self.ui.actionLocked.toggled.connect(self.onViewsLockedChanged)
 
         ## Help menu
         self.ui.action_About.triggered.connect(self.about)
@@ -198,21 +206,25 @@ class MainWindow(QMainWindow):
 
     def loadApplicationSettings(self):
         settings = QSettings()
-        size  = settings.value("MainWindow/Size", QSize(800, 600))
-        pos   = settings.value("MainWindow/Position", QPoint(10, 10))
-        state = settings.value("MainWindow/State")
-        if isinstance(size,  QVariant): size  = size.toSize()
-        if isinstance(pos,   QVariant): pos   = pos.toPoint()
-        if isinstance(state, QVariant): state = state.toByteArray()
+        size   = settings.value("MainWindow/Size", QSize(800, 600))
+        pos    = settings.value("MainWindow/Position", QPoint(10, 10))
+        state  = settings.value("MainWindow/State")
+        locked = settings.value("MainWindow/ViewsLocked", False)
+        if isinstance(size,   QVariant): size  = size.toSize()
+        if isinstance(pos,    QVariant): pos   = pos.toPoint()
+        if isinstance(state,  QVariant): state = state.toByteArray()
+        if isinstance(locked, QVariant): locked = locked.toBool()
         self.resize(size)
         self.move(pos)
         self.restoreState(state)
+        self.ui.actionLocked.setChecked(locked)
 
     def saveApplicationSettings(self):
         settings = QSettings()
-        settings.setValue("MainWindow/Size",     self.size())
-        settings.setValue("MainWindow/Position", self.pos())
-        settings.setValue("MainWindow/State",    self.saveState())
+        settings.setValue("MainWindow/Size",        self.size())
+        settings.setValue("MainWindow/Position",    self.pos())
+        settings.setValue("MainWindow/State",       self.saveState())
+        settings.setValue("MainWindow/ViewsLocked", self.ui.actionLocked.isChecked())
         if self.labeltool.getCurrentFilename() is not None:
             filename = self.labeltool.getCurrentFilename()
         else:
@@ -288,6 +300,14 @@ class MainWindow(QMainWindow):
                 return self.labeltool.addImageFile(fname)
 
         return self.labeltool.addVideoFile(fname)
+
+    def onViewsLockedChanged(self, checked):
+        features = QDockWidget.AllDockWidgetFeatures
+        if checked:
+            features = QDockWidget.NoDockWidgetFeatures 
+
+        self.ui.dockProperties.setFeatures(features)
+        self.ui.dockAnnotations.setFeatures(features)
 
 
     ###
