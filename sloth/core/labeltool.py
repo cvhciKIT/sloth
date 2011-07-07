@@ -19,7 +19,10 @@ from sloth.gui import MainWindow
 import logging
 LOG = logging.getLogger(__name__)
 
-import okapy.videoio as okv
+try:
+    import okapy.videoio as okv
+except:
+    pass
 
 class LabelTool(QObject):
     """

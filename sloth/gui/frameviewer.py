@@ -1,10 +1,12 @@
 #!/usr/bin/python
 import sys, os, math
-import okapy
-import okapy.videoio
-import okapy.guiqt.utilities as ogu
+from sloth.utils import toQImage
 from PyQt4.QtCore import *
 from PyQt4.QtGui  import *
+try:
+    import okapy.videoio
+except:
+    pass
 
 videos = []
 scenes = []
@@ -197,7 +199,7 @@ def get_dummy_scene():
     video.getFrame(1000)
     video.getNextFrame()
     img = video.getImage()
-    qimg = ogu.toQImage(img, True)
+    qimg = toQImage(img, True)
     scene.addPixmap(QPixmap(qimg))
     return (scene, video)
 
@@ -206,7 +208,7 @@ def next_frame():
         v.getNextFrame()
     for v, s in zip(videos, scenes):
         img = v.getImage()
-        qimg = ogu.toQImage(img, True)
+        qimg = toQImage(img, True)
         s.clear()
         s.addPixmap(QPixmap(qimg))
 

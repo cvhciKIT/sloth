@@ -4,7 +4,7 @@ from PyQt4.QtCore import *
 from sloth.items import *
 from sloth.core.exceptions import InvalidArgumentException
 from sloth.annotations.model import AnnotationModelItem
-import okapy
+from sloth.utils import toQImage
 import logging
 LOG = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ class AnnotationScene(QGraphicsScene):
             self.image_item_ = current_image
             assert self.image_item_.model() == self.model_
             self.image_      = self.labeltool_.getImage(self.image_item_)
-            self.pixmap_     = QPixmap(okapy.guiqt.toQImage(self.image_))
+            self.pixmap_     = QPixmap(toQImage(self.image_))
             item             = QGraphicsPixmapItem(self.pixmap_)
             item.setZValue(-1)
             self.setSceneRect(0, 0, self.pixmap_.width(), self.pixmap_.height())

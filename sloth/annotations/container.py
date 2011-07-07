@@ -1,9 +1,14 @@
 import os
+import sys
 import fnmatch
 import time
+import numpy as np
 from sloth.core.exceptions import \
     ImproperlyConfigured, NotImplementedException, InvalidArgumentException
 from sloth.core.utils import import_callable
+import logging
+LOG = logging.getLogger(__name__)
+
 try:
     import cPickle as pickle
 except:
@@ -16,9 +21,15 @@ try:
     import yaml
 except:
     pass
-import okapy
-import logging
-LOG = logging.getLogger(__name__)
+try:
+    import okapy
+    _use_pil = False
+except:
+    try:
+        from PIL import Image
+        _use_pil = True
+    except:
+        LOG.warn("Could neither find PIL nor okapy.  Sloth needs one of them for loading images.")
 
 
 class AnnotationContainerFactory:
@@ -138,7 +149,15 @@ class AnnotationContainer:
         relative to the label file's directory.
         """
         fullpath = self._fullpath(filename)
-        return okapy.loadImage(fullpath)
+        if not os.path.exists(fullpath):
+            LOG.warn("Image file %s does not exists." % fullpath)
+            return None
+
+        if _use_pil:
+            im = Image.open(fullpath)
+            return np.asarray(im)
+        else:
+            return okapy.loadImage(fullpath)
 
     def loadFrame(self, filename, frame_number):
         """
@@ -147,6 +166,10 @@ class AnnotationContainer:
         the video from a path relative to the label files directory.
         """
         fullpath = self._fullpath(filename)
+        if not os.path.exists(fullpath):
+            LOG.warn("Video file %s does not exists." % fullpath)
+            return None
+
         #TODO load video
 
 
