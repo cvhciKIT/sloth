@@ -16,7 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ================================================================================
 
-Sloth includes 3rd party code with different licenses:
+Sloth includes 3rd party code/icons with different licenses:
 
 Django
 ------
@@ -54,5 +54,14 @@ ModelTest
 ---------
 
 see tests/pymodeltest/LICENSE.GPL
+
+
+FamFamFam Silk Icons
+--------------------
+
+Licensed under a Creative Commons Attribution 2.5 License
+(see http://creativecommons.org/licenses/by/2.5/).
+
+Website: http://www.famfamfam.com/lab/icons/silk/
 
 
