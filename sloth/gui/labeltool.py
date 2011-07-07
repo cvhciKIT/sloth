@@ -98,7 +98,7 @@ class MainWindow(QMainWindow):
             hk.setShortcut(QKeySequence(key))
             hk.setEnabled(True)
             hk.triggered.connect(bind(fun, self.labeltool))
-            self.ui.menuPlugins.addAction(hk)
+            self.ui.menuShortcuts.addAction(hk)
             self.shortcuts.append(hk)
 
     ###
