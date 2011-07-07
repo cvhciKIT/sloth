@@ -90,7 +90,7 @@ class GraphicsView(QGraphicsView):
         QGraphicsView.resizeEvent(self, event)
 
     def mousePressEvent(self, event):
-        if event.button() & Qt.MiddleButton != 0:
+        if event.button() & Qt.MidButton != 0:
             self._pan = True
             self._panStartX = event.x()
             self._panStartY = event.y()
