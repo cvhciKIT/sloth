@@ -217,7 +217,7 @@ class MainWindow(QMainWindow):
         self.resize(size)
         self.move(pos)
         self.restoreState(state)
-        self.ui.actionLocked.setChecked(locked)
+        self.ui.actionLocked.setChecked(bool(locked))
 
     def saveApplicationSettings(self):
         settings = QSettings()
