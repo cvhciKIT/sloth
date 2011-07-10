@@ -14,13 +14,39 @@ ItemRole, DataRole, ImageRole = [Qt.UserRole + i + 1 for i in range(3)]
 
 class ModelItem:
     def __init__(self):
-        self._model    = None
-        self._parent   = None
-        self._row      = -1
+        self._loaded    = True
+        self._row_cache = None
+        self._model     = None
+        self._parent    = None
+        self._row       = -1
         if not hasattr(self, "_children"):
             self._children = []
 
+    def _load(self):
+        pass
+
+    def _ensureLoaded(self):
+        if not self._loaded:
+            # Need to set the before actually loading to avoid
+            # endless recursion...
+            self._loaded = True
+            self._load()
+            self._row_cache = None
+            return True
+        else:
+            return False
+
+    def rowCount(self):
+        if self._row_cache is not None:
+            return self._row_cache
+        else:
+            if self._ensureLoaded():
+                LOG.debug("Loaded because of call to rowCount()")
+            return len(self._children)
+
     def children(self):
+        if self._ensureLoaded():
+            LOG.debug("Loaded because of call to children()")
         return self._children
 
     def model(self):
@@ -48,6 +74,8 @@ class ModelItem:
         return False
 
     def childAt(self, pos):
+        if self._ensureLoaded():
+            LOG.debug("Loaded because of call to childAt()")
         return self._children[pos]
 
     def getPreviousSibling(self):
@@ -80,18 +108,20 @@ class ModelItem:
             return QModelIndex()
         return self._model.createIndex(self._row, column, self)
 
-    def addChildSorted(self, item):
-        self.insertChild(-1, item)
+    def addChildSorted(self, item, signalModel=True):
+        self.insertChild(-1, item, signalModel=signalModel)
 
-    def appendChild(self, item):
-        self.insertChild(-1, item)
+    def appendChild(self, item, signalModel=True):
+        self.insertChild(-1, item, signalModel=signalModel)
 
-    def insertChild(self, pos, item):
+    def insertChild(self, pos, item, signalModel=True):
+        if self._ensureLoaded():
+            LOG.debug("Loaded because of call to insertChild()")
         if pos >= 0:
             next_row = pos
         else:
             next_row = len(self._children)
-        if self._model is not None:
+        if self._model is not None and signalModel:
             self._model.beginInsertRows(self.index(), next_row, next_row)
 
         item._parent = self
@@ -104,16 +134,19 @@ class ModelItem:
 
         if self._model is not None:
             item._attachToModel(self._model)
-            self._model.endInsertRows()
+            if signalModel:
+                self._model.endInsertRows()
 
-    def appendChildren(self, items):
+    def appendChildren(self, items, signalModel=True):
+        if self._ensureLoaded():
+            LOG.debug("Loaded because of call to apendChildren()")
         #for item in items:
             #assert isinstance(item, ModelItem)
             #assert item.model() is None
             #assert item.parent() is None
 
         next_row = len(self._children)
-        if self._model is not None:
+        if self._model is not None and signalModel:
             self._model.beginInsertRows(self.index(), next_row, next_row + len(items) - 1)
 
         for i, item in enumerate(items):
@@ -124,7 +157,8 @@ class ModelItem:
         if self._model is not None:
             for item in items:
                 item._attachToModel(self._model)
-            self._model.endInsertRows()
+            if signalModel:
+                self._model.endInsertRows()
 
     def delete(self):
         if self._parent is None:
@@ -133,6 +167,8 @@ class ModelItem:
             self._parent.deleteChild(self)
 
     def deleteChild(self, arg):
+        if self._ensureLoaded():
+            LOG.debug("Loaded because of call to deleteChild()")
         # Grandchildren are considered deleted automatically
         if isinstance(arg, ModelItem):
             return self.deleteChild(self._children.index(arg))
@@ -153,6 +189,8 @@ class ModelItem:
                 self._model.endRemoveRows()
 
     def deleteAllChildren(self):
+        if self._ensureLoaded():
+            LOG.debug("Loaded because of call to deleteAllChildren()")
         if self._model is not None:
             self._model.beginRemoveRows(self.index(), 0, len(self._children) - 1)
 
@@ -189,9 +227,11 @@ class RootModelItem(ModelItem):
         LOG.debug("Creation of ModelItems: %.2fs, addition to model: %.2fs" % (diff1, diff2))
 
     def numFiles(self):
+        return 0
         return len(self.children())
 
     def numAnnotations(self):
+        return 0
         count = 0
         for ann in self._model.iterator(AnnotationModelItem):
             count += 1
@@ -217,7 +257,7 @@ class KeyValueModelItem(ModelItem, MutableMapping):
                     self._items[key] = item
                     self.addChildSorted(item)
 
-    def addChildSorted(self, item):
+    def addChildSorted(self, item, signalModel=True):
         if isinstance(item, KeyValueRowModelItem):
             next_row = 0
             for child in self._children:
@@ -225,9 +265,9 @@ class KeyValueModelItem(ModelItem, MutableMapping):
                     break
                 next_row += 1
 
-            self.insertChild(next_row, item)
+            self.insertChild(next_row, item, signalModel)
         else:
-            self.appendChild(item)
+            self.appendChild(item, signalModel)
 
     # Methods for MutableMapping
     def __len__(self):
@@ -329,8 +369,8 @@ class ImageModelItem(ModelItem):
         for ann in annotations:
             self.addAnnotation(ann)
 
-    def addAnnotation(self, ann):
-        self.addChildSorted(AnnotationModelItem(ann))
+    def addAnnotation(self, ann, signalModel=True):
+        self.addChildSorted(AnnotationModelItem(ann), signalModel=signalModel)
 
     def annotations(self):
         for child in self._children:
@@ -343,11 +383,18 @@ class ImageModelItem(ModelItem):
 
 class ImageFileModelItem(FileModelItem, ImageModelItem):
     def __init__(self, fileinfo):
-        annotations = fileinfo.get("annotations", [])
+        self._annotation_data = fileinfo.get("annotations", [])
         if "annotations" in fileinfo:
             del fileinfo["annotations"]
         FileModelItem.__init__(self, fileinfo)
-        ImageModelItem.__init__(self, annotations)
+        ImageModelItem.__init__(self, [])
+        self._loaded = False
+        self._row_cache = len(self._children) + len(self._annotation_data)
+
+    def _load(self):
+        LOG.debug("Loading data for ImageFileModelItem %s" % self['filename'])
+        for ann in self._annotation_data:
+            self.addAnnotation(ann, signalModel=False)
 
     def data(self, role=Qt.DisplayRole, column=0):
         if role == DataRole:
@@ -355,6 +402,8 @@ class ImageFileModelItem(FileModelItem, ImageModelItem):
         return FileModelItem.data(self, role, column)
 
     def getAnnotations(self):
+        if self._ensureLoaded():
+            LOG.debug("Loaded because of call to getAnnotations()")
         fi = KeyValueModelItem.getAnnotations(self)
         fi['annotations'] = [child.getAnnotations() for child in self.children()]
         return fi
@@ -495,7 +544,7 @@ class AnnotationModel(QAbstractItemModel):
         if index.column() > 0:
             return 0
         item = self.itemFromIndex(index)
-        return len(item.children())
+        return item.rowCount()
 
     def parent(self, index):
         if index is None:
