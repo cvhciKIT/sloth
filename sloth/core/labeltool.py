@@ -378,6 +378,12 @@ class LabelTool(QObject):
         else:
             return self._mainwindow.scene
 
+    def view(self):
+        if self._mainwindow is None:
+            return None
+        else:
+            return self._mainwindow.view
+
     def selectNextAnnotation(self):
         if self._mainwindow is not None:
             return self._mainwindow.scene.selectNextItem()

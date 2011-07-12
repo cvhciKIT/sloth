@@ -16,6 +16,7 @@ class AnnotationScene(QGraphicsScene):
         self.model_      = None
         self.image_item_ = None
         self.inserter_   = None
+        self.scene_item_ = None
         self.message_    = ""
         self.labeltool_  = labeltool
 
@@ -56,6 +57,9 @@ class AnnotationScene(QGraphicsScene):
         # reset caches, invalidate root
         self.reset()
 
+    def sceneItem(self):
+        return self.scene_item_
+
     def setCurrentImage(self, current_image):
         """
         Set the index of the model which denotes the current image to be
@@ -75,10 +79,10 @@ class AnnotationScene(QGraphicsScene):
             assert self.image_item_.model() == self.model_
             self.image_      = self.labeltool_.getImage(self.image_item_)
             self.pixmap_     = QPixmap(toQImage(self.image_))
-            item             = QGraphicsPixmapItem(self.pixmap_)
-            item.setZValue(-1)
+            self.scene_item_ = QGraphicsPixmapItem(self.pixmap_)
+            self.scene_item_.setZValue(-1)
             self.setSceneRect(0, 0, self.pixmap_.width(), self.pixmap_.height())
-            self.addItem(item)
+            self.addItem(self.scene_item_)
 
             self.insertItems(0, len(self.image_item_.children())-1)
             self.update()
@@ -132,6 +136,10 @@ class AnnotationScene(QGraphicsScene):
         self.clear()
         self.setCurrentImage(None)
         self.clearMessage()
+
+    def clear(self):
+        QGraphicsScene.clear(self)
+        self.scene_item_ = None
 
     def addItem(self, item):
         QGraphicsScene.addItem(self, item)

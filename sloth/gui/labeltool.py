@@ -62,6 +62,8 @@ class MainWindow(QMainWindow):
     def onCurrentImageChanged(self):
         new_image = self.labeltool.currentImage()
         self.scene.setCurrentImage(new_image)
+        if self.options["Fit-to-window mode"].isChecked():
+            self.view.fitInView()
         self.treeview.scrollTo(new_image.index())
 
         img = self.labeltool.getImage(new_image)
@@ -100,6 +102,14 @@ class MainWindow(QMainWindow):
             hk.triggered.connect(bind(fun, self.labeltool))
             self.ui.menuShortcuts.addAction(hk)
             self.shortcuts.append(hk)
+
+    def initOptions(self):
+        self.options = {}
+        for o in ["Fit-to-window mode"]:
+            action = QAction(o, self)
+            action.setCheckable(True)
+            self.ui.menuOptions.addAction(action)
+            self.options[o] = action
 
     ###
     ### GUI/Application setup
@@ -142,6 +152,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.central_widget)
 
         self.initShortcuts(config.HOTKEYS)
+        self.initOptions()
 
         self.treeview = AnnotationTreeView()
         self.treeview.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)

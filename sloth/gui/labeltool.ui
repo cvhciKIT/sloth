@@ -20,7 +20,7 @@
      <x>0</x>
      <y>0</y>
      <width>656</width>
-     <height>25</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -62,10 +62,16 @@
      <string>&amp;Shortcuts</string>
     </property>
    </widget>
+   <widget class="QMenu" name="menuOptions">
+    <property name="title">
+     <string>&amp;Options</string>
+    </property>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menu_Edit"/>
    <addaction name="menuShortcuts"/>
    <addaction name="menu_Views"/>
+   <addaction name="menuOptions"/>
    <addaction name="menuPlugins"/>
    <addaction name="menu_Help"/>
   </widget>

@@ -28,6 +28,20 @@ class GraphicsView(QGraphicsView):
         self._panStartX = -1
         self._panStartY = -1
 
+    def fitInView(self):
+        if self.scene() is None:
+            return
+        si = self.scene().sceneItem()
+        if si is None:
+            return
+
+        old_scale = self.getScale()
+        QGraphicsView.fitInView(self, si, Qt.KeepAspectRatio)
+        new_scale = self.getScale()
+
+        if new_scale != old_scale:
+            self.scaleChanged.emit(new_scale)
+
     def setScene(self, scene):
         QGraphicsView.setScene(self, scene)
         #self.setScaleAbsolute(1)
