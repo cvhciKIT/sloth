@@ -53,8 +53,7 @@ class ModelItem:
         return self.childAt(pos).rowCount()
 
     def children(self):
-        if self._ensureAllLoaded():
-            LOG.debug("Loaded because of call to children()")
+        self._ensureAllLoaded()
         return self._children
 
     def model(self):
@@ -88,8 +87,7 @@ class ModelItem:
         return False
 
     def childAt(self, pos):
-        if self._ensureLoaded(pos):
-            LOG.debug("Loaded child at %d because of call to childAt()" % pos)
+        self._ensureLoaded(pos)
         return self._children[pos]
 
     def getPreviousSibling(self):
@@ -191,8 +189,7 @@ class ModelItem:
         else:
             if arg < 0 or arg >= len(self._children):
                 raise IndexError("child index out of range")
-            if self._ensureLoaded(arg):
-                LOG.debug("Loaded because of call to deleteChild()")
+            self._ensureLoaded(arg)
 
             if self._model is not None:
                 self._model.beginRemoveRows(self.index(), arg, arg)
@@ -207,8 +204,7 @@ class ModelItem:
                 self._model.endRemoveRows()
 
     def deleteAllChildren(self):
-        if self._ensureAllLoaded():
-            LOG.debug("Loaded because of call to deleteAllChildren()")
+        self._ensureAllLoaded()
         if self._model is not None:
             self._model.beginRemoveRows(self.index(), 0, len(self._children) - 1)
 
@@ -231,7 +227,6 @@ class RootModelItem(ModelItem):
         self._loaded = False
 
     def _load(self, index):
-        LOG.debug("Loading data for RootModelItem pos %d" % index)
         self._toload.remove(self._children[index])
         fi = FileModelItem.create(self._children[index])
         self.replaceChild(index, fi)
@@ -439,7 +434,6 @@ class ImageFileModelItem(FileModelItem, ImageModelItem):
         self._loaded = False
 
     def _load(self, index):
-        LOG.debug("Loading data for ImageFileModelItem %s pos %d" % (self['filename'], index))
         self._toload.remove(self._children[index])
         ann = AnnotationModelItem(self._children[index])
         self.replaceChild(index, ann)
@@ -452,8 +446,7 @@ class ImageFileModelItem(FileModelItem, ImageModelItem):
         return FileModelItem.data(self, role, column)
 
     def getAnnotations(self):
-        if self._ensureLoaded():
-            LOG.debug("Loaded because of call to getAnnotations()")
+        self._ensureLoaded()
         fi = KeyValueModelItem.getAnnotations(self)
         fi['annotations'] = [child.getAnnotations() for child in self.children()]
         return fi
