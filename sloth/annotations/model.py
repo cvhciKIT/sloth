@@ -14,13 +14,46 @@ ItemRole, DataRole, ImageRole = [Qt.UserRole + i + 1 for i in range(3)]
 
 class ModelItem:
     def __init__(self):
-        self._model    = None
-        self._parent   = None
-        self._row      = -1
+        self._loaded    = True
+        self._model     = None
+        self._parent    = None
+        self._row       = -1
         if not hasattr(self, "_children"):
             self._children = []
 
+    def _load(self, index):
+        pass
+
+    def _ensureLoaded(self, index):
+        if not self._loaded:
+            if not isinstance(self._children[index], ModelItem):
+                # Need to set the before actually loading to avoid
+                # endless recursion...
+                self._load(index)
+                return True
+        return False
+
+    def _ensureAllLoaded(self):
+        if not self._loaded:
+            for i in range(len(self._children)-1):
+                self._ensureLoaded(i)
+            return True
+        return False
+
+    def hasChildren(self):
+        return len(self._children) > 0
+
+    def childHasChildren(self, row):
+        return self.childAt(row).hasChildren()
+
+    def rowCount(self):
+        return len(self._children)
+
+    def childRowCount(self, pos):
+        return self.childAt(pos).rowCount()
+
     def children(self):
+        self._ensureAllLoaded()
         return self._children
 
     def model(self):
@@ -41,25 +74,32 @@ class ModelItem:
         else:
             return None
 
+    def childData(self, role=Qt.DisplayRole, row=0, column=0):
+        return self.childAt(row).data(role, column)
+
     def flags(self, column):
         return Qt.ItemIsEnabled | Qt.ItemIsSelectable
+
+    def childFlags(self, row, column):
+        return self.childAt(row).flags(column)
 
     def setData(self, value, role=Qt.DisplayRole, column=0):
         return False
 
     def childAt(self, pos):
+        self._ensureLoaded(pos)
         return self._children[pos]
 
     def getPreviousSibling(self):
         if self._parent is not None:
             if self._row > 0:
-                return self._parent._children[self._row-1]
+                return self._parent.childAt(self._row-1)
         return None
 
     def getNextSibling(self):
         if self._parent is not None:
             try:
-                return self._parent._children[self._row+1]
+                return self._parent.childAt(self._row+1)
             except:
                 pass
         return None
@@ -71,27 +111,35 @@ class ModelItem:
 
         self._model = model
         for item in self._children:
-            item._attachToModel(model)
+            if isinstance(item, ModelItem):
+                item._attachToModel(model)
 
     def index(self, column=0):
         if self._parent is None:
             return QModelIndex()
         if column >= self._model.columnCount():
             return QModelIndex()
-        return self._model.createIndex(self._row, column, self)
+        return self._model.createIndex(self._row, column, self._parent)
 
-    def addChildSorted(self, item):
-        self.insertChild(-1, item)
+    def addChildSorted(self, item, signalModel=True):
+        self.insertChild(-1, item, signalModel=signalModel)
 
-    def appendChild(self, item):
-        self.insertChild(-1, item)
+    def appendChild(self, item, signalModel=True):
+        self.insertChild(-1, item, signalModel=signalModel)
 
-    def insertChild(self, pos, item):
+    def replaceChild(self, pos, item):
+        item._parent = self
+        item._row    = pos
+        self._children[pos] = item
+        if self._model is not None:
+            self._children[pos]._attachToModel(self._model)
+
+    def insertChild(self, pos, item, signalModel=True):
         if pos >= 0:
             next_row = pos
         else:
             next_row = len(self._children)
-        if self._model is not None:
+        if self._model is not None and signalModel:
             self._model.beginInsertRows(self.index(), next_row, next_row)
 
         item._parent = self
@@ -104,16 +152,17 @@ class ModelItem:
 
         if self._model is not None:
             item._attachToModel(self._model)
-            self._model.endInsertRows()
+            if signalModel:
+                self._model.endInsertRows()
 
-    def appendChildren(self, items):
+    def appendChildren(self, items, signalModel=True):
         #for item in items:
             #assert isinstance(item, ModelItem)
             #assert item.model() is None
             #assert item.parent() is None
 
         next_row = len(self._children)
-        if self._model is not None:
+        if self._model is not None and signalModel:
             self._model.beginInsertRows(self.index(), next_row, next_row + len(items) - 1)
 
         for i, item in enumerate(items):
@@ -124,7 +173,8 @@ class ModelItem:
         if self._model is not None:
             for item in items:
                 item._attachToModel(self._model)
-            self._model.endInsertRows()
+            if signalModel:
+                self._model.endInsertRows()
 
     def delete(self):
         if self._parent is None:
@@ -139,6 +189,7 @@ class ModelItem:
         else:
             if arg < 0 or arg >= len(self._children):
                 raise IndexError("child index out of range")
+            self._ensureLoaded(arg)
 
             if self._model is not None:
                 self._model.beginRemoveRows(self.index(), arg, arg)
@@ -153,6 +204,7 @@ class ModelItem:
                 self._model.endRemoveRows()
 
     def deleteAllChildren(self):
+        self._ensureAllLoaded()
         if self._model is not None:
             self._model.beginRemoveRows(self.index(), 0, len(self._children) - 1)
 
@@ -165,9 +217,34 @@ class ModelItem:
         return None
 
 class RootModelItem(ModelItem):
-    def __init__(self, model):
+    def __init__(self, model, files):
         ModelItem.__init__(self)
         self._model = model
+        self._toload   = []
+        for f in files:
+            self._toload.append(f)
+            self._children.append(f)
+        self._loaded = False
+
+    def _load(self, index):
+        self._toload.remove(self._children[index])
+        fi = FileModelItem.create(self._children[index])
+        self.replaceChild(index, fi)
+        if len(self._toload) == 0:
+            self._loaded = True
+
+    def childHasChildren(self, pos):
+        if isinstance(self._children[pos], ModelItem):
+            return self._children[pos].hasChildren()
+        else:
+            # Hack to speed things up...
+            return True
+
+    def childFlags(self, row, column):
+        if isinstance(self._children[row], ModelItem):
+            return self._children[row].flags(column)
+        else:
+            return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
     def appendChild(self, item):
         if isinstance(item, FileModelItem):
@@ -189,9 +266,11 @@ class RootModelItem(ModelItem):
         LOG.debug("Creation of ModelItems: %.2fs, addition to model: %.2fs" % (diff1, diff2))
 
     def numFiles(self):
+        return 0
         return len(self.children())
 
     def numAnnotations(self):
+        return 0
         count = 0
         for ann in self._model.iterator(AnnotationModelItem):
             count += 1
@@ -217,7 +296,7 @@ class KeyValueModelItem(ModelItem, MutableMapping):
                     self._items[key] = item
                     self.addChildSorted(item)
 
-    def addChildSorted(self, item):
+    def addChildSorted(self, item, signalModel=True):
         if isinstance(item, KeyValueRowModelItem):
             next_row = 0
             for child in self._children:
@@ -225,9 +304,9 @@ class KeyValueModelItem(ModelItem, MutableMapping):
                     break
                 next_row += 1
 
-            self.insertChild(next_row, item)
+            self.insertChild(next_row, item, signalModel)
         else:
-            self.appendChild(item)
+            self.appendChild(item, signalModel)
 
     # Methods for MutableMapping
     def __len__(self):
@@ -329,8 +408,8 @@ class ImageModelItem(ModelItem):
         for ann in annotations:
             self.addAnnotation(ann)
 
-    def addAnnotation(self, ann):
-        self.addChildSorted(AnnotationModelItem(ann))
+    def addAnnotation(self, ann, signalModel=True):
+        self.addChildSorted(AnnotationModelItem(ann), signalModel=signalModel)
 
     def annotations(self):
         for child in self._children:
@@ -343,11 +422,23 @@ class ImageModelItem(ModelItem):
 
 class ImageFileModelItem(FileModelItem, ImageModelItem):
     def __init__(self, fileinfo):
-        annotations = fileinfo.get("annotations", [])
+        self._annotation_data = fileinfo.get("annotations", [])
         if "annotations" in fileinfo:
             del fileinfo["annotations"]
         FileModelItem.__init__(self, fileinfo)
-        ImageModelItem.__init__(self, annotations)
+        ImageModelItem.__init__(self, [])
+        self._toload = []
+        for ann in self._annotation_data:
+            self._children.append(ann)
+            self._toload.append(ann)
+        self._loaded = False
+
+    def _load(self, index):
+        self._toload.remove(self._children[index])
+        ann = AnnotationModelItem(self._children[index])
+        self.replaceChild(index, ann)
+        if len(self._toload) == 0:
+            self._loaded = True
 
     def data(self, role=Qt.DisplayRole, column=0):
         if role == DataRole:
@@ -355,6 +446,7 @@ class ImageFileModelItem(FileModelItem, ImageModelItem):
         return FileModelItem.data(self, role, column)
 
     def getAnnotations(self):
+        self._ensureLoaded()
         fi = KeyValueModelItem.getAnnotations(self)
         fi['annotations'] = [child.getAnnotations() for child in self.children()]
         return fi
@@ -478,8 +570,7 @@ class AnnotationModel(QAbstractItemModel):
         start = time.time()
         self._annotations = annotations
         self._dirty       = False
-        self._root        = RootModelItem(self)
-        self._root.appendFileItems(annotations)
+        self._root        = RootModelItem(self, annotations)
         diff = time.time() - start
         LOG.info("Created AnnotationModel in %.2fs" % (diff, ))
         self.dataChanged.connect(self.onDataChanged)
@@ -487,6 +578,15 @@ class AnnotationModel(QAbstractItemModel):
         self.rowsRemoved.connect(self.onDataChanged)
 
     # QAbstractItemModel overloads
+    def hasChildren(self, index=QModelIndex()):
+        if index.column() > 0:
+            return 0
+        if not index.isValid():
+            return self._root.hasChildren()
+
+        parent = self.parentFromIndex(index)
+        return parent.childHasChildren(index.row())
+
     def columnCount(self, index=QModelIndex()):
         return 2
 
@@ -494,17 +594,16 @@ class AnnotationModel(QAbstractItemModel):
         # Only items with column==1 can have children
         if index.column() > 0:
             return 0
-        item = self.itemFromIndex(index)
-        return len(item.children())
+        if not index.isValid():
+            return self._root.rowCount()
+
+        parent = self.parentFromIndex(index)
+        return parent.childRowCount(index.row())
 
     def parent(self, index):
         if index is None:
             return QModelIndex()
-        item = self.itemFromIndex(index)
-        parent = item.parent()
-        if parent is None:
-            return QModelIndex()
-        return parent.index()
+        return self.parentFromIndex(index).index()
 
     def index(self, row, column, parent_idx=QModelIndex()):
         # Handle invalid rows/columns
@@ -521,17 +620,17 @@ class AnnotationModel(QAbstractItemModel):
         # Handle normal items
         else:
             parent = self.itemFromIndex(parent_idx)
-        if row < 0 or row >= len(parent.children()):
+        if row < 0 or row >= parent.rowCount():
             return QModelIndex()
         if column < 0 or column >= self.columnCount():
             return QModelIndex()
-        return self.createIndex(row, column, parent.children()[row])
+        return self.createIndex(row, column, parent)
 
     def data(self, index, role=Qt.DisplayRole):
         if not index.isValid():
             return None
-        item = self.itemFromIndex(index)
-        return item.data(role, index.column())
+        parent = self.parentFromIndex(index)
+        return parent.childData(role, index.row(), index.column())
 
     def setData(self, index, value, role=Qt.EditRole):
         if not index.isValid():
@@ -542,8 +641,8 @@ class AnnotationModel(QAbstractItemModel):
     def flags(self, index):
         if not index.isValid():
             return self._root.flags(index.column())
-        item = self.itemFromIndex(index)
-        return item.flags(index.column())
+        parent = self.parentFromIndex(index)
+        return parent.childFlags(index.row(), index.column())
 
     def headerData(self, section, orientation, role):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
@@ -570,11 +669,18 @@ class AnnotationModel(QAbstractItemModel):
     def itemFromIndex(self, index):
         index = QModelIndex(index)  # explicitly convert from QPersistentModelIndex
         if index.isValid():
+            return index.internalPointer().childAt(index.row())
+        return self._root
+
+    def parentFromIndex(self, index):
+        index = QModelIndex(index)  # explicitly convert from QPersistentModelIndex
+        if index.isValid():
             return index.internalPointer()
         return self._root
 
-    def iterator(self, _class=None, predicate=None, start=None):
+    def iterator(self, _class=None, predicate=None, start=None, maxlevels=10000):
         # Visit all nodes
+        level = 0
         item = start if start is not None else self.root()
         while item is not None:
             # Return item
@@ -583,13 +689,15 @@ class AnnotationModel(QAbstractItemModel):
                     yield item
 
             # Get next item
-            if len(item.children()) > 0:
-                item = item.children()[0]
+            if item.rowCount() > 0 and level < maxlevels:
+                level += 1
+                item = item.childAt(0)
             else:
                 next_sibling = item.getNextSibling()
                 if next_sibling is not None:
                     item = next_sibling
                 else:
+                    level -= 1
                     ancestor = item.parent()
                     item = None
                     while ancestor is not None:
@@ -597,6 +705,7 @@ class AnnotationModel(QAbstractItemModel):
                         if ancestor_sibling is not None:
                             item = ancestor_sibling
                             break
+                        level -= 1
                         ancestor = ancestor.parent()
 
 

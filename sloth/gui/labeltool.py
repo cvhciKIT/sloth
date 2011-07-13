@@ -5,7 +5,7 @@ import fnmatch
 from PyQt4.QtGui import QMainWindow, QSizePolicy, QWidget, QVBoxLayout, QAction,\
         QKeySequence, QLabel, QItemSelectionModel, QMessageBox, QFileDialog, QFrame, \
         QDockWidget
-from PyQt4.QtCore import SIGNAL, QSettings, QSize, QPoint, QVariant, QFileInfo
+from PyQt4.QtCore import SIGNAL, QSettings, QSize, QPoint, QVariant, QFileInfo, QTimer, pyqtSignal, QObject
 import PyQt4.uic as uic
 from sloth.gui import qrc_icons  # needed for toolbar icons
 from sloth.gui.propertyeditor import PropertyEditor
@@ -22,9 +22,28 @@ GUIDIR=os.path.join(os.path.dirname(__file__))
 def bind(function, labeltool):
     return lambda: function(labeltool)
 
+class BackgroundLoader(QObject):
+    finished = pyqtSignal()
+
+    def __init__(self, model):
+        QObject.__init__(self)
+        self._iterators = [model.iterator(maxlevels=1), model.iterator()]
+
+    def load(self):
+        if self._iterators:
+            try:
+                self._iterators[0].next()
+            except StopIteration:
+                self._iterators.pop(0)
+        else:
+            self.finished.emit()
+
 class MainWindow(QMainWindow):
     def __init__(self, labeltool, parent=None):
         QMainWindow.__init__(self, parent)
+
+        self.idletimer = QTimer()
+        self.loader = None
 
         self.labeltool = labeltool
         self.setupGui()
@@ -58,6 +77,19 @@ class MainWindow(QMainWindow):
         self.treeview.setSelectionModel(self.selectionmodel)
         self.treeview.selectionModel().currentChanged.connect(self.labeltool.setCurrentImage)
         self.property_editor.onModelChanged(self.labeltool.model())
+
+        # Start background loading thread
+        if self.loader is not None:
+            self.idletimer.timeout.disconnect()
+        self.loader = BackgroundLoader(self.labeltool.model())
+        self.idletimer.timeout.connect(self.loader.load)
+        self.loader.finished.connect(self.onBackgroundLoadingFinished)
+        self.idletimer.start()
+
+    def onBackgroundLoadingFinished(self):
+        self.idletimer.timeout.disconnect()
+        self.statusBar().showMessage("Background loading finished", 5000)
+        self.loader = None
 
     def onCurrentImageChanged(self):
         new_image = self.labeltool.currentImage()
