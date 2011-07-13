@@ -685,8 +685,9 @@ class AnnotationModel(QAbstractItemModel):
             return index.internalPointer()
         return self._root
 
-    def iterator(self, _class=None, predicate=None, start=None):
+    def iterator(self, _class=None, predicate=None, start=None, maxlevels=10000):
         # Visit all nodes
+        level = 0
         item = start if start is not None else self.root()
         while item is not None:
             # Return item
@@ -695,13 +696,15 @@ class AnnotationModel(QAbstractItemModel):
                     yield item
 
             # Get next item
-            if item.rowCount() > 0:
+            if item.rowCount() > 0 and level < maxlevels:
+                level += 1
                 item = item.childAt(0)
             else:
                 next_sibling = item.getNextSibling()
                 if next_sibling is not None:
                     item = next_sibling
                 else:
+                    level -= 1
                     ancestor = item.parent()
                     item = None
                     while ancestor is not None:
@@ -709,6 +712,7 @@ class AnnotationModel(QAbstractItemModel):
                         if ancestor_sibling is not None:
                             item = ancestor_sibling
                             break
+                        level -= 1
                         ancestor = ancestor.parent()
 
 
