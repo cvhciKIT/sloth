@@ -4,7 +4,7 @@ import functools
 import fnmatch
 from PyQt4.QtGui import QMainWindow, QSizePolicy, QWidget, QVBoxLayout, QAction,\
         QKeySequence, QLabel, QItemSelectionModel, QMessageBox, QFileDialog, QFrame, \
-        QDockWidget
+        QDockWidget, QProgressBar
 from PyQt4.QtCore import SIGNAL, QSettings, QSize, QPoint, QVariant, QFileInfo, QTimer, pyqtSignal, QObject
 import PyQt4.uic as uic
 from sloth.gui import qrc_icons  # needed for toolbar icons
@@ -25,16 +25,42 @@ def bind(function, labeltool):
 class BackgroundLoader(QObject):
     finished = pyqtSignal()
 
-    def __init__(self, model):
+    def __init__(self, model, statusbar):
         QObject.__init__(self)
-        self._iterators = [model.iterator(maxlevels=1), model.iterator()]
+        self._max_levels = 3
+        self._model = model
+        self._statusbar = statusbar
+        self._message_dislayed = False
+        self.progress = QProgressBar()
+        self.progress.setMinimum(0)
+        self.progress.setMaximum(1000 * self._max_levels)
+        self.progress.setMaximumWidth(150)
+
+        self._level = 1
+        self._iterator = self._model.iterator(maxlevels=self._level)
+        self._pos = 0
+        self._rows = self._model.root().rowCount() + 1
+        self._next_rows = 0
 
     def load(self):
-        if self._iterators:
+        if not self._message_dislayed:
+            self._statusbar.showMessage("Loading annotations...", 5000)
+            self._message_dislayed = True
+        if self._level <= self._max_levels:
             try:
-                self._iterators[0].next()
+                if hasattr(self._iterator, "next"):
+                    item = self._iterator.next()
+                else:
+                    item = next(self._iterator)
+                self._next_rows += item.rowCount()
+                self._pos += 1
+                self.progress.setValue(int((float(self._pos) / float(self._rows) + self._level - 1) * 1000))
             except StopIteration:
-                self._iterators.pop(0)
+                self._level += 1
+                self._iterator = self._model.iterator(maxlevels=self._level)
+                self._pos = 0
+                self._rows = self._next_rows
+                self._next_rows = 1
         else:
             self.finished.emit()
 
@@ -68,6 +94,23 @@ class MainWindow(QMainWindow):
     def onMousePositionChanged(self, x, y):
         self.posinfo.setText("%d, %d" % (x, y))
 
+    def startBackgroundLoading(self):
+        self.stopBackgroundLoading(forced=True)
+        self.loader = BackgroundLoader(self.labeltool.model(), self.statusBar())
+        self.idletimer.timeout.connect(self.loader.load)
+        self.loader.finished.connect(self.stopBackgroundLoading)
+        self.idletimer.start()
+        self.statusBar().insertWidget(1000, self.loader.progress)
+
+    def stopBackgroundLoading(self, forced=False):
+        if self.loader is not None:
+            self.idletimer.timeout.disconnect()
+            self.statusBar().removeWidget(self.loader.progress)
+            self.loader = None
+        self.idletimer.stop()
+        if not forced:
+            self.statusBar().showMessage("Background loading finished", 5000)
+
     def onAnnotationsLoaded(self):
         self.labeltool.model().dirtyChanged.connect(self.onModelDirtyChanged)
         self.onModelDirtyChanged(self.labeltool.model().dirty())
@@ -77,19 +120,7 @@ class MainWindow(QMainWindow):
         self.treeview.setSelectionModel(self.selectionmodel)
         self.treeview.selectionModel().currentChanged.connect(self.labeltool.setCurrentImage)
         self.property_editor.onModelChanged(self.labeltool.model())
-
-        # Start background loading thread
-        if self.loader is not None:
-            self.idletimer.timeout.disconnect()
-        self.loader = BackgroundLoader(self.labeltool.model())
-        self.idletimer.timeout.connect(self.loader.load)
-        self.loader.finished.connect(self.onBackgroundLoadingFinished)
-        self.idletimer.start()
-
-    def onBackgroundLoadingFinished(self):
-        self.idletimer.timeout.disconnect()
-        self.statusBar().showMessage("Background loading finished", 5000)
-        self.loader = None
+        self.startBackgroundLoading()
 
     def onCurrentImageChanged(self):
         new_image = self.labeltool.currentImage()
