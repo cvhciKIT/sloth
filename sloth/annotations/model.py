@@ -15,39 +15,43 @@ ItemRole, DataRole, ImageRole = [Qt.UserRole + i + 1 for i in range(3)]
 class ModelItem:
     def __init__(self):
         self._loaded    = True
-        self._row_cache = None
         self._model     = None
         self._parent    = None
         self._row       = -1
         if not hasattr(self, "_children"):
             self._children = []
 
-    def _load(self):
+    def _load(self, index):
         pass
 
-    def _ensureLoaded(self):
+    def _ensureLoaded(self, index):
         if not self._loaded:
-            # Need to set the before actually loading to avoid
-            # endless recursion...
-            self._loaded = True
-            self._load()
-            self._row_cache = None
+            if not isinstance(self._children[index], ModelItem):
+                # Need to set the before actually loading to avoid
+                # endless recursion...
+                self._load(index)
+                return True
+        return False
+
+    def _ensureAllLoaded(self):
+        if not self._loaded:
+            for i in range(len(self._children)-1):
+                self._ensureLoaded(i)
             return True
-        else:
-            return False
+        return False
 
     def rowCount(self):
-        if self._row_cache is not None:
-            return self._row_cache
-        else:
-            if self._ensureLoaded():
-                LOG.debug("Loaded because of call to rowCount()")
-            return len(self._children)
+        return len(self._children)
 
     def children(self):
-        if self._ensureLoaded():
+        if self._ensureAllLoaded():
             LOG.debug("Loaded because of call to children()")
         return self._children
+
+    def childAt(self, index):
+        if self._ensureLoaded(index):
+            LOG.debug("Loaded because of call to childAt()")
+        return self._children[index]
 
     def model(self):
         return self._model
@@ -74,8 +78,8 @@ class ModelItem:
         return False
 
     def childAt(self, pos):
-        if self._ensureLoaded():
-            LOG.debug("Loaded because of call to childAt()")
+        if self._ensureLoaded(pos):
+            LOG.debug("Loaded child at %d because of call to childAt()" % pos)
         return self._children[pos]
 
     def getPreviousSibling(self):
@@ -99,7 +103,8 @@ class ModelItem:
 
         self._model = model
         for item in self._children:
-            item._attachToModel(model)
+            if isinstance(item, ModelItem):
+                item._attachToModel(model)
 
     def index(self, column=0):
         if self._parent is None:
@@ -114,9 +119,14 @@ class ModelItem:
     def appendChild(self, item, signalModel=True):
         self.insertChild(-1, item, signalModel=signalModel)
 
+    def replaceChild(self, pos, item):
+        item._parent = self
+        item._row    = pos
+        self._children[pos] = item
+        if self._model is not None:
+            self._children[pos]._attachToModel(self._model)
+
     def insertChild(self, pos, item, signalModel=True):
-        if self._ensureLoaded():
-            LOG.debug("Loaded because of call to insertChild()")
         if pos >= 0:
             next_row = pos
         else:
@@ -138,8 +148,6 @@ class ModelItem:
                 self._model.endInsertRows()
 
     def appendChildren(self, items, signalModel=True):
-        if self._ensureLoaded():
-            LOG.debug("Loaded because of call to apendChildren()")
         #for item in items:
             #assert isinstance(item, ModelItem)
             #assert item.model() is None
@@ -167,14 +175,14 @@ class ModelItem:
             self._parent.deleteChild(self)
 
     def deleteChild(self, arg):
-        if self._ensureLoaded():
-            LOG.debug("Loaded because of call to deleteChild()")
         # Grandchildren are considered deleted automatically
         if isinstance(arg, ModelItem):
             return self.deleteChild(self._children.index(arg))
         else:
             if arg < 0 or arg >= len(self._children):
                 raise IndexError("child index out of range")
+            if self._ensureLoaded(arg):
+                LOG.debug("Loaded because of call to deleteChild()")
 
             if self._model is not None:
                 self._model.beginRemoveRows(self.index(), arg, arg)
@@ -189,7 +197,7 @@ class ModelItem:
                 self._model.endRemoveRows()
 
     def deleteAllChildren(self):
-        if self._ensureLoaded():
+        if self._ensureAllLoaded():
             LOG.debug("Loaded because of call to deleteAllChildren()")
         if self._model is not None:
             self._model.beginRemoveRows(self.index(), 0, len(self._children) - 1)
@@ -388,13 +396,19 @@ class ImageFileModelItem(FileModelItem, ImageModelItem):
             del fileinfo["annotations"]
         FileModelItem.__init__(self, fileinfo)
         ImageModelItem.__init__(self, [])
-        self._loaded = False
-        self._row_cache = len(self._children) + len(self._annotation_data)
-
-    def _load(self):
-        LOG.debug("Loading data for ImageFileModelItem %s" % self['filename'])
+        self._toload = []
         for ann in self._annotation_data:
-            self.addAnnotation(ann, signalModel=False)
+            self._children.append(ann)
+            self._toload.append(ann)
+        self._loaded = False
+
+    def _load(self, index):
+        LOG.debug("Loading data for ImageFileModelItem %s pos %d" % (self['filename'], index))
+        self._toload.remove(self._children[index])
+        ann = AnnotationModelItem(self._children[index])
+        self.replaceChild(index, ann)
+        if len(self._toload) == 0:
+            self._loaded = True
 
     def data(self, role=Qt.DisplayRole, column=0):
         if role == DataRole:
@@ -570,11 +584,11 @@ class AnnotationModel(QAbstractItemModel):
         # Handle normal items
         else:
             parent = self.itemFromIndex(parent_idx)
-        if row < 0 or row >= len(parent.children()):
+        if row < 0 or row >= parent.rowCount():
             return QModelIndex()
         if column < 0 or column >= self.columnCount():
             return QModelIndex()
-        return self.createIndex(row, column, parent.children()[row])
+        return self.createIndex(row, column, parent.childAt(row))
 
     def data(self, index, role=Qt.DisplayRole):
         if not index.isValid():
