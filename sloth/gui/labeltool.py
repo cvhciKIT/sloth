@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import os
+import logging, os
 import functools
 import fnmatch
 from PyQt4.QtGui import QMainWindow, QSizePolicy, QWidget, QVBoxLayout, QAction,\
@@ -18,6 +18,8 @@ from sloth.annotations.model import AnnotationTreeView, FrameModelItem, ImageFil
 from sloth import APP_NAME, ORGANIZATION_DOMAIN
 
 GUIDIR=os.path.join(os.path.dirname(__file__))
+
+LOG=logging.getLogger(__name__)
 
 def bind(function, labeltool):
     return lambda: function(labeltool)
@@ -62,6 +64,7 @@ class BackgroundLoader(QObject):
                 self._rows = self._next_rows
                 self._next_rows = 1
         else:
+            LOG.debug("Loading finished...")
             self.finished.emit()
 
 class MainWindow(QMainWindow):
@@ -100,16 +103,16 @@ class MainWindow(QMainWindow):
         self.idletimer.timeout.connect(self.loader.load)
         self.loader.finished.connect(self.stopBackgroundLoading)
         self.idletimer.start()
-        self.statusBar().insertWidget(1000, self.loader.progress)
+        self.statusBar().addWidget(self.loader.progress)
 
     def stopBackgroundLoading(self, forced=False):
+        if not forced:
+            self.statusBar().showMessage("Background loading finished", 5000)
+        self.idletimer.stop()
         if self.loader is not None:
             self.idletimer.timeout.disconnect()
             self.statusBar().removeWidget(self.loader.progress)
             self.loader = None
-        self.idletimer.stop()
-        if not forced:
-            self.statusBar().showMessage("Background loading finished", 5000)
 
     def onAnnotationsLoaded(self):
         self.labeltool.model().dirtyChanged.connect(self.onModelDirtyChanged)
