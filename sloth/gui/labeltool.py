@@ -48,7 +48,7 @@ class BackgroundLoader(QObject):
         if not self._message_dislayed:
             self._statusbar.showMessage("Loading annotations...", 5000)
             self._message_dislayed = True
-        if self._level <= self._max_levels:
+        if self._level <= self._max_levels and self._rows > 0:
             try:
                 if hasattr(self._iterator, "next"):
                     item = self._iterator.next()
