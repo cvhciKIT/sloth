@@ -336,7 +336,7 @@ class MainWindow(QMainWindow):
         fname = QFileDialog.getOpenFileName(self, 
                 "%s - Load Annotations" % APP_NAME, path,
                 "%s annotation files (%s)" % (APP_NAME, format_str))
-        if not fname.isEmpty():
+        if len(str(fname)) > 0:
             self.labeltool.loadAnnotations(fname)
 
     def fileSave(self):
@@ -352,7 +352,7 @@ class MainWindow(QMainWindow):
                 "%s - Save Annotations" % APP_NAME, fname,
                 "%s annotation files (%s)" % (APP_NAME, format_str))
 
-        if not fname.isEmpty():
+        if len(str(fname)) > 0:
             return self.labeltool.saveAnnotations(str(fname))
         return False
 
@@ -367,7 +367,7 @@ class MainWindow(QMainWindow):
         format_str = ' '.join(image_types + video_types)
         fname = QFileDialog.getOpenFileName(self, "%s - Add Media File" % APP_NAME, path, "Media files (%s)" % (format_str, ))
 
-        if fname.isEmpty():
+        if len(str(fname)) == 0:
             return
 
         fname = str(fname)
