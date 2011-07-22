@@ -178,7 +178,12 @@ class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
             if len(selected_values) > 1:
                 self._inputField.setPlaceholderText(", ".join(selected_values))
             elif len(selected_values) == 1:
-                self._inputField.setText(iter(selected_values).next())
+                it = iter(selected_values)
+                if hasattr(it, 'next'):
+                    self._inputField.setText(it.next())
+                else:
+                    self._inputField.setText(next(it))
+
 
     def updateButtons(self):
         selected_values = self.getSelectedValues()
