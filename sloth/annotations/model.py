@@ -446,7 +446,7 @@ class ImageFileModelItem(FileModelItem, ImageModelItem):
         return FileModelItem.data(self, role, column)
 
     def getAnnotations(self):
-        self._ensureLoaded()
+        self._ensureAllLoaded()
         fi = KeyValueModelItem.getAnnotations(self)
         fi['annotations'] = [child.getAnnotations() for child in self.children()]
         return fi
