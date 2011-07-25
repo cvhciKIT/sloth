@@ -107,6 +107,7 @@ class AnnotationScene(QGraphicsScene):
 
     def onInserterFinished(self):
         self.sender().inserterFinished.disconnect(self.onInserterFinished)
+        self.labeltool_.exitInsertMode()
         self.inserter_ = None
 
     def onInsertionModeStarted(self, label_class):
