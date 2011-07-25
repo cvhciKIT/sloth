@@ -32,9 +32,9 @@ class BaseItem(QAbstractGraphicsShapeItem):
         self.changeColor()
 
         # initialize members
-        self.text_ = ""
-        self.text_bg_brush_ = None
-        self.auto_text_keys_ = []
+        self._text = ""
+        self._text_bg_brush = None
+        self._auto_text_keys = []
 
     def changeColor(self):
         if self._model_item is not None:
@@ -64,10 +64,10 @@ class BaseItem(QAbstractGraphicsShapeItem):
         """
         Sets a text to be displayed on this item.
         """
-        self.text_ = text
+        self._text = text
 
     def text(self):
-        return self.text_
+        return self._text
 
     def setTextBackgroundBrush(self, brush=None):
         """
@@ -75,33 +75,33 @@ class BaseItem(QAbstractGraphicsShapeItem):
         behind the text. Set to None to not draw a background
         (leave transparent).
         """
-        self.text_bg_brush_ = brush
+        self._text_bg_brush = brush
 
     def textBackgroundBrush(self):
         """
         Returns the background brush for the text region.
         """
-        return self.text_bg_brush_
+        return self._text_bg_brush
 
     def setAutoTextKeys(self, keys=[]):
         """
         Sets the keys for which the values from the annotations
         are displayed automatically as text.
         """
-        self.auto_text_keys_ = keys
+        self._auto_text_keys = keys
 
     def autoTextKeys(self):
         """
         Returns the list of keys for which the values from
         the annotations are displayed as text automatically.
         """
-        return self.auto_text_keys_
+        return self._auto_text_keys
 
     def _compile_text(self):
         text_lines = []
-        if self.text_ != "" and self.text_ is not None:
-            text_lines.append(self.text_)
-        for key in self.auto_text_keys_:
+        if self._text != "" and self._text is not None:
+            text_lines.append(self._text)
+        for key in self._auto_text_keys:
             text_lines.append("%s: %s" % \
                     (key, self._model_item.get(key, "")))
         return '\n'.join(text_lines)
@@ -127,9 +127,9 @@ class BaseItem(QAbstractGraphicsShapeItem):
                 QRect(5, 5, 1000, 1000), Qt.AlignTop | Qt.AlignLeft, text)
 
         # fill background region behind text
-        if self.text_bg_brush_ is not None:
+        if self._text_bg_brush is not None:
             bg_rect = rect.adjusted(-3, -3, 3, 3)
-            painter.fillRect(bg_rect, self.text_bg_brush_)
+            painter.fillRect(bg_rect, self._text_bg_brush)
 
         painter.drawText(rect, Qt.AlignTop | Qt.AlignLeft, text)
         painter.restore()
@@ -156,22 +156,22 @@ class PointItem(BaseItem):
     def __init__(self, model_item=None, parent=None):
         BaseItem.__init__(self, model_item, parent)
 
-        self.radius_ = 2
-        self.point_ = None
+        self._radius = 2
+        self._point = None
         self.updatePoint()
 
     def setRadius(self, radius):
-        self.radius_ = radius
+        self._radius = radius
         self.update()
 
     def radius(self):
-        return self.radius_
+        return self._radius
 
     def __call__(self, model_item=None, parent=None):
         pointitem = PointItem(model_item, parent)
         pointitem.setPen(self.pen())
         pointitem.setBrush(self.brush())
-        pointitem.setRadius(self.radius_)
+        pointitem.setRadius(self._radius)
         return pointitem
 
     def dataChange(self):
@@ -189,15 +189,15 @@ class PointItem(BaseItem):
 
         point = QPointF(float(self._model_item['x']),
                         float(self._model_item['y']))
-        if point == self.point_:
+        if point == self._point:
             return
 
-        self.point_ = point
+        self._point = point
         self.prepareGeometryChange()
-        self.setPos(self.point_)
+        self.setPos(self._point)
 
     def boundingRect(self):
-        r = self.radius_
+        r = self._radius
         return QRectF(-r, -r, 2 * r, 2 * r)
 
     def paint(self, painter, option, widget=None):
@@ -227,13 +227,13 @@ class RectItem(BaseItem):
     def __init__(self, model_item=None, parent=None):
         BaseItem.__init__(self, model_item, parent)
 
-        self.rect_ = None
+        self._rect = None
         self._resize = False
         self._resize_start = None
         self._resize_start_rect = None
 
         self._updateRect(self._dataToRect(self._model_item))
-        LOG.debug("Constructed rect %s for model item %s" % (self.rect_, model_item))
+        LOG.debug("Constructed rect %s for model item %s" % (self._rect, model_item))
 
     def __call__(self, model_item=None, parent=None):
         item = RectItem(model_item, parent)
@@ -248,24 +248,24 @@ class RectItem(BaseItem):
                       float(model_item['width']), float(model_item['height']))
 
     def _updateRect(self, rect):
-        if rect == self.rect_:
+        if rect == self._rect:
             return
 
-        self.rect_ = rect
+        self._rect = rect
         self.prepareGeometryChange()
         self.setPos(rect.topLeft())
 
     def updateModel(self):
-        self.rect_ = QRectF(self.scenePos(), self.rect_.size())
+        self._rect = QRectF(self.scenePos(), self._rect.size())
         self._model_item.update({
-            'x':      float(self.rect_.topLeft().x()),
-            'y':      float(self.rect_.topLeft().y()),
-            'width':  float(self.rect_.width()),
-            'height': float(self.rect_.height()),
+            'x':      float(self._rect.topLeft().x()),
+            'y':      float(self._rect.topLeft().y()),
+            'width':  float(self._rect.width()),
+            'height': float(self._rect.height()),
         })
 
     def boundingRect(self):
-        return QRectF(QPointF(0, 0), self.rect_.size())
+        return QRectF(QPointF(0, 0), self._rect.size())
 
     def paint(self, painter, option, widget=None):
         BaseItem.paint(self, painter, option, widget)
@@ -285,7 +285,7 @@ class RectItem(BaseItem):
         if event.button() & Qt.RightButton != 0:
             self._resize = True
             self._resize_start = event.scenePos()
-            self._resize_start_rect = QRectF(self.rect_)
+            self._resize_start_rect = QRectF(self._rect)
             event.accept()
         else:
             BaseItem.mousePressEvent(self, event)
@@ -318,9 +318,9 @@ class RectItem(BaseItem):
              }.get(event.key(), None)
         if ds is not None:
             if event.modifiers() & Qt.ControlModifier:
-                rect = self.rect_.adjusted(*((0, 0) + ds))
+                rect = self._rect.adjusted(*((0, 0) + ds))
             else:
-                rect = self.rect_.adjusted(*(ds + ds))
+                rect = self._rect.adjusted(*(ds + ds))
             self._updateRect(rect)
             self.updateModel()
             event.accept()

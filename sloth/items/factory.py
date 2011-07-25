@@ -15,7 +15,7 @@ class Factory:
             Mapping from type to python callable.  If not None, all mappings
             will be registered with the factory.
         """
-        self.items_ = {}
+        self._items = {}
 
         if items is not None:
             for _type, item in items.items():
@@ -33,13 +33,13 @@ class Factory:
             Reference to the callable which creates the new object.
         """
         _type = str(_type)
-        if _type in self.items_ and not replace:
+        if _type in self._items and not replace:
             raise Exception("Type %s already has an item: %s" % \
-                             (_type, str(self.items_[_type])))
+                             (_type, str(self._items[_type])))
         else:
             if type(item) == str:
                 item = import_callable(item)
-            self.items_[_type] = item
+            self._items[_type] = item
 
     def clear(self, _type=None):
         """
@@ -53,10 +53,10 @@ class Factory:
         """
         _type = str(_type)
         if _type is None:
-            self.items_     = {}
+            self._items     = {}
         else:
-            if _type in self.items_:
-                del self.items_[_type]
+            if _type in self._items:
+                del self._items[_type]
 
     def create(self, _type, *args, **kwargs):
         """
@@ -76,9 +76,9 @@ class Factory:
         function returns ``None``.
         """
         _type = str(_type)
-        if _type not in self.items_:
+        if _type not in self._items:
             return None
-        item = self.items_[_type]
+        item = self._items[_type]
         if item is None:
             return None
         return item(*args, **kwargs)

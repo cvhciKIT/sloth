@@ -44,14 +44,14 @@ class AnnotationContainerFactory:
             The mapping between file pattern and container class responsible
             for loading/saving.
         """
-        self.containers_ = []
+        self._containers = []
         for pattern, item in containers:
             if type(item) == str:
                 item = import_callable(item)
-            self.containers_.append((pattern, item))
+            self._containers.append((pattern, item))
 
     def patterns(self):
-        return [pattern for pattern, item in self.containers_]
+        return [pattern for pattern, item in self._containers]
 
     def create(self, filename, *args, **kwargs):
         """
@@ -64,7 +64,7 @@ class AnnotationContainerFactory:
         *args, **kwargs:
             Arguments passed to constructor of the container.
         """
-        for pattern, container in self.containers_:
+        for pattern, container in self._containers:
             if fnmatch.fnmatch(filename, pattern):
                 return container(*args, **kwargs)
         raise ImproperlyConfigured(
@@ -81,11 +81,11 @@ class AnnotationContainer:
         self.clear()
 
     def filename(self):
-        return self.filename_
+        return self._filename
 
     def clear(self):
-        self.annotations_ = []
-        self.filename_ = None
+        self._annotations = []
+        self._filename = None
 
     def load(self, filename):
         """
@@ -93,7 +93,7 @@ class AnnotationContainer:
         """
         if not filename:
             raise InvalidArgumentException("filename cannot be empty")
-        self.filename_ = filename
+        self._filename = filename
         start = time.time()
         ann = self.parseFromFile(filename)
         diff = time.time() - start
@@ -117,7 +117,7 @@ class AnnotationContainer:
         if not filename:
             filename = self.filename()
         self.serializeToFile(filename, annotations)
-        self.filename_ = filename
+        self._filename = filename
 
     def serializeToFile(self, filename, annotations):
         """
@@ -242,7 +242,7 @@ class FileNameListContainer(AnnotationContainer):
     """
 
     def parseFromFile(self, filename):
-        self.basedir_ = os.path.dirname(filename)
+        self._basedir = os.path.dirname(filename)
         f = open(filename, "r")
 
         annotations = []

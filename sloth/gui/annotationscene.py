@@ -13,15 +13,15 @@ class AnnotationScene(QGraphicsScene):
     def __init__(self, labeltool, items=None, inserters=None, parent=None):
         super(AnnotationScene, self).__init__(parent)
 
-        self.model_      = None
-        self.image_item_ = None
-        self.inserter_   = None
-        self.scene_item_ = None
-        self.message_    = ""
-        self.labeltool_  = labeltool
+        self._model      = None
+        self._image_item = None
+        self._inserter   = None
+        self._scene_item = None
+        self._message    = ""
+        self._labeltool  = labeltool
 
-        self.itemfactory_     = Factory(items)
-        self.inserterfactory_ = Factory(inserters)
+        self._itemfactory     = Factory(items)
+        self._inserterfactory = Factory(inserters)
 
         self.setBackgroundBrush(Qt.darkGray)
         self.reset()
@@ -30,35 +30,35 @@ class AnnotationScene(QGraphicsScene):
     # getters/setters
     #______________________________________________________________________________________________________
     def setModel(self, model):
-        if model == self.model_:
+        if model == self._model:
             # same model as the current one
             # reset caches anyway, invalidate root
             self.reset()
             return
 
         # disconnect old signals
-        if self.model_ is not None:
-            self.disconnect(self.model_, SIGNAL('dataChanged(QModelIndex,QModelIndex)'), self.dataChanged)
-            self.disconnect(self.model_, SIGNAL('rowsInserted(QModelIndex,int,int)'), self.rowsInserted)
-            self.disconnect(self.model_, SIGNAL('rowsAboutToBeRemoved(QModelIndex,int,int)'), self.rowsAboutToBeRemoved)
-            self.disconnect(self.model_, SIGNAL('rowsRemoved(QModelIndex,int,int)'), self.rowsRemoved)
-            self.disconnect(self.model_, SIGNAL('modelReset()'), self.reset)
+        if self._model is not None:
+            self.disconnect(self._model, SIGNAL('dataChanged(QModelIndex,QModelIndex)'), self.dataChanged)
+            self.disconnect(self._model, SIGNAL('rowsInserted(QModelIndex,int,int)'), self.rowsInserted)
+            self.disconnect(self._model, SIGNAL('rowsAboutToBeRemoved(QModelIndex,int,int)'), self.rowsAboutToBeRemoved)
+            self.disconnect(self._model, SIGNAL('rowsRemoved(QModelIndex,int,int)'), self.rowsRemoved)
+            self.disconnect(self._model, SIGNAL('modelReset()'), self.reset)
 
-        self.model_ = model
+        self._model = model
 
         # connect new signals
-        if self.model_ is not None:
-            self.connect(self.model_, SIGNAL('dataChanged(QModelIndex,QModelIndex)'), self.dataChanged)
-            self.connect(self.model_, SIGNAL('rowsInserted(QModelIndex,int,int)'), self.rowsInserted)
-            self.connect(self.model_, SIGNAL('rowsAboutToBeRemoved(QModelIndex,int,int)'), self.rowsAboutToBeRemoved)
-            self.connect(self.model_, SIGNAL('rowsRemoved(QModelIndex,int,int)'), self.rowsRemoved)
-            self.connect(self.model_, SIGNAL('modelReset()'), self.reset)
+        if self._model is not None:
+            self.connect(self._model, SIGNAL('dataChanged(QModelIndex,QModelIndex)'), self.dataChanged)
+            self.connect(self._model, SIGNAL('rowsInserted(QModelIndex,int,int)'), self.rowsInserted)
+            self.connect(self._model, SIGNAL('rowsAboutToBeRemoved(QModelIndex,int,int)'), self.rowsAboutToBeRemoved)
+            self.connect(self._model, SIGNAL('rowsRemoved(QModelIndex,int,int)'), self.rowsRemoved)
+            self.connect(self._model, SIGNAL('modelReset()'), self.reset)
 
         # reset caches, invalidate root
         self.reset()
 
     def sceneItem(self):
-        return self.scene_item_
+        return self._scene_item
 
     def setCurrentImage(self, current_image):
         """
@@ -66,40 +66,40 @@ class AnnotationScene(QGraphicsScene):
         displayed by the scene.  This can be either the index to a frame in a
         video, or to an image.
         """
-        if current_image == self.image_item_:
+        if current_image == self._image_item:
             return
         elif current_image is None:
             self.clear()
-            self.image_item_ = None
-            self.image_      = None
-            self.pixmap_     = None
+            self._image_item = None
+            self._image      = None
+            self._pixmap     = None
         else:
             self.clear()
-            self.image_item_ = current_image
-            assert self.image_item_.model() == self.model_
-            self.image_      = self.labeltool_.getImage(self.image_item_)
-            self.pixmap_     = QPixmap(toQImage(self.image_))
-            self.scene_item_ = QGraphicsPixmapItem(self.pixmap_)
-            self.scene_item_.setZValue(-1)
-            self.setSceneRect(0, 0, self.pixmap_.width(), self.pixmap_.height())
-            self.addItem(self.scene_item_)
+            self._image_item = current_image
+            assert self._image_item.model() == self._model
+            self._image      = self._labeltool.getImage(self._image_item)
+            self._pixmap     = QPixmap(toQImage(self._image))
+            self._scene_item = QGraphicsPixmapItem(self._pixmap)
+            self._scene_item.setZValue(-1)
+            self.setSceneRect(0, 0, self._pixmap.width(), self._pixmap.height())
+            self.addItem(self._scene_item)
 
-            self.insertItems(0, len(self.image_item_.children())-1)
+            self.insertItems(0, len(self._image_item.children())-1)
             self.update()
 
     def insertItems(self, first, last):
-        if self.image_item_ is None:
+        if self._image_item is None:
             return
 
-        assert self.model_ is not None
+        assert self._model is not None
 
         # create a graphics item for each model index
         for row in range(first, last+1):
-            child = self.image_item_.childAt(row)
+            child = self._image_item.childAt(row)
             if not isinstance(child, AnnotationModelItem):
                 continue
             label_class = child['class']
-            item = self.itemfactory_.create(label_class, child)
+            item = self._itemfactory.create(label_class, child)
             if item is not None:
                 self.addItem(item)
             else:
@@ -107,28 +107,28 @@ class AnnotationScene(QGraphicsScene):
 
     def onInserterFinished(self):
         self.sender().inserterFinished.disconnect(self.onInserterFinished)
-        self.labeltool_.exitInsertMode()
-        self.inserter_ = None
+        self._labeltool.exitInsertMode()
+        self._inserter = None
 
     def onInsertionModeStarted(self, label_class):
         # Abort current inserter
-        if self.inserter_ is not None:
-            self.inserter_.abort()
+        if self._inserter is not None:
+            self._inserter.abort()
 
         self.deselectAllItems()
 
         # Add new inserter
-        default_properties = self.labeltool_.propertyeditor().currentEditorProperties()
-        inserter = self.inserterfactory_.create(label_class, self.labeltool_, self, default_properties)
+        default_properties = self._labeltool.propertyeditor().currentEditorProperties()
+        inserter = self._inserterfactory.create(label_class, self._labeltool, self, default_properties)
         if inserter is None:
             raise InvalidArgumentException("Could not find inserter for class '%s' with default properties '%s'" % (label_class, default_properties))
         inserter.inserterFinished.connect(self.onInserterFinished)
-        self.inserter_ = inserter
+        self._inserter = inserter
         LOG.debug("Created inserter for class '%s' with default properties '%s'" % (label_class, default_properties))
 
     def onInsertionModeEnded(self):
-        if self.inserter_ is not None:
-            self.inserter_.abort()
+        if self._inserter is not None:
+            self._inserter.abort()
 
     #
     # common methods
@@ -140,7 +140,7 @@ class AnnotationScene(QGraphicsScene):
 
     def clear(self):
         QGraphicsScene.clear(self)
-        self.scene_item_ = None
+        self._scene_item = None
 
     def addItem(self, item):
         QGraphicsScene.addItem(self, item)
@@ -151,22 +151,22 @@ class AnnotationScene(QGraphicsScene):
     #______________________________________________________________________________________________________
     def mousePressEvent(self, event):
         LOG.debug("mousePressEvent %s %s" % (self.sceneRect().contains(event.scenePos()), event.scenePos()))
-        if self.inserter_ is not None:
+        if self._inserter is not None:
             if not self.sceneRect().contains(event.scenePos()) and \
-               not self.inserter_.allowOutOfSceneEvents():
+               not self._inserter.allowOutOfSceneEvents():
                 # ignore events outside the scene rect
                 return
             # insert mode
-            self.inserter_.mousePressEvent(event, self.image_item_)
+            self._inserter.mousePressEvent(event, self._image_item)
         else:
             # selection mode
             QGraphicsScene.mousePressEvent(self, event)
 
     def mouseReleaseEvent(self, event):
         LOG.debug("mouseReleaseEvent %s %s" % (self.sceneRect().contains(event.scenePos()), event.scenePos()))
-        if self.inserter_ is not None:
+        if self._inserter is not None:
             # insert mode
-            self.inserter_.mouseReleaseEvent(event, self.image_item_)
+            self._inserter.mouseReleaseEvent(event, self._image_item)
         else:
             # selection mode
             QGraphicsScene.mouseReleaseEvent(self, event)
@@ -175,9 +175,9 @@ class AnnotationScene(QGraphicsScene):
         sp = event.scenePos()
         self.mousePositionChanged.emit(sp.x(), sp.y())
         #LOG.debug("mouseMoveEvent %s %s" % (self.sceneRect().contains(event.scenePos()), event.scenePos()))
-        if self.inserter_ is not None:
+        if self._inserter is not None:
             # insert mode
-            self.inserter_.mouseMoveEvent(event, self.image_item_)
+            self._inserter.mouseMoveEvent(event, self._image_item)
         else:
             # selection mode
             QGraphicsScene.mouseMoveEvent(self, event)
@@ -188,7 +188,7 @@ class AnnotationScene(QGraphicsScene):
 
     def onSelectionChanged(self):
         model_items = [item.modelItem() for item in self.selectedItems()]
-        self.labeltool_.treeview().setSelectedItems(model_items)
+        self._labeltool.treeview().setSelectedItems(model_items)
         self.editSelectedItems()
 
     def onSelectionChangedInTreeView(self, items):
@@ -204,9 +204,9 @@ class AnnotationScene(QGraphicsScene):
 
     def editSelectedItems(self):
         scene_items = self.selectedItems()
-        if self.inserter_ is None or len(scene_items) > 0:
+        if self._inserter is None or len(scene_items) > 0:
             items = [item.modelItem() for item in scene_items]
-            self.labeltool_.propertyeditor().startEditMode(items)
+            self._labeltool.propertyeditor().startEditMode(items)
 
     #
     # key event handlers
@@ -214,7 +214,7 @@ class AnnotationScene(QGraphicsScene):
     def selectNextItem(self, reverse=False):
         # disable inserting
         # TODO: forward this to the ButtonArea
-        self.inserter_ = None
+        self._inserter = None
 
         # set focus to the view, so that subsequent keyboard events are forwarded to the scene
         if len(self.views()) > 0:
@@ -245,13 +245,13 @@ class AnnotationScene(QGraphicsScene):
     def keyPressEvent(self, event):
         LOG.debug("keyPressEvent %s" % event)
 
-        if self.model_ is None or self.image_item_ is None:
+        if self._model is None or self._image_item is None:
             event.ignore()
             return
 
-        if self.inserter_ is not None:
+        if self._inserter is not None:
             # insert mode
-            self.inserter_.keyPressEvent(event, self.image_item_)
+            self._inserter.keyPressEvent(event, self._image_item)
         else:
             # selection mode
             if event.key() == Qt.Key_Delete:
@@ -276,7 +276,7 @@ class AnnotationScene(QGraphicsScene):
     # this is the implemenation of the scene as a view of the model
     #______________________________________________________________________________________________________
     def dataChanged(self, indexFrom, indexTo):
-        if self.image_item_ is None or self.image_item_.index() != indexFrom.parent().parent():
+        if self._image_item is None or self._image_item.index() != indexFrom.parent().parent():
             return
 
         item = self.itemFromIndex(indexFrom.parent())
@@ -284,13 +284,13 @@ class AnnotationScene(QGraphicsScene):
             item.dataChanged()
 
     def rowsInserted(self, index, first, last):
-        if self.image_item_ is None or self.image_item_.index() != index:
+        if self._image_item is None or self._image_item.index() != index:
             return
 
         self.insertItems(first, last)
 
     def rowsAboutToBeRemoved(self, index, first, last):
-        if self.image_item_ is None or self.image_item_.index() != index:
+        if self._image_item is None or self._image_item.index() != index:
             return
 
         for row in range(first, last+1):
@@ -313,39 +313,39 @@ class AnnotationScene(QGraphicsScene):
     # message handling and displaying
     #______________________________________________________________________________________________________
     def setMessage(self, message):
-        if self.message_ is not None:
+        if self._message is not None:
             self.clearMessage()
 
         if message is None or message == "":
             return
 
         # TODO don't use text item at all, just draw the text in drawForeground
-        self.message_ = message
-        self.message_text_item_ = QGraphicsSimpleTextItem(message)
-        self.message_text_item_.setPos(20, 20)
+        self._message = message
+        self._message_text_item = QGraphicsSimpleTextItem(message)
+        self._message_text_item.setPos(20, 20)
         self.invalidate(QRectF(), QGraphicsScene.ForegroundLayer)
 
     def clearMessage(self):
-        if self.message_ is not None:
-            self.message_text_item_ = None
-            self.message_ = None
+        if self._message is not None:
+            self._message_text_item = None
+            self._message = None
             self.invalidate(QRectF(), QGraphicsScene.ForegroundLayer)
 
     def drawForeground(self, painter, rect):
         QGraphicsScene.drawForeground(self, painter, rect)
 
-        if self.message_ is not None:
-            assert self.message_text_item_ is not None
+        if self._message is not None:
+            assert self._message_text_item is not None
 
             painter.setTransform(QTransform())
             painter.setBrush(QColor('lightGray'))
             painter.setPen(QPen(QBrush(QColor('black')), 2))
 
-            br = self.message_text_item_.boundingRect()
+            br = self._message_text_item.boundingRect()
 
             painter.drawRoundedRect(QRectF(10, 10, br.width()+20, br.height()+20), 10.0, 10.0)
             painter.setTransform(QTransform.fromTranslate(20, 20))
             painter.setPen(QPen(QColor('black'), 1))
 
-            self.message_text_item_.paint(painter, QStyleOptionGraphicsItem(), None)
+            self._message_text_item.paint(painter, QStyleOptionGraphicsItem(), None)
 

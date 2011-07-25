@@ -66,8 +66,8 @@ class LabelTool(QObject):
         """
         QObject.__init__(self, parent)
 
-        self.container_factory_ = None
-        self.container_ = AnnotationContainer()
+        self._container_factory = None
+        self._container = AnnotationContainer()
         self._current_image = None
         self._model = AnnotationModel([])
         self._mainwindow = None
@@ -204,15 +204,15 @@ class LabelTool(QObject):
             config.update(config_module_path)
 
         # Instatiate container factory
-        self.container_factory_ = AnnotationContainerFactory(config.CONTAINERS)
+        self._container_factory = AnnotationContainerFactory(config.CONTAINERS)
 
     def loadPlugins(self, plugins):
-        self.plugins_ = []
+        self._plugins = []
         for plugin in plugins:
             if type(plugin) == str:
                 plugin = import_callable(plugin)
             p = plugin(self)
-            self.plugins_.append(p)
+            self._plugins.append(p)
             action = p.action()
             self.pluginLoaded.emit(action)
 
@@ -223,8 +223,8 @@ class LabelTool(QObject):
         fname = str(fname) # convert from QString
 
         try:
-            self.container_ = self.container_factory_.create(fname)
-            self._model = AnnotationModel(self.container_.load(fname))
+            self._container = self._container_factory.create(fname)
+            self._model = AnnotationModel(self._container.load(fname))
             msg = "Successfully loaded %s (%d files, %d annotations)" % \
                     (fname, self._model.root().numFiles(), self._model.root().numAnnotations())
         except Exception as e:
@@ -240,14 +240,14 @@ class LabelTool(QObject):
         success = False
         try:
             # create new container if the filename is different
-            if fname != self.container_.filename():
+            if fname != self._container.filename():
                 # TODO: skip if it is the same class
-                self.container_ = self.container_factory_.create(fname)
+                self._container = self._container_factory.create(fname)
 
             # Get annotations dict
             ann = self._model.root().getAnnotations()
 
-            self.container_.save(ann, fname)
+            self._container.save(ann, fname)
             #self._model.writeback() # write back changes that are cached in the model itself, e.g. mask updates
             msg = "Successfully saved %s (%d files, %d annotations)" % \
                     (fname, self._model.root().numFiles(), self._model.root().numAnnotations())
@@ -266,7 +266,7 @@ class LabelTool(QObject):
         self.annotationsLoaded.emit()
 
     def getCurrentFilename(self):
-        return self.container_.filename()
+        return self._container.filename()
 
     ###########################################################################
     # Model stuff
@@ -318,10 +318,10 @@ class LabelTool(QObject):
 
     def getImage(self, item):
         # TODO: Also handle video frames
-        return self.container_.loadImage(item['filename'])
+        return self._container.loadImage(item['filename'])
 
     def getAnnotationFilePatterns(self):
-        return self.container_factory_.patterns()
+        return self._container_factory.patterns()
 
     def addImageFile(self, fname):
         fileitem = {

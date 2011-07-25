@@ -10,14 +10,14 @@ class ControlButtonWidget(QWidget):
         layout.setAlignment(Qt.AlignTop)
         self.back_button = QPushButton("<")
         self.forward_button = QPushButton(">")
-        self.label_ = QLabel("<center><b></b></center>")
+        self._label = QLabel("<center><b></b></center>")
         layout.addWidget(self.back_button)
-        layout.addWidget(self.label_)
+        layout.addWidget(self._label)
         layout.addWidget(self.forward_button)
         self.setLayout(layout)
 
     def setFrameNumAndTimestamp(self, num, timestamp):
-        self.label_.setText("<center><b>%d / %f</b></center>" % (num, timestamp))
+        self._label.setText("<center><b>%d / %f</b></center>" % (num, timestamp))
 
     def setFilename(self, filename):
-        self.label_.setText("<center><b>%s</b></center>" % (filename, ))
+        self._label.setText("<center><b>%s</b></center>" % (filename, ))

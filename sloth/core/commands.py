@@ -66,7 +66,7 @@ class DumpLabelsCommand(BaseCommand):
 
         self.labeltool.loadAnnotations(args[0])
         # TODO add better accessor the the labeltool
-        pprint(self.labeltool.container_.annotations())
+        pprint(self.labeltool._container.annotations())
 
 
 class AppendFilesCommand(BaseCommand):

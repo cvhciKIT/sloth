@@ -23,7 +23,7 @@ class GraphicsView(QGraphicsView):
         self.setMouseTracking(True)
         self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform | QPainter.TextAntialiasing);
         self.setStyleSheet("QFrame { border: 3px solid black }");
-        self.active_ = False
+        self._active = False
         self._pan = False
         self._panStartX = -1
         self._panStartY = -1
@@ -53,18 +53,18 @@ class GraphicsView(QGraphicsView):
             return 1
 
     def isActive(self):
-        return self.active_
+        return self._active
 
     def activate(self):
-        if not self.active_:
-            self.active_ = True
+        if not self._active:
+            self._active = True
             self.setFocus(Qt.OtherFocusReason)
             self.setStyleSheet("QFrame { border: 3px solid red }");
             self.update()
 
     def deactivate(self):
-        if self.active_:
-            self.active_ = False
+        if self._active:
+            self._active = False
             self.clearFocus()
             self.setStyleSheet("QFrame { border: 3px solid black }");
             self.update()
