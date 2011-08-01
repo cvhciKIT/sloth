@@ -337,3 +337,101 @@ class ControlItem(QGraphicsItem):
         color = QColor('black')
         color.setAlpha(200)
         painter.fillRect(self.boundingRect(), color)
+
+class NPointFacePointItem(QGraphicsEllipseItem):
+    def __init__(self, landmark, *args, **kwargs):
+        self._landmark = landmark
+        QGraphicsEllipseItem.__init__(self, *args, **kwargs)
+        self.setFlags(QGraphicsItem.ItemIsMovable |
+                      QGraphicsItem.ItemSendsGeometryChanges |
+                      QGraphicsItem.ItemSendsScenePositionChanges)
+
+    def landmark(self):
+        return self._landmark
+
+    def itemChange(self, change, value):
+        if change == QGraphicsItem.ItemPositionHasChanged:
+            parent = self.parentItem()
+            if parent is not None:
+                parent.landmarkChanged(self, value)
+        return QAbstractGraphicsShapeItem.itemChange(self, change, value)
+
+    def setColor(self, color):
+        self.setPen(color)
+        self.update()
+
+class NPointFaceItem(BaseItem):
+    landmarks = [
+            ("leoc", "left eye outer corner"),
+            ("leic", "left eye inner corner"),
+            ("reic", "right eye inner corner"),
+            ("reoc", "right eye outer corner"),
+            ("nt",   "nose tip"),
+            ("mlc",  "left mouth corner"),
+            ("mrc",  "right mouth corner"),
+            ]
+
+    def __init__(self, model_item=None, parent=None):
+        self._children = {}
+        BaseItem.__init__(self, model_item, parent)
+        self.dataChange()
+        self.changeColor()
+
+    def updateModel(self):
+        changes = {}
+        for lm, lmstr in self.landmarks:
+            lmx, lmy = (lm+"x", lm+"y")
+            if self._model_item[lmx] != self._children[lm].scenePos().x():
+                changes[lmx] = self._children[lm].scenePos().x()
+            if self._model_item[lmy] != self._children[lm].scenePos().y():
+                changes[lmy] = self._children[lm].scenePos().y()
+        if changes:
+            self._model_item.update(changes)
+
+    def dataChange(self):
+        for lm, lmstr in self.landmarks:
+            lmx, lmy = (lm+"x", lm+"y")
+            landmark_present = True
+            if lmx not in self._model_item or lmy not in self._model_item:
+                landmark_present = False
+            elif self._model_item[lmx] < 0 or self._model_item[lmy] < 0:
+                landmark_present = False
+
+            if landmark_present:
+                px, py = (self._model_item[lmx], self._model_item[lmy])
+                if lm in self._children:
+                    # Update item position if it is different
+                    if px != self._children[lm].scenePos().x() or py != self._children[lm].scenePos().y():
+                        self._children[lm].setPos(px, py)
+                else:
+                    self._children[lm] = NPointFacePointItem(lm, QRectF(-2, -2, 5, 5), self)
+                    self._children[lm].setPos(px, py)
+            else:
+                # Landmark is not present
+                if lm in self._children:
+                    # Remove landmark from scene
+                    pass
+
+    def setColor(self, *args, **kwargs):
+        for c in self._children.values():
+            c.setColor(*args, **kwargs)
+        BaseItem.setColor(self, *args, **kwargs)
+
+    def landmarkChanged(self, item, value):
+        self.prepareGeometryChange()
+        self.updateModel()
+
+    def boundingRect(self):
+        br = self.childrenBoundingRect()
+        offset = 0.2 * br.height()
+        return br.adjusted(-offset, -offset, +offset, +offset)
+
+    def paint(self, painter, option, widget=None):
+        BaseItem.paint(self, painter, option, widget)
+
+        pen = self.pen()
+        if self.isSelected():
+            pen.setStyle(Qt.DashLine)
+        painter.setPen(pen)
+        painter.drawRect(self.boundingRect())
+

@@ -109,6 +109,70 @@ class FixedRatioRectItemInserter(RectItemInserter):
 
         event.accept()
 
+class NPointFaceInserter(ItemInserter):
+    landmarks = [
+            ("leoc", "left eye outer corner"),
+            ("leic", "left eye inner corner"),
+            ("reic", "right eye inner corner"),
+            ("reoc", "right eye outer corner"),
+            ("nt",   "nose tip"),
+            ("mlc",  "left mouth corner"),
+            ("mrc",  "right mouth corner"),
+            ]
+
+    def __init__(self, labeltool, scene, default_properties=None):
+        ItemInserter.__init__(self, labeltool, scene, default_properties)
+        self._reset()
+
+    def _reset(self):
+        self._state = 0
+        self._items = []
+        self._values = {}
+        self._image_item = None
+        self._scene.setMessage("Labeling %s" % self.landmarks[self._state][1])
+        pass
+
+    def _cleanup(self):
+        for item in self._items:
+            self._scene.removeItem(item)
+        self._scene.clearMessage()
+
+    def _insertItem(self):
+        item = {}
+        item.update(self._default_properties)
+        item.update(self._values)
+        self._image_item.addAnnotation(item)
+
+    def mousePressEvent(self, event, image_item):
+        if self._image_item is None:
+            self._image_item = image_item
+        else:
+            assert(self._image_item == image_item)
+
+        pos = event.scenePos()
+        if event.buttons() & Qt.LeftButton:
+            self._values[self.landmarks[self._state][0] + "x"] = pos.x()
+            self._values[self.landmarks[self._state][0] + "y"] = pos.y()
+            item = QGraphicsEllipseItem(QRectF(pos.x()-2, pos.y()-2, 5, 5))
+            item.setPen(Qt.red)
+            self._scene.addItem(item)
+            self._items.append(item)
+        else:
+            self._values[self.landmarks[self._state][0] + "x"] = -1
+            self._values[self.landmarks[self._state][0] + "y"] = -1
+
+        if self._state == len(self.landmarks)-1:
+            self._cleanup()
+            self._insertItem()
+            self.inserterFinished.emit()
+        else:
+            self._state += 1
+            self._scene.setMessage("Labeling %s" % self.landmarks[self._state][1])
+
+    def abort(self):
+        self._cleanup()
+        self.inserterFinished.emit()
+
 # TODO
 class PolygonItemInserter(ItemInserter):
     def __init__(self, scene, mode=None):
