@@ -374,16 +374,19 @@ class NPointFaceItem(BaseItem):
     def __init__(self, model_item=None, parent=None):
         self._children = {}
         BaseItem.__init__(self, model_item, parent)
+        self.setFlag(QGraphicsItem.ItemIsMovable, False)
         self.dataChange()
         self.changeColor()
 
     def updateModel(self):
         changes = {}
         for lm, lmstr in self.landmarks:
+            if lm not in self._children:
+                continue
             lmx, lmy = (lm+"x", lm+"y")
-            if self._model_item[lmx] != self._children[lm].scenePos().x():
+            if lmx not in self._model_item or self._model_item[lmx] != self._children[lm].scenePos().x():
                 changes[lmx] = self._children[lm].scenePos().x()
-            if self._model_item[lmy] != self._children[lm].scenePos().y():
+            if lmy not in self._model_item or self._model_item[lmy] != self._children[lm].scenePos().y():
                 changes[lmy] = self._children[lm].scenePos().y()
         if changes:
             self._model_item.update(changes)
