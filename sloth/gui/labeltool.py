@@ -16,13 +16,11 @@ from sloth.conf import config
 from sloth.core.utils import import_callable
 from sloth.annotations.model import AnnotationTreeView, FrameModelItem, ImageFileModelItem
 from sloth import APP_NAME, ORGANIZATION_DOMAIN
+from sloth.utils.bind import bind, compose_noargs
 
 GUIDIR=os.path.join(os.path.dirname(__file__))
 
 LOG=logging.getLogger(__name__)
-
-def bind(function, labeltool):
-    return lambda: function(labeltool)
 
 class BackgroundLoader(QObject):
     finished = pyqtSignal()
@@ -165,7 +163,10 @@ class MainWindow(QMainWindow):
             hk = QAction(desc, self)
             hk.setShortcut(QKeySequence(key))
             hk.setEnabled(True)
-            hk.triggered.connect(bind(fun, self.labeltool))
+            if hasattr(fun, '__call__'):
+                hk.triggered.connect(bind(fun, self.labeltool))
+            else:
+                hk.triggered.connect(compose_noargs([bind(f, self.labeltool) for f in fun]))
             self.ui.menuShortcuts.addAction(hk)
             self.shortcuts.append(hk)
 
