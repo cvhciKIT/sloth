@@ -196,9 +196,6 @@
    <property name="text">
     <string>Next</string>
    </property>
-   <property name="shortcut">
-    <string>Space</string>
-   </property>
   </action>
   <action name="actionPrevious">
    <property name="icon">
@@ -207,9 +204,6 @@
    </property>
    <property name="text">
     <string>Previous</string>
-   </property>
-   <property name="shortcut">
-    <string>Backspace</string>
    </property>
   </action>
   <action name="actionZoom_In">
