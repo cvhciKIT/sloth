@@ -255,6 +255,7 @@ class RootModelItem(ModelItem):
     def appendFileItem(self, fileinfo):
         item = FileModelItem.create(fileinfo)
         self.appendChild(item)
+        return item
 
     def appendFileItems(self, fileinfos):
         start1 = time.time()

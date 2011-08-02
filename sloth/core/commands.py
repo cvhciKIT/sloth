@@ -76,6 +76,10 @@ class AppendFilesCommand(BaseCommand):
     """
     args = '<labelfile> <file1> [<file2> ...]'
     help = __doc__.strip()
+    option_list = BaseCommand.option_list + (
+        make_option('-u', '--unlabeled', action='store_true', default=False,
+            help='Mark appended files as unlabeled.'),
+    )
 
     def handle(self, *args, **options):
         if len(args) < 2:
@@ -88,7 +92,9 @@ class AppendFilesCommand(BaseCommand):
                 rel_filename = os.path.relpath(filename, os.path.dirname(args[0]))
             except:
                 pass
-            self.labeltool.addImageFile(rel_filename)
+            item = self.labeltool.addImageFile(rel_filename)
+            if options['unlabeled']:
+                item.setUnlabeled(True)
         self.labeltool.saveAnnotations(args[0])
 
 
