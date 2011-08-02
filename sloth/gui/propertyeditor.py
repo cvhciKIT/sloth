@@ -352,6 +352,12 @@ class PropertyEditor(QWidget):
         self._class_buttons[label_class] = button
         self._classbox_layout.addWidget(button)
 
+        # Add hotkey
+        if 'hotkey' in label_config:
+            hotkey = QShortcut(QKeySequence(label_config['hotkey']), self)
+            hotkey.activated.connect(button.click)
+            self._class_shortcuts[label_class] = hotkey
+
     def parseConfiguration(self, label_class, label_config):
         attrs = label_config['attributes']
 
@@ -435,6 +441,7 @@ class PropertyEditor(QWidget):
 
     def _setupGUI(self):
         self._class_buttons = {}
+        self._class_shortcuts = {}
         self._label_editor  = None
 
         # Label class buttons
