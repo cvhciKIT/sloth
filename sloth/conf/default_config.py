@@ -70,6 +70,11 @@ LABELS = (
 # third entry -- if present -- is expected to be a string describing the 
 # action.
 HOTKEYS = (
+    ('Space',     [lambda lt: lt.currentImage().confirmAll(),
+                   lambda lt: lt.currentImage().setUnlabeled(False),
+                   lambda lt: lt.gotoNext()
+                  ],                                         'Mark image as labeled/confirmed and go to next'),
+    ('Backspace', lambda lt: lt.gotoPrevious(),              'Previous image/frame'),
     ('PgDown',    lambda lt: lt.gotoNext(),                  'Next image/frame'),
     ('PgUp',      lambda lt: lt.gotoPrevious(),              'Previous image/frame'),
     ('Tab',       lambda lt: lt.selectNextAnnotation(),      'Select next annotation'),
