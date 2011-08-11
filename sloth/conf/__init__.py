@@ -1,5 +1,5 @@
 from sloth.conf import default_config
-import importlib
+from sloth.utils import importlib
 import sys
 import os
 
