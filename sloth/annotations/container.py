@@ -194,6 +194,93 @@ class PickleContainer(AnnotationContainer):
         pickle.dump(annotations, f)
 
 
+class OkapiAnnotationContainer(AnnotationContainer):
+    """
+    Converts a AnnotationPropertiesMap to a dict
+    """
+    def convertAnnotationPropertiesMapToDict(self, properties):
+        propdict = {}
+        for k, v in properties.iteritems():
+            propdict[k] = v
+        return propdict
+
+    """
+    Simple container which writes the annotations to disk using okapy.AnnotationContainer.
+    """
+    def parseFromFile(self, filename):
+        """
+        Overwritten to read Okapi::Annotation files.
+        """
+        container = okapy.AnnotationContainer()
+        container.ReadFromFile(filename)
+
+        annotations = []
+        for f in container.files():
+            fileitem = self.convertAnnotationPropertiesMapToDict(f.properties())
+            fileitem['class'] = fileitem['type']
+            del fileitem['type']
+            if f.isImage():
+                fileitem['annotations'] = []
+                for annotation in f.annotations():
+                    ann = self.convertAnnotationPropertiesMapToDict(annotation.properties())
+                    fileitem['annotations'].append(ann)
+            elif f.isVideo():
+                fileitem['frames'] = []
+                for frame in f.frames():
+                    frameitem = self.convertAnnotationPropertiesMapToDict(frame.properties())
+                    frameitem['annotations'] = []
+                    for annotation in frame.annotations():
+                        ann = self.convertAnnotationPropertiesMapToDict(annotation.properties())
+                        frameitem['annotations'].append(ann)
+                    fileitem['frames'].append(frameitem)
+            annotations.append(fileitem)
+
+        return annotations
+
+    """
+    Converts a dict to a AnnotationPropertiesMap
+    """
+    def convertDictToAnnotationPropertiesMap(self, annotation, propdict):
+        for k, v in propdict.iteritems():
+            if k != 'annotations' or k != 'frames':
+                annotation.set_str(k, str(v))
+        return annotation
+
+    def serializeToFile(self, fname, annotations):
+        """
+        Overwritten to write Okapi::Annotation files.
+        """
+        container = okapy.AnnotationContainer()
+
+        for f in annotations:
+            fileitem = okapy.AnnotationFileItem()
+            if f.has_key('class'):
+                f['type'] = f['class']
+                del f['class']
+            fileitem = self.convertDictToAnnotationPropertiesMap(fileitem, f)
+            if fileitem.isImage():
+                if f.has_key('annotations'):
+                    for annotation in f['annotations']:
+                        annoitem = okapy.AnnotationItem()
+                        annoitem = self.convertDictToAnnotationPropertiesMap(annoitem, annotation)
+                        fileitem.annotations().push_back(annoitem)
+            elif fileitem.isVideo():
+                if f.has_key('frames'):
+                    for frame in f['frames']:
+                        frameitem = okapy.AnnotationFrameItem()
+                        frameitem = self.convertDictToAnnotationPropertiesMap(frameitem, frame)
+                        if frame.has_key('annotations'):
+                            for annotation in frame['annotations']:
+                                annoitem = okapy.AnnotationItem()
+                                annoitem = self.convertDictToAnnotationPropertiesMap(annoitem, annotation)
+                                frameitem.annotations().push_back(annoitem)
+                        fileitem.frames().push_back(frameitem)
+            container.files().push_back(fileitem)
+
+        # TODO make all image filenames relative to the label file
+        container.WriteToFile(fname)
+
+
 class JsonContainer(AnnotationContainer):
     """
     Simple container which writes the annotations to disk in JSON format.
