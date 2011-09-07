@@ -40,6 +40,7 @@ Contents
    items
    inserters
    containers
+   examples
    api/index
 
 
