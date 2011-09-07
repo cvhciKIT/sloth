@@ -38,8 +38,8 @@ class CreateConfigCommand(BaseCommand):
         if len(args) != 1:
             raise CommandError("Expect exactly 1 argument.")
 
-        template_dir = os.path.join(sloth.__path__[0], 'conf', 'template')
-        config_template = os.path.join(template_dir, 'config_template.py')
+        template_dir = os.path.join(sloth.__path__[0], 'conf')
+        config_template = os.path.join(template_dir, 'default_config.py')
         target = args[0]
 
         if os.path.exists(target) and not options['force']:
