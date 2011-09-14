@@ -4,10 +4,18 @@ from PyQt4.Qt import *
 import logging
 LOG = logging.getLogger(__name__)
 
+class IgnorePrefix:
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return self.value
+
 class BaseItem(QAbstractGraphicsShapeItem):
     """
     Base class for visualization items.
     """
+
+    cycleValuesOnKeypress = {}
 
     def __init__(self, model_item=None, prefix="", parent=None):
         """
@@ -154,6 +162,33 @@ class BaseItem(QAbstractGraphicsShapeItem):
             self.updateModel()
         return QAbstractGraphicsShapeItem.itemChange(self, change, value)
 
+    def keyPressEvent(self, event):
+        """
+        This handles the value cycling as defined in cycleValuesOnKeypress.
+        """
+        if str(event.text()) in self.cycleValuesOnKeypress:
+            itemkey, valuelist = self.cycleValuesOnKeypress[str(event.text())]
+            if isinstance(itemkey, IgnorePrefix):
+                itemkey = itemkey.value
+            else:
+                itemkey = self.prefix() + itemkey
+            if len(valuelist) > 0:
+                oldvalue = self._model_item.get(itemkey, None)
+                if oldvalue is None:
+                    nextindex = 0
+                else:
+                    try:
+                        nextindex = (valuelist.index(oldvalue)+1) % len(valuelist)
+                    except ValueError:
+                        nextindex = 0
+                newvalue = valuelist[nextindex]
+                if newvalue is None and oldvalue is not None:
+                    self._model_item.delete(itemkey)
+                else:
+                    self._model_item[itemkey] = valuelist[nextindex]
+                self.dataChanged()
+                event.accept()
+
 
 class PointItem(BaseItem):
     """
@@ -217,6 +252,7 @@ class PointItem(BaseItem):
         painter.drawEllipse(self.boundingRect())
 
     def keyPressEvent(self, event):
+        BaseItem.keyPressEvent(self, event)
         step = 1
         if event.modifiers() & Qt.ShiftModifier:
             step = 5
@@ -317,6 +353,7 @@ class RectItem(BaseItem):
             BaseItem.mouseReleaseEvent(self, event)
 
     def keyPressEvent(self, event):
+        BaseItem.keyPressEvent(self, event)
         step = 1
         if event.modifiers() & Qt.ShiftModifier:
             step = 5
@@ -358,6 +395,10 @@ class GroupItem(BaseItem):
         return self.childrenBoundingRect()
 
 class OccludablePointItem(PointItem):
+    cycleValuesOnKeypress = {
+        'o': ('occluded', [True, False])
+    }
+
     def __init__(self, *args, **kwargs):
         PointItem.__init__(self, *args, **kwargs)
         self.updateColor()
@@ -372,17 +413,15 @@ class OccludablePointItem(PointItem):
             occluded = self._model_item[key]
             self.setColor(Qt.red if occluded else Qt.yellow)
 
-    def keyPressEvent(self, event):
-        PointItem.keyPressEvent(self, event)
-        if event.key() == Qt.Key_O:
-            occluded = not self._model_item.get(self.prefix() + 'occluded', False)
-            self._model_item[self.prefix() + 'occluded'] = occluded
-            self.updateColor()
-            event.accept()
+class IDRectItem(RectItem):
+    cycleValuesOnKeypress = dict(
+        [('i',    (IgnorePrefix('id'), range(10)))] +
+        [(str(i), (IgnorePrefix('id'), [i])) for i in range(10)]
+    )
 
 class BBoxFaceItem(GroupItem):
     items = [
-        (RectItem,            "bbox"),
+        (IDRectItem,          "bbox"),
         (OccludablePointItem, "lec"),
         (OccludablePointItem, "rec"),
         (OccludablePointItem, "mc"),
