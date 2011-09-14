@@ -58,45 +58,50 @@ class ItemInserter(QObject):
 class PointItemInserter(ItemInserter):
     def mousePressEvent(self, event, image_item):
         pos = event.scenePos()
-        ann = {'x': pos.x(), 'y': pos.y()}
-        ann.update(self._default_properties)
-        image_item.addAnnotation(ann)
+        self._ann.update({
+            self._prefix + 'x': pos.x(),
+            self._prefix + 'y': pos.y()})
+        if self._commit:
+            image_item.addAnnotation(ann)
+        self._item = QGraphicsEllipseItem(QRectF(pos.x()-2, pos.y()-2, 5, 5))
+        self._item.setPen(self.pen())
+        self.annotationFinished.emit()
         event.accept()
 
 class RectItemInserter(ItemInserter):
-    def __init__(self, labeltool, scene, default_properties=None):
-        ItemInserter.__init__(self, labeltool, scene, default_properties)
-        self._current_item = None
+    def __init__(self, labeltool, scene, default_properties=None, prefix="", commit=True):
+        ItemInserter.__init__(self, labeltool, scene, default_properties, prefix, commit)
         self._init_pos     = None
 
     def mousePressEvent(self, event, image_item):
         pos = event.scenePos()
-        item = QGraphicsRectItem(QRectF(pos.x(), pos.y(), 0, 0))
-        item.setPen(Qt.red)
-        self._current_item = item
-        self._init_pos     = pos
-        self._scene.addItem(item)
+        self._init_pos = pos
+        self._item = QGraphicsRectItem(QRectF(pos.x(), pos.y(), 0, 0))
+        self._item.setPen(self.pen())
+        self._scene.addItem(self._item)
         event.accept()
 
     def mouseMoveEvent(self, event, image_item):
-        if self._current_item is not None:
+        if self._item is not None:
             assert self._init_pos is not None
             rect = QRectF(self._init_pos, event.scenePos()).normalized()
-            self._current_item.setRect(rect)
+            self._item.setRect(rect)
 
         event.accept()
 
     def mouseReleaseEvent(self, event, image_item):
-        if self._current_item is not None:
-            if self._current_item.rect().width() > 1 and \
-               self._current_item.rect().height() > 1:
-                rect = self._current_item.rect()
-                ann = {'x': rect.x(), 'y': rect.y(),
-                       'width': rect.width(), 'height': rect.height()}
-                ann.update(self._default_properties)
-                image_item.addAnnotation(ann)
-            self._scene.removeItem(self._current_item)
-            self._current_item = None
+        if self._item is not None:
+            if self._item.rect().width() > 1 and \
+               self._item.rect().height() > 1:
+                rect = self._item.rect()
+                self._ann.update({self._prefix + 'x': rect.x(),
+                                  self._prefix + 'y': rect.y(),
+                                  self._prefix + 'width': rect.width(),
+                                  self._prefix + 'height': rect.height()})
+                if self._commit:
+                    image_item.addAnnotation(ann)
+            self._scene.removeItem(self._item)
+            self.annotationFinished.emit()
             self._init_pos = None
 
         event.accept()
@@ -105,15 +110,15 @@ class RectItemInserter(ItemInserter):
         return True
 
     def abort(self):
-        if self._current_item is not None:
-            self._scene.removeItem(self._current_item)
-            self._current_item = None
+        if self._item is not None:
+            self._scene.removeItem(self._item)
+            self._item = None
             self._init_pos = None
         ItemInserter.abort(self)
 
 class FixedRatioRectItemInserter(RectItemInserter):
-    def __init__(self, labeltool, scene, default_properties=None):
-        RectItemInserter.__init__(self, labeltool, scene, default_properties)
+    def __init__(self, labeltool, scene, default_properties=None, prefix="", commit=True):
+        RectItemInserter.__init__(self, labeltool, scene, default_properties, prefix, commit)
         self._ratio = 1
         if default_properties is not None:
             self._ratio = float(default_properties.get('_ratio', 1))
