@@ -28,6 +28,12 @@ class ItemInserter(QObject):
     def keyPressEvent(self, event, image_item):
         event.ignore()
 
+    def imageChange(self):
+        """
+        Slot which gets called if the current image in the labeltool changes.
+        """
+        pass
+
     def allowOutOfSceneEvents(self):
         return False
 

@@ -115,6 +115,7 @@ class AnnotationScene(QGraphicsScene):
 
     def onInserterFinished(self):
         self.sender().inserterFinished.disconnect(self.onInserterFinished)
+        self._labeltool.currentImageChanged.disconnect(self.sender())
         self._labeltool.exitInsertMode()
         self._inserter = None
 
@@ -131,6 +132,7 @@ class AnnotationScene(QGraphicsScene):
         if inserter is None:
             raise InvalidArgumentException("Could not find inserter for class '%s' with default properties '%s'" % (label_class, default_properties))
         inserter.inserterFinished.connect(self.onInserterFinished)
+        self._labeltool.currentImageChanged.connect(inserter.imageChange)
         self._inserter = inserter
         LOG.debug("Created inserter for class '%s' with default properties '%s'" % (label_class, default_properties))
 
