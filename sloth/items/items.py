@@ -16,6 +16,7 @@ class BaseItem(QAbstractGraphicsShapeItem):
     """
 
     cycleValuesOnKeypress = {}
+    defaultAutoTextKeys = []
 
     def __init__(self, model_item=None, prefix="", parent=None):
         """
@@ -43,7 +44,7 @@ class BaseItem(QAbstractGraphicsShapeItem):
         self._prefix = prefix
         self._text = ""
         self._text_bg_brush = None
-        self._auto_text_keys = []
+        self._auto_text_keys = self.defaultAutoTextKeys[:]
 
     def changeColor(self):
         if self._model_item is not None:
@@ -418,6 +419,7 @@ class IDRectItem(RectItem):
         [('i',    (IgnorePrefix('id'), range(10)))] +
         [(str(i), (IgnorePrefix('id'), [i])) for i in range(10)]
     )
+    defaultAutoTextKeys = ['id']
 
 class BBoxFaceItem(GroupItem):
     items = [
