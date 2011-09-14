@@ -212,6 +212,44 @@ class SequenceItemInserter(ItemInserter):
         self._cleanup()
         self.inserterFinished.emit()
 
+class BBoxFaceInserter(SequenceItemInserter):
+    inserters = [
+        (RectItemInserter,  "bbox", "Labelling bounding box"),
+        (PointItemInserter, "lec",  "Labelling left eye center"),
+        (PointItemInserter, "rec",  "Labelling right eye center"),
+        (PointItemInserter, "mc",   "Labelling mouth center"),
+    ]
+
+    def toggleOccludedForCurrentInserter(self):
+        if self._state > 0:
+            prefix = self.inserters[self._state][1]
+            occluded = not self._current_inserter._ann.get(prefix + 'occluded', False)
+            self._current_inserter._ann[prefix + 'occluded'] = occluded
+            if occluded:
+                self._scene.setMessage(self.inserters[self._state][2] + ' (occluded)')
+            else:
+                self._scene.setMessage(self.inserters[self._state][2])
+
+    def mousePressEvent(self, event, image_item):
+        if event.buttons() & Qt.RightButton:
+            self.toggleOccludedForCurrentInserter()
+        SequenceItemInserter.mousePressEvent(self, event, image_item)
+
+    def keyPressEvent(self, event, image_item):
+        if event.key() == Qt.Key_O and self._state > 0:
+            self.toggleOccludedForCurrentInserter()
+        SequenceItemInserter.keyPressEvent(self, event, image_item)
+
+    def imageChange(self):
+        if self._state > 0:
+            # restart the inserter
+            self._cleanup()
+            self.nextState(0)
+            self._scene.setMessage("<b>Warning</b>: Image changed during insert operation.\n" +
+                                   "Resetting the inserter state.\n" +
+                                   "Now at: " + self.inserters[self._state][2])
+
+
 class NPointFaceInserter(ItemInserter):
     landmarks = [
             ("leoc", "left eye outer corner"),
