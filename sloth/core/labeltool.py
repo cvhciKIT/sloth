@@ -101,7 +101,6 @@ class LabelTool(QObject):
                                  option_list=BaseCommand.option_list)
         try:
             options, args = parser.parse_args(self.argv)
-            handle_default_options(options)
         except:
             pass  # Ignore any option errors at this point.
 
@@ -121,7 +120,7 @@ class LabelTool(QObject):
 
         # check for commands
         try:
-            subcommand = self.argv[1]
+            subcommand = args[1]
         except IndexError:
             subcommand = None
 

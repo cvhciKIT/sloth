@@ -196,7 +196,7 @@ class LaxOptionParser(OptionParser):
     """
     An option parser that doesn't raise any errors on unknown options.
 
-    This is needed because the --settings and --pythonpath options affect
+    This is needed because the --config and --pythonpath options may affect
     the commands (and thus the options) that are available to the user.
     """
     def error(self, msg):
