@@ -139,6 +139,79 @@ class FixedRatioRectItemInserter(RectItemInserter):
 
         event.accept()
 
+class SequenceItemInserter(ItemInserter):
+    inserters = []
+
+    def __init__(self, labeltool, scene, default_properties=None, prefix="", commit=True):
+        ItemInserter.__init__(self, labeltool, scene, default_properties, prefix, commit)
+        self._items     = []
+        self._state     = 0
+        self._current_inserter = None
+        self._current_image_item = None
+
+        self.nextState(0)
+
+    def _cleanup(self):
+        for item in self._items:
+            if item.scene() is not None:
+                self._scene.removeItem(item)
+        self._items = []
+        self._scene.clearMessage()
+        self._current_inserter = None
+
+    def updateAnnotation(self, ann):
+        self._ann.update(ann)
+
+    def nextState(self, next_state=None):
+        if next_state is None:
+            next_state = self._state + 1
+
+        if self._current_inserter is not None:
+            if self._current_inserter is not None:
+                self.updateAnnotation(self._current_inserter.annotation())
+            item = self._current_inserter.item()
+            if item is not None:
+                self._scene.addItem(item)
+                self._items.append(item)
+
+            self._current_inserter.annotationFinished.disconnect(self.nextState)
+
+            if next_state >= len(self.inserters):
+                if self._commit:
+                    self._current_image_item.addAnnotation(self._ann)
+                self.annotationFinished.emit()
+                self._cleanup()
+                next_state = 0
+
+        callable_, prefix, message = self.inserters[next_state]
+        self._current_inserter = callable_(self._labeltool, self._scene, prefix=prefix, commit=False)
+        self._current_inserter.annotationFinished.connect(self.nextState)
+        if message:
+            self._scene.setMessage(message)
+        else:
+            self._scene.clearMessage()
+        self._state = next_state
+
+    def mousePressEvent(self, event, image_item):
+        self._current_image_item = image_item
+        self._current_inserter.mousePressEvent(event, image_item)
+
+    def mouseMoveEvent(self, event, image_item):
+        self._current_image_item = image_item
+        self._current_inserter.mouseMoveEvent(event, image_item)
+
+    def mouseReleaseEvent(self, event, image_item):
+        self._current_image_item = image_item
+        self._current_inserter.mouseReleaseEvent(event, image_item)
+
+    def keyPressEvent(self, event, image_item):
+        self._current_image_item = image_item
+        self._current_inserter.keyPressEvent(event, image_item)
+
+    def abort(self):
+        self._cleanup()
+        self.inserterFinished.emit()
+
 class NPointFaceInserter(ItemInserter):
     landmarks = [
             ("leoc", "left eye outer corner"),
