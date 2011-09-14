@@ -105,6 +105,14 @@ class AnnotationScene(QGraphicsScene):
             else:
                 LOG.warn("Could not find item for annotation with class '%s'" % label_class)
 
+    def deleteSelectedItems(self):
+        # some (graphics) items may share the same model item
+        # therefore we need to determine the unique set of model items first
+        # must use a dict for hashing instead of a set, because objects are not hashable
+        modelitems_to_delete = dict((id(item.modelItem()), item.modelItem()) for item in self.selectedItems())
+        for item in modelitems_to_delete.values():
+            item.delete()
+
     def onInserterFinished(self):
         self.sender().inserterFinished.disconnect(self.onInserterFinished)
         self._labeltool.exitInsertMode()
@@ -139,7 +147,12 @@ class AnnotationScene(QGraphicsScene):
         self.clearMessage()
 
     def clear(self):
-        QGraphicsScene.clear(self)
+        # do not use QGraphicsScene.clear(self) so that the underlying
+        # C++ objects are not deleted if there is still another python
+        # reference to the item somewhere else (e.g. in an inserter)
+        for item in self.items():
+            if item.parentItem() is None:
+                self.removeItem(item)
         self._scene_item = None
 
     def addItem(self, item):
@@ -255,8 +268,7 @@ class AnnotationScene(QGraphicsScene):
         else:
             # selection mode
             if event.key() == Qt.Key_Delete:
-                for item in self.selectedItems():
-                    item.modelItem().delete()
+                self.deleteSelectedItems()
                 event.accept()
 
             elif event.key() == Qt.Key_Escape:
@@ -294,8 +306,13 @@ class AnnotationScene(QGraphicsScene):
             return
 
         for row in range(first, last+1):
-            item = self.itemFromIndex(index.child(row, 0))
-            if item is not None:
+            items = self.itemsFromIndex(index.child(row, 0))
+            for item in items:
+                # if the item has a parent item, do not delete it
+                # we assume, that the parent shares the same model index
+                # and thus removing the parent will also remove the child
+                if item.parentItem() is not None:
+                    continue
                 self.removeItem(item)
 
     def rowsRemoved(self, index, first, last):
@@ -308,6 +325,15 @@ class AnnotationScene(QGraphicsScene):
             if hasattr(item, 'index') and item.index() == index:
                 return item
         return None
+
+    def itemsFromIndex(self, index):
+        items = []
+        for item in self.items():
+            # some graphics items will not have an index method,
+            # we just skip these
+            if hasattr(item, 'index') and item.index() == index:
+                items.append(item)
+        return items
 
     #
     # message handling and displaying

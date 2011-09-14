@@ -394,8 +394,7 @@ class LabelTool(QObject):
 
     def deleteSelectedAnnotations(self):
         if self._mainwindow is not None:
-            for item in self._mainwindow.scene.selectedItems():
-                item.modelItem().delete()
+            self._mainwindow.scene.deleteSelectedItems()
 
     def exitInsertMode(self):
         if self._mainwindow is not None:
