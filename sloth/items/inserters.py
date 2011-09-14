@@ -10,11 +10,26 @@ class ItemInserter(QObject):
     annotationFinished = pyqtSignal()
     inserterFinished   = pyqtSignal()
 
-    def __init__(self, labeltool, scene, default_properties=None):
+    def __init__(self, labeltool, scene, default_properties=None, prefix="", commit=True):
         QObject.__init__(self)
         self._labeltool          = labeltool
         self._scene              = scene
         self._default_properties = default_properties
+        self._prefix             = prefix
+        self._ann                = {}
+        if default_properties is not None:
+            self._ann = dict(self._default_properties.iteritems())
+        self._commit             = commit
+        self._item               = None
+
+    def annotation(self):
+        return self._ann
+
+    def item(self):
+        return self._item
+
+    def pen(self):
+        return Qt.red
 
     def mousePressEvent(self, event, image_item):
         event.accept()
