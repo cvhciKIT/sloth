@@ -3,8 +3,12 @@ from PyQt4.Qt import *
 import math
 
 class ItemInserter(QObject):
+    """
+    The base class for all item insertion handlers.
+    """
     # Signals
-    inserterFinished = pyqtSignal()
+    annotationFinished = pyqtSignal()
+    inserterFinished   = pyqtSignal()
 
     def __init__(self, labeltool, scene, default_properties=None):
         QObject.__init__(self)
