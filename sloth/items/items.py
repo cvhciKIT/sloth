@@ -9,7 +9,7 @@ class BaseItem(QAbstractGraphicsShapeItem):
     Base class for visualization items.
     """
 
-    def __init__(self, model_item=None, parent=None):
+    def __init__(self, model_item=None, prefix="", parent=None):
         """
         Creates a visualization item.
 
@@ -32,6 +32,7 @@ class BaseItem(QAbstractGraphicsShapeItem):
         self.changeColor()
 
         # initialize members
+        self._prefix = prefix
         self._text = ""
         self._text_bg_brush = None
         self._auto_text_keys = []
@@ -59,6 +60,12 @@ class BaseItem(QAbstractGraphicsShapeItem):
         Returns the index of this item.
         """
         return self._model_item.index()
+
+    def prefix(self):
+        """
+        Returns the key prefix of the item.
+        """
+        return self._prefix
 
     def setText(self, text=""):
         """
@@ -153,8 +160,8 @@ class PointItem(BaseItem):
     Visualization item for points.
     """
 
-    def __init__(self, model_item=None, parent=None):
-        BaseItem.__init__(self, model_item, parent)
+    def __init__(self, model_item=None, prefix="", parent=None):
+        BaseItem.__init__(self, model_item, prefix, parent)
 
         self._radius = 2
         self._point = None
@@ -179,16 +186,16 @@ class PointItem(BaseItem):
 
     def updateModel(self):
         self._model_item.update({
-            'x': self.scenePos().x(),
-            'y': self.scenePos().y(),
+            self.prefix() + 'x': self.scenePos().x(),
+            self.prefix() + 'y': self.scenePos().y(),
         })
 
     def updatePoint(self):
         if self._model_item is None:
             return
 
-        point = QPointF(float(self._model_item['x']),
-                        float(self._model_item['y']))
+        point = QPointF(float(self._model_item[self.prefix() + 'x']),
+                        float(self._model_item[self.prefix() + 'y']))
         if point == self._point:
             return
 
@@ -224,8 +231,8 @@ class PointItem(BaseItem):
 
 
 class RectItem(BaseItem):
-    def __init__(self, model_item=None, parent=None):
-        BaseItem.__init__(self, model_item, parent)
+    def __init__(self, model_item=None, prefix="", parent=None):
+        BaseItem.__init__(self, model_item, prefix, parent)
 
         self._rect = None
         self._resize = False
@@ -244,8 +251,10 @@ class RectItem(BaseItem):
     def _dataToRect(self, model_item):
         if model_item is None:
             return QRectF()
-        return QRectF(float(model_item['x']), float(model_item['y']),
-                      float(model_item['width']), float(model_item['height']))
+        return QRectF(float(model_item[self.prefix() + 'x']),
+                      float(model_item[self.prefix() + 'y']),
+                      float(model_item[self.prefix() + 'width']),
+                      float(model_item[self.prefix() + 'height']))
 
     def _updateRect(self, rect):
         if rect == self._rect:
@@ -258,10 +267,10 @@ class RectItem(BaseItem):
     def updateModel(self):
         self._rect = QRectF(self.scenePos(), self._rect.size())
         self._model_item.update({
-            'x':      float(self._rect.topLeft().x()),
-            'y':      float(self._rect.topLeft().y()),
-            'width':  float(self._rect.width()),
-            'height': float(self._rect.height()),
+            self.prefix() + 'x':      float(self._rect.topLeft().x()),
+            self.prefix() + 'y':      float(self._rect.topLeft().y()),
+            self.prefix() + 'width':  float(self._rect.width()),
+            self.prefix() + 'height': float(self._rect.height()),
         })
 
     def boundingRect(self):
