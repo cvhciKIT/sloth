@@ -334,6 +334,29 @@ class RectItem(BaseItem):
             self.updateModel()
             event.accept()
 
+class GroupItem(BaseItem):
+    items = []
+
+    def __init__(self, model_item=None, prefix="", parent=None):
+        self._children = []
+        BaseItem.__init__(self, model_item, prefix, parent)
+        self.setFlag(QGraphicsItem.ItemIsMovable, False)
+
+        self.createChildren()
+
+    def createChildren(self):
+        for callable_, prefix in self.items:
+            child = callable_(self._model_item, prefix, self)
+            self._children.append(child)
+
+    def setColor(self, *args, **kwargs):
+        for c in self._children:
+            c.setColor(*args, **kwargs)
+        BaseItem.setColor(self, *args, **kwargs)
+
+    def boundingRect(self):
+        return self.childrenBoundingRect()
+
 
 class ControlItem(QGraphicsItem):
     def __init__(self, parent=None):
