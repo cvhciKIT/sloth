@@ -357,6 +357,36 @@ class GroupItem(BaseItem):
     def boundingRect(self):
         return self.childrenBoundingRect()
 
+class OccludablePointItem(PointItem):
+    def __init__(self, *args, **kwargs):
+        PointItem.__init__(self, *args, **kwargs)
+        self.updateColor()
+
+    def dataChange(self):
+        PointItem.dataChange(self)
+        self.updateColor()
+
+    def updateColor(self):
+        key = self.prefix() + 'occluded'
+        if key in self._model_item:
+            occluded = self._model_item[key]
+            self.setColor(Qt.red if occluded else Qt.yellow)
+
+    def keyPressEvent(self, event):
+        PointItem.keyPressEvent(self, event)
+        if event.key() == Qt.Key_O:
+            occluded = not self._model_item.get(self.prefix() + 'occluded', False)
+            self._model_item[self.prefix() + 'occluded'] = occluded
+            self.updateColor()
+            event.accept()
+
+class BBoxFaceItem(GroupItem):
+    items = [
+        (RectItem,            "bbox"),
+        (OccludablePointItem, "lec"),
+        (OccludablePointItem, "rec"),
+        (OccludablePointItem, "mc"),
+    ]
 
 class ControlItem(QGraphicsItem):
     def __init__(self, parent=None):
