@@ -345,9 +345,9 @@ class AnnotationScene(QGraphicsScene):
         if message is None or message == "":
             return
 
-        # TODO don't use text item at all, just draw the text in drawForeground
-        self._message = message
-        self._message_text_item = QGraphicsSimpleTextItem(message)
+        self._message = message.replace('\n', '<br />')
+        self._message_text_item = QGraphicsTextItem()
+        self._message_text_item.setHtml(self._message)
         self._message_text_item.setPos(20, 20)
         self.invalidate(QRectF(), QGraphicsScene.ForegroundLayer)
 
