@@ -1,6 +1,5 @@
 #!/usr/bin/python
-import sys, os, math
-from sloth.utils import toQImage
+import math
 from PyQt4.QtCore import *
 from PyQt4.QtGui  import *
 try:
@@ -133,6 +132,7 @@ class GraphicsView(QGraphicsView):
         else:
             return QGraphicsView.mouseMoveEvent(self, event)
 
+
 class FrameViewer(QWidget):
     # Signals
     activeSceneViewChanged = pyqtSignal(GraphicsView)
@@ -155,6 +155,7 @@ class FrameViewer(QWidget):
     def setActiveScaleRelative(self, scale):
         self.getActiveSceneView().setScaleRelative(scale)
 
+
 class SingleFrameViewer(FrameViewer):
     def __init__(self, annotation_scene, parent=None):
         FrameViewer.__init__(self, parent)
@@ -168,6 +169,7 @@ class SingleFrameViewer(FrameViewer):
 
     def getActiveSceneView(self):
         return self.scene_view
+
 
 class MultiFrameEqualViewer(FrameViewer):
     def __init__(self, annotation_scenes, parent=None):
@@ -207,48 +209,3 @@ class MultiFrameEqualViewer(FrameViewer):
     def getActiveSceneView(self):
         return self.scene_views[self.active_scene_view]
 
-def get_dummy_scene():
-    scene = QGraphicsScene()
-    video = okapy.videoio.FFMPEGIndexedVideoSource("/home/mfischer/data/mika_serien/COUPLING_S1_E1.vob")
-    video.getFrame(1000)
-    video.getNextFrame()
-    img = video.getImage()
-    qimg = toQImage(img, True)
-    scene.addPixmap(QPixmap(qimg))
-    return (scene, video)
-
-def next_frame():
-    for v in videos:
-        v.getNextFrame()
-    for v, s in zip(videos, scenes):
-        img = v.getImage()
-        qimg = toQImage(img, True)
-        s.clear()
-        s.addPixmap(QPixmap(qimg))
-
-def main():
-    app = QApplication(sys.argv)
-
-    for i in range(4):
-        (scene, video) = get_dummy_scene()
-        videos.append(video)
-        scenes.append(scene)
-
-    #viewer = SingleFrameViewer(scene)
-    viewer = MultiFrameEqualViewer(scenes)
-    viewer.show()
-    viewer.resize(800, 600)
-
-    timer = QTimer()
-    timer.setInterval(10)
-    timer.timeout.connect(next_frame)
-    timer.start()
-
-    return app.exec_()
-
-if __name__ == '__main__':
-    sys.exit(main())
-
-# Necessary information
-# - Functionalities
-#   - Display zoom level
