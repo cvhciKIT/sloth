@@ -235,6 +235,11 @@ class LabelTool(QObject):
         self.statusMessage.emit(msg)
         self.annotationsLoaded.emit()
 
+    def annotations(self):
+        if self._model is None:
+            return None
+        return self._model.root().getAnnotations()
+
     def saveAnnotations(self, fname):
         success = False
         try:

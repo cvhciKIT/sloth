@@ -65,8 +65,7 @@ class DumpLabelsCommand(BaseCommand):
             raise CommandError("Expect exactly 1 argument.")
 
         self.labeltool.loadAnnotations(args[0])
-        # TODO add better accessor the the labeltool
-        pprint(self.labeltool._container.annotations())
+        pprint(self.labeltool.annotations())
 
 
 class AppendFilesCommand(BaseCommand):
