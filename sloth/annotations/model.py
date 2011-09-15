@@ -35,7 +35,7 @@ class ModelItem:
 
     def _ensureAllLoaded(self):
         if not self._loaded:
-            for i in range(len(self._children)-1):
+            for i in range(len(self._children)):
                 self._ensureLoaded(i)
             return True
         return False
