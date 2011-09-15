@@ -278,7 +278,8 @@ class RootModelItem(ModelItem):
         return count
 
     def getAnnotations(self):
-        return [child.getAnnotations() for child in self.children()]
+        return [child.getAnnotations() for child in self.children()
+                if hasattr(child, 'getAnnotations')]
 
 class KeyValueModelItem(ModelItem, MutableMapping):
     def __init__(self, hidden=[], properties=None):
@@ -449,7 +450,8 @@ class ImageFileModelItem(FileModelItem, ImageModelItem):
     def getAnnotations(self):
         self._ensureAllLoaded()
         fi = KeyValueModelItem.getAnnotations(self)
-        fi['annotations'] = [child.getAnnotations() for child in self.children()]
+        fi['annotations'] = [child.getAnnotations() for child in self.children()
+                             if hasattr(child, 'getAnnotations')]
         return fi
 
 class VideoFileModelItem(FileModelItem):
