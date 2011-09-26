@@ -38,21 +38,21 @@ class AnnotationScene(QGraphicsScene):
 
         # disconnect old signals
         if self._model is not None:
-            self.disconnect(self._model, SIGNAL('dataChanged(QModelIndex,QModelIndex)'), self.dataChanged)
-            self.disconnect(self._model, SIGNAL('rowsInserted(QModelIndex,int,int)'), self.rowsInserted)
-            self.disconnect(self._model, SIGNAL('rowsAboutToBeRemoved(QModelIndex,int,int)'), self.rowsAboutToBeRemoved)
-            self.disconnect(self._model, SIGNAL('rowsRemoved(QModelIndex,int,int)'), self.rowsRemoved)
-            self.disconnect(self._model, SIGNAL('modelReset()'), self.reset)
+            self._model.dataChanged.disconnect(self.dataChanged)
+            self._model.rowsInserted.disconnect(self.rowsInserted)
+            self._model.rowsAboutToBeRemoved.disconnect(self.rowsAboutToBeRemoved)
+            self._model.rowsRemoved.disconnect(self.rowsRemoved)
+            self._model.modelReset.disconnect(self.reset)
 
         self._model = model
 
         # connect new signals
         if self._model is not None:
-            self.connect(self._model, SIGNAL('dataChanged(QModelIndex,QModelIndex)'), self.dataChanged)
-            self.connect(self._model, SIGNAL('rowsInserted(QModelIndex,int,int)'), self.rowsInserted)
-            self.connect(self._model, SIGNAL('rowsAboutToBeRemoved(QModelIndex,int,int)'), self.rowsAboutToBeRemoved)
-            self.connect(self._model, SIGNAL('rowsRemoved(QModelIndex,int,int)'), self.rowsRemoved)
-            self.connect(self._model, SIGNAL('modelReset()'), self.reset)
+            self._model.dataChanged.connect(self.dataChanged)
+            self._model.rowsInserted.connect(self.rowsInserted)
+            self._model.rowsAboutToBeRemoved.connect(self.rowsAboutToBeRemoved)
+            self._model.rowsRemoved.connect(self.rowsRemoved)
+            self._model.modelReset.connect(self.reset)
 
         # reset caches, invalidate root
         self.reset()

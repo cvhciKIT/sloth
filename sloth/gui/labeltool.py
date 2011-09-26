@@ -257,11 +257,11 @@ class MainWindow(QMainWindow):
 
     def connectActions(self):
         ## File menu
-        self.connect(self.ui.actionNew,     SIGNAL("triggered()"), self.fileNew)
-        self.connect(self.ui.actionOpen,    SIGNAL("triggered()"), self.fileOpen)
-        self.connect(self.ui.actionSave,    SIGNAL("triggered()"), self.fileSave)
-        self.connect(self.ui.actionSave_As, SIGNAL("triggered()"), self.fileSaveAs)
-        self.connect(self.ui.actionExit,    SIGNAL("triggered()"), self.close)
+        self.ui.actionNew.    triggered.connect(self.fileNew)
+        self.ui.actionOpen.   triggered.connect(self.fileOpen)
+        self.ui.actionSave.   triggered.connect(self.fileSave)
+        self.ui.actionSave_As.triggered.connect(self.fileSaveAs)
+        self.ui.actionExit.   triggered.connect(self.close)
 
         ## View menu
         self.ui.actionLocked.toggled.connect(self.onViewsLockedChanged)
