@@ -109,7 +109,7 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("Background loading finished", 5000)
         self.idletimer.stop()
         if self.loader is not None:
-            self.idletimer.timeout.disconnect()
+            self.idletimer.timeout.disconnect(self.loader.load)
             self.statusBar().removeWidget(self.sb_progress)
             self.loader = None
 
