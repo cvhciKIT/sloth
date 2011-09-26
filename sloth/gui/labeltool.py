@@ -30,7 +30,7 @@ class BackgroundLoader(QObject):
         self._max_levels = 3
         self._model = model
         self._statusbar = statusbar
-        self._message_dislayed = False
+        self._message_displayed = False
         self.progress = QProgressBar()
         self.progress.setMinimum(0)
         self.progress.setMaximum(1000 * self._max_levels)
@@ -43,9 +43,9 @@ class BackgroundLoader(QObject):
         self._next_rows = 0
 
     def load(self):
-        if not self._message_dislayed:
+        if not self._message_displayed:
             self._statusbar.showMessage("Loading annotations...", 5000)
-            self._message_dislayed = True
+            self._message_displayed = True
         if self._level <= self._max_levels and self._rows > 0:
             try:
                 if hasattr(self._iterator, "next"):
