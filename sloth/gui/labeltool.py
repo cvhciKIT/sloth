@@ -25,16 +25,16 @@ LOG=logging.getLogger(__name__)
 class BackgroundLoader(QObject):
     finished = pyqtSignal()
 
-    def __init__(self, model, statusbar):
+    def __init__(self, model, statusbar, progress):
         QObject.__init__(self)
         self._max_levels = 3
         self._model = model
         self._statusbar = statusbar
         self._message_displayed = False
-        self.progress = QProgressBar()
-        self.progress.setMinimum(0)
-        self.progress.setMaximum(1000 * self._max_levels)
-        self.progress.setMaximumWidth(150)
+        self._progress = progress
+        self._progress.setMinimum(0)
+        self._progress.setMaximum(1000 * self._max_levels)
+        self._progress.setMaximumWidth(150)
 
         self._level = 1
         self._iterator = self._model.iterator(maxlevels=self._level)
@@ -54,7 +54,7 @@ class BackgroundLoader(QObject):
                     item = next(self._iterator)
                 self._next_rows += item.rowCount()
                 self._pos += 1
-                self.progress.setValue(int((float(self._pos) / float(self._rows) + self._level - 1) * 1000))
+                self._progress.setValue(int((float(self._pos) / float(self._rows) + self._level - 1) * 1000))
             except StopIteration:
                 self._level += 1
                 self._iterator = self._model.iterator(maxlevels=self._level)
@@ -97,11 +97,12 @@ class MainWindow(QMainWindow):
 
     def startBackgroundLoading(self):
         self.stopBackgroundLoading(forced=True)
-        self.loader = BackgroundLoader(self.labeltool.model(), self.statusBar())
+        self.loader = BackgroundLoader(self.labeltool.model(), self.statusBar(), self.sb_progress)
         self.idletimer.timeout.connect(self.loader.load)
         self.loader.finished.connect(self.stopBackgroundLoading)
+        self.statusBar().addWidget(self.sb_progress)
+        self.sb_progress.show()
         self.idletimer.start()
-        self.statusBar().addWidget(self.loader.progress)
 
     def stopBackgroundLoading(self, forced=False):
         if not forced:
@@ -109,7 +110,7 @@ class MainWindow(QMainWindow):
         self.idletimer.stop()
         if self.loader is not None:
             self.idletimer.timeout.disconnect()
-            self.statusBar().removeWidget(self.loader.progress)
+            self.statusBar().removeWidget(self.sb_progress)
             self.loader = None
 
     def onAnnotationsLoaded(self):
@@ -242,6 +243,8 @@ class MainWindow(QMainWindow):
         self.statusBar().addPermanentWidget(self.zoominfo)
         self.view.scaleChanged.connect(self.onScaleChanged)
         self.onScaleChanged(self.view.getScale())
+
+        self.sb_progress = QProgressBar()
 
         # View menu
         self.ui.menu_Views.addAction(self.ui.dockProperties.toggleViewAction())
