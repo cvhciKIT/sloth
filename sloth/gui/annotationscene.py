@@ -115,7 +115,7 @@ class AnnotationScene(QGraphicsScene):
 
     def onInserterFinished(self):
         self.sender().inserterFinished.disconnect(self.onInserterFinished)
-        self._labeltool.currentImageChanged.disconnect(self.sender())
+        self._labeltool.currentImageChanged.disconnect(self.sender().imageChange)
         self._labeltool.exitInsertMode()
         self._inserter = None
 
