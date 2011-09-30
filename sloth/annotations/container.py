@@ -200,7 +200,7 @@ class OkapiAnnotationContainer(AnnotationContainer):
     """
     def convertAnnotationPropertiesMapToDict(self, properties):
         propdict = {}
-        for k, v in properties.iteritems():
+        for k, v in properties.items():
             propdict[k] = v
         return propdict
 
@@ -241,7 +241,7 @@ class OkapiAnnotationContainer(AnnotationContainer):
     Converts a dict to a AnnotationPropertiesMap
     """
     def convertDictToAnnotationPropertiesMap(self, annotation, propdict):
-        for k, v in propdict.iteritems():
+        for k, v in propdict.items():
             if k != 'annotations' or k != 'frames':
                 annotation.set_str(k, str(v))
         return annotation

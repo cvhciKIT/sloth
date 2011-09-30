@@ -15,7 +15,7 @@ class CopyAnnotationsPlugin(QObject):
             prev = current.getPreviousSibling()
             if prev is not None:
                 for annotation in prev.children():
-                    copied = dict(annotation.iteritems())
+                    copied = dict(annotation.items())
                     current.addAnnotation(copied)
 
     def action(self):

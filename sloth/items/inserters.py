@@ -18,7 +18,7 @@ class ItemInserter(QObject):
         self._prefix             = prefix
         self._ann                = {}
         if default_properties is not None:
-            self._ann = dict(self._default_properties.iteritems())
+            self._ann = dict(self._default_properties.items())
         self._commit             = commit
         self._item               = None
 
