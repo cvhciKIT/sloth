@@ -66,7 +66,7 @@ class PointItemInserter(ItemInserter):
             self._prefix + 'x': pos.x(),
             self._prefix + 'y': pos.y()})
         if self._commit:
-            image_item.addAnnotation(ann)
+            image_item.addAnnotation(self._ann)
         self._item = QGraphicsEllipseItem(QRectF(pos.x()-2, pos.y()-2, 5, 5))
         self._item.setPen(self.pen())
         self.annotationFinished.emit()
