@@ -266,16 +266,15 @@ class NPointFaceInserter(SequenceItemInserter):
     ]
 
     def toggleOccludedForCurrentInserter(self):
-        if self._state > 0:
-            prefix = self.inserters[self._state][1]
-            occluded = not self._current_inserter._ann.get(prefix + 'occluded', False)
-            self._current_inserter._ann[prefix + 'occluded'] = occluded
-            if occluded:
-                self._scene.setMessage(self.inserters[self._state][2] + ' (occluded)')
-                self._current_inserter.setPen(Qt.red)
-            else:
-                self._scene.setMessage(self.inserters[self._state][2])
-                self._current_inserter.setPen(Qt.yellow)
+        prefix = self.inserters[self._state][1]
+        occluded = not self._current_inserter._ann.get(prefix + 'occluded', False)
+        self._current_inserter._ann[prefix + 'occluded'] = occluded
+        if occluded:
+            self._scene.setMessage(self.inserters[self._state][2] + ' (occluded)')
+            self._current_inserter.setPen(Qt.red)
+        else:
+            self._scene.setMessage(self.inserters[self._state][2])
+            self._current_inserter.setPen(Qt.yellow)
 
     def mousePressEvent(self, event, image_item):
         if event.buttons() & Qt.RightButton:
@@ -283,7 +282,7 @@ class NPointFaceInserter(SequenceItemInserter):
         SequenceItemInserter.mousePressEvent(self, event, image_item)
 
     def keyPressEvent(self, event, image_item):
-        if event.key() == Qt.Key_O and self._state > 0:
+        if event.key() == Qt.Key_O:
             self.toggleOccludedForCurrentInserter()
         SequenceItemInserter.keyPressEvent(self, event, image_item)
 
