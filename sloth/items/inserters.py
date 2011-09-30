@@ -14,7 +14,7 @@ class ItemInserter(QObject):
         QObject.__init__(self)
         self._labeltool          = labeltool
         self._scene              = scene
-        self._default_properties = default_properties
+        self._default_properties = default_properties if default_properties is not None else {}
         self._prefix             = prefix
         self._ann                = {}
         self._commit             = commit
