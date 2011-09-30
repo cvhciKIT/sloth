@@ -17,8 +17,6 @@ class ItemInserter(QObject):
         self._default_properties = default_properties
         self._prefix             = prefix
         self._ann                = {}
-        if default_properties is not None:
-            self._ann = dict(self._default_properties.items())
         self._commit             = commit
         self._item               = None
         self._pen                = Qt.red
@@ -65,6 +63,7 @@ class PointItemInserter(ItemInserter):
         self._ann.update({
             self._prefix + 'x': pos.x(),
             self._prefix + 'y': pos.y()})
+        self._ann.update(self._default_properties)
         if self._commit:
             image_item.addAnnotation(self._ann)
         self._item = QGraphicsEllipseItem(QRectF(pos.x()-2, pos.y()-2, 5, 5))
@@ -102,6 +101,7 @@ class RectItemInserter(ItemInserter):
                                   self._prefix + 'y': rect.y(),
                                   self._prefix + 'width': rect.width(),
                                   self._prefix + 'height': rect.height()})
+                self._ann.update(self._default_properties)
                 if self._commit:
                     image_item.addAnnotation(ann)
             self._scene.removeItem(self._item)
@@ -181,6 +181,7 @@ class SequenceItemInserter(ItemInserter):
             self._current_inserter.annotationFinished.disconnect(self.nextState)
 
             if next_state >= len(self.inserters):
+                self._ann.update(self._default_properties)
                 if self._commit:
                     self._current_image_item.addAnnotation(self._ann)
                 self.annotationFinished.emit()
