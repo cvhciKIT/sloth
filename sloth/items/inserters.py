@@ -21,6 +21,7 @@ class ItemInserter(QObject):
             self._ann = dict(self._default_properties.items())
         self._commit             = commit
         self._item               = None
+        self._pen                = Qt.red
 
     def annotation(self):
         return self._ann
@@ -29,7 +30,10 @@ class ItemInserter(QObject):
         return self._item
 
     def pen(self):
-        return Qt.red
+        return self._pen
+
+    def setPen(self, pen):
+        self._pen = pen
 
     def mousePressEvent(self, event, image_item):
         event.accept()
@@ -250,69 +254,48 @@ class BBoxFaceInserter(SequenceItemInserter):
                                    "Now at: " + self.inserters[self._state][2])
 
 
-class NPointFaceInserter(ItemInserter):
-    landmarks = [
-            ("leoc", "left eye outer corner"),
-            ("leic", "left eye inner corner"),
-            ("reic", "right eye inner corner"),
-            ("reoc", "right eye outer corner"),
-            ("nt",   "nose tip"),
-            ("mlc",  "left mouth corner"),
-            ("mrc",  "right mouth corner"),
-            ]
+class NPointFaceInserter(SequenceItemInserter):
+    inserters = [
+            (PointItemInserter, "leoc", "left eye outer corner"),
+            (PointItemInserter, "leic", "left eye inner corner"),
+            (PointItemInserter, "reic", "right eye inner corner"),
+            (PointItemInserter, "reoc", "right eye outer corner"),
+            (PointItemInserter, "nt",   "nose tip"),
+            (PointItemInserter, "mlc",  "left mouth corner"),
+            (PointItemInserter, "mrc",  "right mouth corner"),
+    ]
 
-    def __init__(self, labeltool, scene, default_properties=None):
-        ItemInserter.__init__(self, labeltool, scene, default_properties)
-        self._reset()
-
-    def _reset(self):
-        self._state = 0
-        self._items = []
-        self._values = {}
-        self._image_item = None
-        self._scene.setMessage("Labeling %s" % self.landmarks[self._state][1])
-        pass
-
-    def _cleanup(self):
-        for item in self._items:
-            self._scene.removeItem(item)
-        self._scene.clearMessage()
-
-    def _insertItem(self):
-        item = {}
-        item.update(self._default_properties)
-        item.update(self._values)
-        self._image_item.addAnnotation(item)
+    def toggleOccludedForCurrentInserter(self):
+        if self._state > 0:
+            prefix = self.inserters[self._state][1]
+            occluded = not self._current_inserter._ann.get(prefix + 'occluded', False)
+            self._current_inserter._ann[prefix + 'occluded'] = occluded
+            if occluded:
+                self._scene.setMessage(self.inserters[self._state][2] + ' (occluded)')
+                self._current_inserter.setPen(Qt.red)
+            else:
+                self._scene.setMessage(self.inserters[self._state][2])
+                self._current_inserter.setPen(Qt.yellow)
 
     def mousePressEvent(self, event, image_item):
-        if self._image_item is None:
-            self._image_item = image_item
-        else:
-            assert(self._image_item == image_item)
+        if event.buttons() & Qt.RightButton:
+            self.toggleOccludedForCurrentInserter()
+        SequenceItemInserter.mousePressEvent(self, event, image_item)
 
-        pos = event.scenePos()
-        if event.buttons() & Qt.LeftButton:
-            self._values[self.landmarks[self._state][0] + "x"] = pos.x()
-            self._values[self.landmarks[self._state][0] + "y"] = pos.y()
-            item = QGraphicsEllipseItem(QRectF(pos.x()-2, pos.y()-2, 5, 5))
-            item.setPen(Qt.red)
-            self._scene.addItem(item)
-            self._items.append(item)
-        else:
-            self._values[self.landmarks[self._state][0] + "x"] = -1
-            self._values[self.landmarks[self._state][0] + "y"] = -1
+    def keyPressEvent(self, event, image_item):
+        if event.key() == Qt.Key_O and self._state > 0:
+            self.toggleOccludedForCurrentInserter()
+        SequenceItemInserter.keyPressEvent(self, event, image_item)
 
-        if self._state == len(self.landmarks)-1:
+    def imageChange(self):
+        if self._state > 0:
+            # restart the inserter
             self._cleanup()
-            self._insertItem()
-            self.inserterFinished.emit()
-        else:
-            self._state += 1
-            self._scene.setMessage("Labeling %s" % self.landmarks[self._state][1])
+            self.nextState(0)
+            self._scene.setMessage("<b>Warning</b>: Image changed during insert operation.\n" +
+                                   "Resetting the inserter state.\n" +
+                                   "Now at: " + self.inserters[self._state][2])
 
-    def abort(self):
-        self._cleanup()
-        self.inserterFinished.emit()
 
 # TODO
 class PolygonItemInserter(ItemInserter):

@@ -463,69 +463,16 @@ class NPointFacePointItem(QGraphicsEllipseItem):
         self.setPen(color)
         self.update()
 
-class NPointFaceItem(BaseItem):
-    landmarks = [
-            ("leoc", "left eye outer corner"),
-            ("leic", "left eye inner corner"),
-            ("reic", "right eye inner corner"),
-            ("reoc", "right eye outer corner"),
-            ("nt",   "nose tip"),
-            ("mlc",  "left mouth corner"),
-            ("mrc",  "right mouth corner"),
-            ]
-
-    def __init__(self, model_item=None, parent=None):
-        self._children = {}
-        BaseItem.__init__(self, model_item, parent)
-        self.setFlag(QGraphicsItem.ItemIsMovable, False)
-        self.dataChange()
-        self.changeColor()
-
-    def updateModel(self):
-        changes = {}
-        for lm, lmstr in self.landmarks:
-            if lm not in self._children:
-                continue
-            lmx, lmy = (lm+"x", lm+"y")
-            if lmx not in self._model_item or self._model_item[lmx] != self._children[lm].scenePos().x():
-                changes[lmx] = self._children[lm].scenePos().x()
-            if lmy not in self._model_item or self._model_item[lmy] != self._children[lm].scenePos().y():
-                changes[lmy] = self._children[lm].scenePos().y()
-        if changes:
-            self._model_item.update(changes)
-
-    def dataChange(self):
-        for lm, lmstr in self.landmarks:
-            lmx, lmy = (lm+"x", lm+"y")
-            landmark_present = True
-            if lmx not in self._model_item or lmy not in self._model_item:
-                landmark_present = False
-            elif self._model_item[lmx] < 0 or self._model_item[lmy] < 0:
-                landmark_present = False
-
-            if landmark_present:
-                px, py = (self._model_item[lmx], self._model_item[lmy])
-                if lm in self._children:
-                    # Update item position if it is different
-                    if px != self._children[lm].scenePos().x() or py != self._children[lm].scenePos().y():
-                        self._children[lm].setPos(px, py)
-                else:
-                    self._children[lm] = NPointFacePointItem(lm, QRectF(-2, -2, 5, 5), self)
-                    self._children[lm].setPos(px, py)
-            else:
-                # Landmark is not present
-                if lm in self._children:
-                    # Remove landmark from scene
-                    pass
-
-    def setColor(self, *args, **kwargs):
-        for c in self._children.values():
-            c.setColor(*args, **kwargs)
-        BaseItem.setColor(self, *args, **kwargs)
-
-    def landmarkChanged(self, item, value):
-        self.prepareGeometryChange()
-        self.updateModel()
+class NPointFaceItem(GroupItem):
+    items = [
+        (OccludablePointItem, "leoc"),
+        (OccludablePointItem, "leic"),
+        (OccludablePointItem, "reic"),
+        (OccludablePointItem, "reoc"),
+        (OccludablePointItem, "nt"),
+        (OccludablePointItem, "mlc"),
+        (OccludablePointItem, "mrc"),
+    ]
 
     def boundingRect(self):
         br = self.childrenBoundingRect()
