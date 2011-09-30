@@ -262,8 +262,7 @@ class NPointFaceInserter(SequenceItemInserter):
             (PointItemInserter, "reic", "right eye inner corner"),
             (PointItemInserter, "reoc", "right eye outer corner"),
             (PointItemInserter, "nt",   "nose tip"),
-            (PointItemInserter, "mlc",  "left mouth corner"),
-            (PointItemInserter, "mrc",  "right mouth corner"),
+            (PointItemInserter, "ulc",  "upper lip center"),
     ]
 
     def toggleOccludedForCurrentInserter(self):
@@ -325,4 +324,3 @@ class PolygonItemInserter(ItemInserter):
             self._current_item.setPolygon(polygon)
 
         event.accept()
-

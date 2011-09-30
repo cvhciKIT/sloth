@@ -470,8 +470,7 @@ class NPointFaceItem(GroupItem):
         (OccludablePointItem, "reic"),
         (OccludablePointItem, "reoc"),
         (OccludablePointItem, "nt"),
-        (OccludablePointItem, "mlc"),
-        (OccludablePointItem, "mrc"),
+        (OccludablePointItem, "ulc"),
     ]
 
     def boundingRect(self):
