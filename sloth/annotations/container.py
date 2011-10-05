@@ -29,7 +29,7 @@ except:
         from PIL import Image
         _use_pil = True
     except:
-        LOG.warn("Could neither find PIL nor okapy.  Sloth needs one of them for loading images.")
+        raise RuntimeError("Could neither find PIL nor okapy.  Sloth needs one of them for loading images.")
 
 
 class AnnotationContainerFactory:
