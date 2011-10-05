@@ -466,12 +466,23 @@ class NPointFacePointItem(QGraphicsEllipseItem):
 class NPointFaceItem(GroupItem):
     items = [
         (OccludablePointItem, "leoc"),
+        (OccludablePointItem, "lec"),
         (OccludablePointItem, "leic"),
         (OccludablePointItem, "reic"),
+        (OccludablePointItem, "rec"),
         (OccludablePointItem, "reoc"),
         (OccludablePointItem, "nt"),
         (OccludablePointItem, "ulc"),
+        (OccludablePointItem, "mc"),
+        (OccludablePointItem, "lmc"),
+        (OccludablePointItem, "rmc"),
     ]
+
+    def createChildren(self):
+        for callable_, prefix in self.items:
+            if prefix + 'x' in self._model_item and prefix + 'y' in self._model_item:
+                child = callable_(self._model_item, prefix, self)
+                self._children.append(child)
 
     def boundingRect(self):
         br = self.childrenBoundingRect()
