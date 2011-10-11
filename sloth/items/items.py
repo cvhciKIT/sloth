@@ -113,6 +113,17 @@ class BaseItem(QAbstractGraphicsShapeItem):
         """
         return self._auto_text_keys
 
+    def isValid(self):
+        """
+        Return whether this graphics item is valid, i.e. has
+        a matching, valid model item connected to it.  An item is
+        by default valid, will only be set invalid on failure.
+        """
+        return self._valid
+
+    def setValid(self, val):
+        self._valid = val
+
     def _compile_text(self):
         text_lines = []
         if self._text != "" and self._text is not None:
@@ -230,8 +241,16 @@ class PointItem(BaseItem):
         if self._model_item is None:
             return
 
-        point = QPointF(float(self._model_item[self.prefix() + 'x']),
-                        float(self._model_item[self.prefix() + 'y']))
+        try:
+            point = QPointF(float(self._model_item[self.prefix() + 'x']),
+                            float(self._model_item[self.prefix() + 'y']))
+        except KeyError as e:
+            LOG.error("PointItem: Could not find expected key in item: "
+                      + str(e) + ". Check your config!")
+            self.setValid(False)
+            self._point = None
+            return
+
         if point == self._point:
             return
 
@@ -288,10 +307,17 @@ class RectItem(BaseItem):
     def _dataToRect(self, model_item):
         if model_item is None:
             return QRectF()
-        return QRectF(float(model_item[self.prefix() + 'x']),
-                      float(model_item[self.prefix() + 'y']),
-                      float(model_item[self.prefix() + 'width']),
-                      float(model_item[self.prefix() + 'height']))
+
+        try:
+            return QRectF(float(model_item[self.prefix() + 'x']),
+                          float(model_item[self.prefix() + 'y']),
+                          float(model_item[self.prefix() + 'width']),
+                          float(model_item[self.prefix() + 'height']))
+        except KeyError as e:
+            LOG.error("PointItem: Could not find expected key in item: "
+                      + str(e) + ". Check your config!")
+            self.setValid(False)
+            return QRectF()
 
     def _updateRect(self, rect):
         if rect == self._rect:
