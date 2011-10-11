@@ -4,11 +4,14 @@ from PyQt4.Qt import *
 import logging
 LOG = logging.getLogger(__name__)
 
+
 class IgnorePrefix:
     def __init__(self, value):
         self.value = value
+
     def __str__(self):
         return self.value
+
 
 class BaseItem(QAbstractGraphicsShapeItem):
     """
@@ -29,9 +32,9 @@ class BaseItem(QAbstractGraphicsShapeItem):
         parent :
         """
         QAbstractGraphicsShapeItem.__init__(self, parent)
-        self.setFlags(QGraphicsItem.ItemIsSelectable | \
-                      QGraphicsItem.ItemIsMovable | \
-                      QGraphicsItem.ItemSendsGeometryChanges | \
+        self.setFlags(QGraphicsItem.ItemIsSelectable |
+                      QGraphicsItem.ItemIsMovable |
+                      QGraphicsItem.ItemSendsGeometryChanges |
                       QGraphicsItem.ItemSendsScenePositionChanges)
 
         self._model_item = model_item
@@ -45,6 +48,7 @@ class BaseItem(QAbstractGraphicsShapeItem):
         self._text = ""
         self._text_bg_brush = None
         self._auto_text_keys = self.defaultAutoTextKeys[:]
+        self._valid = True
 
     def changeColor(self):
         if self._model_item is not None:
@@ -190,7 +194,8 @@ class BaseItem(QAbstractGraphicsShapeItem):
                     nextindex = 0
                 else:
                     try:
-                        nextindex = (valuelist.index(oldvalue)+1) % len(valuelist)
+                        nextindex = valuelist.index(oldvalue) + 1
+                        nextindex %= len(valuelist)
                     except ValueError:
                         nextindex = 0
                 newvalue = valuelist[nextindex]
@@ -296,7 +301,8 @@ class RectItem(BaseItem):
         self._resize_start_rect = None
 
         self._updateRect(self._dataToRect(self._model_item))
-        LOG.debug("Constructed rect %s for model item %s" % (self._rect, model_item))
+        LOG.debug("Constructed rect %s for model item %s" %
+                  (self._rect, model_item))
 
     def __call__(self, model_item=None, parent=None):
         item = RectItem(model_item, parent)
@@ -365,7 +371,9 @@ class RectItem(BaseItem):
     def mouseMoveEvent(self, event):
         if self._resize:
             diff = event.scenePos() - self._resize_start
-            rect = QRectF(self._resize_start_rect.topLeft(), self._resize_start_rect.bottomRight() + diff).normalized()
+            tl = self._resize_start_rect.topLeft()
+            br = self._resize_start_rect.bottomRight()
+            rect = QRectF(tl, br + diff).normalized()
             self._updateRect(rect)
             self.updateModel()
             event.accept()
@@ -398,6 +406,7 @@ class RectItem(BaseItem):
             self.updateModel()
             event.accept()
 
+
 class GroupItem(BaseItem):
     items = []
 
@@ -421,6 +430,7 @@ class GroupItem(BaseItem):
     def boundingRect(self):
         return self.childrenBoundingRect()
 
+
 class OccludablePointItem(PointItem):
     cycleValuesOnKeypress = {
         'o': ('occluded', [True, False])
@@ -440,12 +450,14 @@ class OccludablePointItem(PointItem):
             occluded = self._model_item[key]
             self.setColor(Qt.red if occluded else Qt.yellow)
 
+
 class IDRectItem(RectItem):
     cycleValuesOnKeypress = dict(
         [('i',    (IgnorePrefix('id'), range(10)))] +
         [(str(i), (IgnorePrefix('id'), [i])) for i in range(10)]
     )
     defaultAutoTextKeys = ['id']
+
 
 class BBoxFaceItem(GroupItem):
     items = [
@@ -454,6 +466,7 @@ class BBoxFaceItem(GroupItem):
         (OccludablePointItem, "rec"),
         (OccludablePointItem, "mc"),
     ]
+
 
 class ControlItem(QGraphicsItem):
     def __init__(self, parent=None):
@@ -466,6 +479,7 @@ class ControlItem(QGraphicsItem):
         color = QColor('black')
         color.setAlpha(200)
         painter.fillRect(self.boundingRect(), color)
+
 
 class NPointFacePointItem(QGraphicsEllipseItem):
     def __init__(self, landmark, *args, **kwargs):
@@ -489,6 +503,7 @@ class NPointFacePointItem(QGraphicsEllipseItem):
         self.setPen(color)
         self.update()
 
+
 class NPointFaceItem(GroupItem):
     items = [
         (OccludablePointItem, "leoc"),
@@ -506,7 +521,8 @@ class NPointFaceItem(GroupItem):
 
     def createChildren(self):
         for callable_, prefix in self.items:
-            if prefix + 'x' in self._model_item and prefix + 'y' in self._model_item:
+            if prefix + 'x' in self._model_item and \
+               prefix + 'y' in self._model_item:
                 child = callable_(self._model_item, prefix, self)
                 self._children.append(child)
 
@@ -523,4 +539,3 @@ class NPointFaceItem(GroupItem):
             pen.setStyle(Qt.DashLine)
         painter.setPen(pen)
         painter.drawRect(self.boundingRect())
-

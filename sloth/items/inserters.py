@@ -2,24 +2,28 @@ from PyQt4.QtGui import *
 from PyQt4.Qt import *
 import math
 
+
 class ItemInserter(QObject):
     """
     The base class for all item insertion handlers.
     """
     # Signals
     annotationFinished = pyqtSignal()
-    inserterFinished   = pyqtSignal()
+    inserterFinished = pyqtSignal()
 
-    def __init__(self, labeltool, scene, default_properties=None, prefix="", commit=True):
+    def __init__(self, labeltool, scene, default_properties={},
+                 prefix="", commit=True):
         QObject.__init__(self)
-        self._labeltool          = labeltool
-        self._scene              = scene
-        self._default_properties = default_properties if default_properties is not None else {}
-        self._prefix             = prefix
-        self._ann                = {}
-        self._commit             = commit
-        self._item               = None
-        self._pen                = Qt.red
+        self._labeltool = labeltool
+        self._scene = scene
+        self._default_properties = default_properties
+        if self._default_properties is None:
+            self._default_properties = {}
+        self._prefix = prefix
+        self._ann = {}
+        self._commit = commit
+        self._item = None
+        self._pen = Qt.red
 
     def annotation(self):
         return self._ann
@@ -57,6 +61,7 @@ class ItemInserter(QObject):
     def abort(self):
         self.inserterFinished.emit()
 
+
 class PointItemInserter(ItemInserter):
     def mousePressEvent(self, event, image_item):
         pos = event.scenePos()
@@ -66,15 +71,19 @@ class PointItemInserter(ItemInserter):
         self._ann.update(self._default_properties)
         if self._commit:
             image_item.addAnnotation(self._ann)
-        self._item = QGraphicsEllipseItem(QRectF(pos.x()-2, pos.y()-2, 5, 5))
+        self._item = QGraphicsEllipseItem(QRectF(pos.x() - 2,
+                                          pos.y() - 2, 5, 5))
         self._item.setPen(self.pen())
         self.annotationFinished.emit()
         event.accept()
 
+
 class RectItemInserter(ItemInserter):
-    def __init__(self, labeltool, scene, default_properties=None, prefix="", commit=True):
-        ItemInserter.__init__(self, labeltool, scene, default_properties, prefix, commit)
-        self._init_pos     = None
+    def __init__(self, labeltool, scene, default_properties={},
+                 prefix="", commit=True):
+        ItemInserter.__init__(self, labeltool, scene, default_properties,
+                              prefix, commit)
+        self._init_pos = None
 
     def mousePressEvent(self, event, image_item):
         pos = event.scenePos()
@@ -120,36 +129,41 @@ class RectItemInserter(ItemInserter):
             self._init_pos = None
         ItemInserter.abort(self)
 
+
 class FixedRatioRectItemInserter(RectItemInserter):
-    def __init__(self, labeltool, scene, default_properties=None, prefix="", commit=True):
-        RectItemInserter.__init__(self, labeltool, scene, default_properties, prefix, commit)
-        self._ratio = 1
-        if default_properties is not None:
-            self._ratio = float(default_properties.get('_ratio', 1))
+    def __init__(self, labeltool, scene, default_properties={},
+                 prefix="", commit=True):
+        RectItemInserter.__init__(self, labeltool, scene, default_properties,
+                                  prefix, commit)
+        self._ratio = float(default_properties.get('_ratio', 1))
 
     def mouseMoveEvent(self, event, image_item):
         if self._current_item is not None:
-            new_geometry = QRectF(self._current_item.rect().topLeft(), event.scenePos())
+            new_geometry = QRectF(self._current_item.rect().topLeft(),
+                                  event.scenePos())
             dx = new_geometry.width()
             dy = new_geometry.height()
-            d = math.sqrt(dx*dx + dy*dy)
+            d = math.sqrt(dx * dx + dy * dy)
             r = self._ratio
-            k = math.sqrt(r*r+1)
-            h = d/k
-            w = d*r/k
+            k = math.sqrt(r * r + 1)
+            h = d / k
+            w = d * r / k
             new_geometry.setWidth(w)
             new_geometry.setHeight(h)
             self._current_item.setRect(new_geometry.normalized())
 
         event.accept()
 
+
 class SequenceItemInserter(ItemInserter):
     inserters = []
 
-    def __init__(self, labeltool, scene, default_properties=None, prefix="", commit=True):
-        ItemInserter.__init__(self, labeltool, scene, default_properties, prefix, commit)
-        self._items     = []
-        self._state     = 0
+    def __init__(self, labeltool, scene, default_properties={},
+                 prefix="", commit=True):
+        ItemInserter.__init__(self, labeltool, scene, default_properties,
+                              prefix, commit)
+        self._items = []
+        self._state = 0
         self._current_inserter = None
         self._current_image_item = None
 
@@ -171,8 +185,7 @@ class SequenceItemInserter(ItemInserter):
             next_state = self._state + 1
 
         if self._current_inserter is not None:
-            if self._current_inserter is not None:
-                self.updateAnnotation(self._current_inserter.annotation())
+            self.updateAnnotation(self._current_inserter.annotation())
             item = self._current_inserter.item()
             if item is not None:
                 self._scene.addItem(item)
@@ -189,7 +202,8 @@ class SequenceItemInserter(ItemInserter):
                 next_state = 0
 
         callable_, prefix, message = self.inserters[next_state]
-        self._current_inserter = callable_(self._labeltool, self._scene, prefix=prefix, commit=False)
+        self._current_inserter = callable_(self._labeltool, self._scene,
+                                           prefix=prefix, commit=False)
         self._current_inserter.annotationFinished.connect(self.nextState)
         if message:
             self._scene.setMessage(message)
@@ -216,6 +230,7 @@ class SequenceItemInserter(ItemInserter):
     def abort(self):
         self._cleanup()
         self.inserterFinished.emit()
+
 
 class BBoxFaceInserter(SequenceItemInserter):
     inserters = [
