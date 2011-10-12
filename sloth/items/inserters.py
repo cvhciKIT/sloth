@@ -258,6 +258,14 @@ class BBoxFaceInserter(SequenceItemInserter):
     def keyPressEvent(self, event, image_item):
         if event.key() == Qt.Key_O and self._state > 0:
             self.toggleOccludedForCurrentInserter()
+            return
+        elif Qt.Key_0 <= event.key() <= Qt.Key_9:
+            self._ann['id'] = int(str(event.text()))
+            message = self._scene._message
+            if message is None:
+                message = ""
+            self._scene.setMessage(message + "\nSet id to %d." % self._ann['id'])
+            return
         SequenceItemInserter.keyPressEvent(self, event, image_item)
 
     def imageChange(self):
