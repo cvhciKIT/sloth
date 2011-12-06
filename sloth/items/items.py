@@ -41,14 +41,18 @@ class BaseItem(QAbstractGraphicsShapeItem):
         if self._model_item is not None:
             self._model_item.model().dataChanged.connect(self.onDataChanged)
 
-        self.changeColor()
-
         # initialize members
         self._prefix = prefix
+        self._auto_text_keys = self.defaultAutoTextKeys[:]
         self._text = ""
         self._text_bg_brush = None
-        self._auto_text_keys = self.defaultAutoTextKeys[:]
+        self._text_item = QGraphicsTextItem(self)
+        self._text_item.setPos(0, 0)
+        self._text_item.setAcceptHoverEvents(False)
+        self._text_item.setHtml(self._compile_text())
         self._valid = True
+
+        self.changeColor()
 
     def changeColor(self):
         if self._model_item is not None:
@@ -59,8 +63,12 @@ class BaseItem(QAbstractGraphicsShapeItem):
         self.setColor(Qt.yellow)
 
     def onDataChanged(self, indexFrom, indexTo):
+        # FIXME why is this not updated, when changed graphically via attribute box ?
+        #print "onDataChanged", self._model_item.index(), indexFrom, indexTo, indexFrom.parent()
         if indexFrom == self._model_item.index():
             self.changeColor()
+            #print "hit"
+            # self._text_item.setHtml(self._compile_text())
 
     def modelItem(self):
         """
@@ -80,11 +88,16 @@ class BaseItem(QAbstractGraphicsShapeItem):
         """
         return self._prefix
 
+    def setPen(self, pen):
+        QAbstractGraphicsShapeItem.setPen(self, pen)
+        self._text_item.setDefaultTextColor(pen)
+
     def setText(self, text=""):
         """
         Sets a text to be displayed on this item.
         """
         self._text = text
+        self._text_item.setHtml(self._compile_text())
 
     def text(self):
         return self._text
@@ -109,6 +122,7 @@ class BaseItem(QAbstractGraphicsShapeItem):
         are displayed automatically as text.
         """
         self._auto_text_keys = keys
+        self._text_item.setHtml(self._compile_text())
 
     def autoTextKeys(self):
         """
@@ -135,10 +149,11 @@ class BaseItem(QAbstractGraphicsShapeItem):
         for key in self._auto_text_keys:
             text_lines.append("%s: %s" % \
                     (key, self._model_item.get(key, "")))
-        return '\n'.join(text_lines)
+        return '<br/>'.join(text_lines)
 
     def dataChanged(self):
         self.dataChange()
+        self._text_item.setHtml(self._compile_text())
         self.update()
 
     def dataChange(self):
@@ -147,23 +162,6 @@ class BaseItem(QAbstractGraphicsShapeItem):
     def updateModel(self, ann=None):
         if ann is not None:
             self._model_item.update(ann)
-
-    def paint(self, painter, option, widget=None):
-        painter.save()
-        painter.setPen(self.pen())
-
-        # display the text for this item
-        text = self._compile_text()
-        rect = painter.boundingRect(
-                QRect(5, 5, 1000, 1000), Qt.AlignTop | Qt.AlignLeft, text)
-
-        # fill background region behind text
-        if self._text_bg_brush is not None:
-            bg_rect = rect.adjusted(-3, -3, 3, 3)
-            painter.fillRect(bg_rect, self._text_bg_brush)
-
-        painter.drawText(rect, Qt.AlignTop | Qt.AlignLeft, text)
-        painter.restore()
 
     def boundingRect(self):
         return QRectF(0, 0, 0, 0)
