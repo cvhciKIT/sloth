@@ -259,8 +259,12 @@ class BBoxFaceInserter(SequenceItemInserter):
         if event.key() == Qt.Key_O and self._state > 0:
             self.toggleOccludedForCurrentInserter()
             return
-        elif Qt.Key_0 <= event.key() <= Qt.Key_9:
-            self._ann['id'] = int(str(event.text()))
+        elif Qt.Key_0 <= event.key() <= Qt.Key_9 or \
+             Qt.Key_A <= event.key() <= Qt.Key_Z:
+            if Qt.Key_0 <= event.key() <= Qt.Key_9:
+                self._ann['id'] = int(str(event.text()))
+            else:
+                self._ann['id'] = ord(str(event.text()).upper()) - 65 + 10
             message = self._scene._message
             if message is None:
                 message = ""
