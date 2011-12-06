@@ -49,6 +49,7 @@ class BaseItem(QAbstractGraphicsShapeItem):
         self._text_item = QGraphicsTextItem(self)
         self._text_item.setPos(0, 0)
         self._text_item.setAcceptHoverEvents(False)
+        self._text_item.setFlags(QGraphicsItem.ItemIgnoresTransformations)
         self._text_item.setHtml(self._compile_text())
         self._valid = True
 
