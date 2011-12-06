@@ -172,6 +172,9 @@ class BaseItem(QAbstractGraphicsShapeItem):
         self.setBrush(color)
         self.update()
 
+    def paint(self, painter, option, widget=None):
+        pass
+
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionHasChanged:
             self.updateModel()
@@ -532,7 +535,7 @@ class NPointFaceItem(GroupItem):
         return br.adjusted(-offset, -offset, +offset, +offset)
 
     def paint(self, painter, option, widget=None):
-        BaseItem.paint(self, painter, option, widget)
+        GroupItem.paint(self, painter, option, widget)
 
         pen = self.pen()
         if self.isSelected():
