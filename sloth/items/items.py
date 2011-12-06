@@ -416,6 +416,8 @@ class GroupItem(BaseItem):
         self._children = []
         BaseItem.__init__(self, model_item, prefix, parent)
         self.setFlag(QGraphicsItem.ItemIsMovable, False)
+        self.setFlag(QGraphicsItem.ItemIsSelectable, False)
+        self.setFlag(QGraphicsItem.ItemIsFocusable, False)
 
         self.createChildren()
 
