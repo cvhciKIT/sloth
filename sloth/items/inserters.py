@@ -112,10 +112,11 @@ class RectItemInserter(ItemInserter):
                                   self._prefix + 'height': rect.height()})
                 self._ann.update(self._default_properties)
                 if self._commit:
-                    image_item.addAnnotation(ann)
+                    image_item.addAnnotation(self._ann)
             self._scene.removeItem(self._item)
             self.annotationFinished.emit()
             self._init_pos = None
+            self._item = None
 
         event.accept()
 
