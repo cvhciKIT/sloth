@@ -222,6 +222,7 @@ class PointItem(BaseItem):
         self.updatePoint()
 
     def setRadius(self, radius):
+        self.prepareGeometryChange()
         self._radius = radius
         self.update()
 
@@ -261,8 +262,8 @@ class PointItem(BaseItem):
         if point == self._point:
             return
 
-        self._point = point
         self.prepareGeometryChange()
+        self._point = point
         self.setPos(self._point)
 
     def boundingRect(self):
@@ -331,8 +332,8 @@ class RectItem(BaseItem):
         if rect == self._rect:
             return
 
-        self._rect = rect
         self.prepareGeometryChange()
+        self._rect = rect
         self.setPos(rect.topLeft())
 
     def updateModel(self):
