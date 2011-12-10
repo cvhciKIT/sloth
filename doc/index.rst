@@ -43,12 +43,6 @@ Contents
    examples
    api/index
 
-
-TODOs
-=====
-
-.. todolist::
-
 Indices and tables
 ==================
 
