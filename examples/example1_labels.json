@@ -1,36 +1,33 @@
 [
     {
-        "class": "image", 
+        "class": "image",
+        "filename": "image1.jpg",
         "annotations": [
             {
+                "class": "rect",
                 "height": 60.0, 
                 "width": 46.0, 
                 "y": 105.0, 
-                "x": 346.0, 
-                "class": "Face"
+                "x": 346.0
             }, 
             {
+                "class": "rect",
                 "height": 58.0, 
                 "width": 56.0, 
                 "y": 119.0, 
-                "x": 636.0, 
-                "class": "Face",
-                "unconfirmed": "true"
+                "x": 636.0
             }
-        ], 
-        "filename": "image1.jpg"
+        ] 
     }, 
     {
         "class": "image", 
+        "filename": "image2.jpg",
         "annotations": [
             {
+                "class": "point",
                 "y": 155.0, 
-                "x": 409.0, 
-                "class": "mouth",
-                "unconfirmed": "true"
+                "x": 409.0
             }
-        ], 
-        "filename": "image2.jpg",
-        "unlabeled": "true"
+        ] 
     }
 ]
