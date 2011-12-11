@@ -33,8 +33,8 @@ Contents
 .. toctree::
    :maxdepth: 2
 
-   concepts
    installation
+   concepts
    first_steps
    configuration
    items
