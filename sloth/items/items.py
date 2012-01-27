@@ -525,6 +525,9 @@ class NPointFaceItem(GroupItem):
         (OccludablePointItem, "rmc"),
     ]
 
+    def __init__(self, model_item=None, prefix="", parent=None):
+        GroupItem.__init__(self, model_item, prefix, parent)
+
     def createChildren(self):
         for callable_, prefix in self.items:
             if prefix + 'x' in self._model_item and \
