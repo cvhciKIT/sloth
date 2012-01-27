@@ -782,13 +782,14 @@ class AnnotationTreeView(QTreeView):
         self.resizeColumns()
 
     def setSelectedItems(self, items):
-        block = self.blockSignals(True)
+        #block = self.blockSignals(True)
         sel = QItemSelection()
         for item in items:
             sel.merge(QItemSelection(item.index(), item.index(1)), QItemSelectionModel.SelectCurrent)
-        self.selectionModel().clear()
-        self.selectionModel().select(sel, QItemSelectionModel.Select)
-        self.blockSignals(block)
+        if set(sel) != set(self.selectionModel().selection()):
+            self.selectionModel().clear()
+            self.selectionModel().select(sel, QItemSelectionModel.Select)
+        #self.blockSignals(block)
 
     def selectionChanged(self, selected, deselected):
         items = [ self.model().itemFromIndex(index) for index in self.selectionModel().selectedIndexes()]
