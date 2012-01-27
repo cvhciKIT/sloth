@@ -206,12 +206,15 @@ class AnnotationScene(QGraphicsScene):
         self._labeltool.treeview().setSelectedItems(model_items)
         self.editSelectedItems()
 
-    def onSelectionChangedInTreeView(self, items):
+    def onSelectionChangedInTreeView(self, model_items):
         block = self.blockSignals(True)
-        items = [self.itemFromIndex(item.index()) for item in items]
+        selected_items = set()
+        for model_item in model_items:
+            for item in self.itemsFromIndex(model_item.index()):
+                selected_items.add(item)
         for item in self.items():
             item.setSelected(False)
-        for item in items:
+        for item in selected_items:
             if item is not None:
                 item.setSelected(True)
         self.blockSignals(block)
