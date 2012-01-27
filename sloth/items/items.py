@@ -433,7 +433,12 @@ class GroupItem(BaseItem):
         BaseItem.setColor(self, *args, **kwargs)
 
     def boundingRect(self):
-        return self.childrenBoundingRect()
+        br = QRectF()
+        for item in self.childItems():
+            if item is self._text_item:
+                continue
+            br |= item.mapRectToParent(item.boundingRect())
+        return br
 
 
 class OccludablePointItem(PointItem):
@@ -536,7 +541,7 @@ class NPointFaceItem(GroupItem):
                 self._children.append(child)
 
     def boundingRect(self):
-        br = self.childrenBoundingRect()
+        br = GroupItem.boundingRect(self)
         offset = 0.2 * br.height()
         return br.adjusted(-offset, -offset, +offset, +offset)
 
