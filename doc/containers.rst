@@ -41,7 +41,7 @@ parsing and serialization of the labels from/to disk to the to functions
 
 and
 
-.. py:function:: serializeToFile(self, filename, annotations
+.. py:function:: serializeToFile(self, filename, annotations)
 
 respectively.  If you subclass AnnotationContainer, make sure to
 provide implementations for those two functions.
