@@ -18,10 +18,15 @@ class ConvertCommand(BaseCommand):
 
     def handle(self, *args, **options):
         if len(args) != 2:
-            raise CommandError("Expect exactly 2 arguments.")
+            raise CommandError("convert: Expecting exactly 2 arguments.")
 
         input, output = args[:]
+        logger.info("converting from %s to %s" % (input, output))
+
+        logger.debug("loading annotations from %s" % input)
         self.labeltool.loadAnnotations(input)
+
+        logger.debug("saving annotations to %s" % output)
         self.labeltool.saveAnnotations(output)
 
 
