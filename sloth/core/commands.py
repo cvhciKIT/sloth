@@ -85,7 +85,13 @@ class AppendFilesCommand(BaseCommand):
     option_list = BaseCommand.option_list + (
         make_option('-u', '--unlabeled', action='store_true', default=False,
             help='Mark appended files as unlabeled.'),
+        make_option(      '--image', action='store_true', default=False,
+            help='Force appended files to be recognized as images.'),
+        make_option(      '--video', action='store_true', default=False,
+            help='Force appended files to be recognized as videos.'),
     )
+
+    video_extensions = ['.vob', '.idx', '.mpg', '.mpeg']
 
     def handle(self, *args, **options):
         if len(args) < 2:
@@ -98,7 +104,15 @@ class AppendFilesCommand(BaseCommand):
                 rel_filename = os.path.relpath(filename, os.path.dirname(args[0]))
             except:
                 pass
-            item = self.labeltool.addImageFile(rel_filename)
+
+            _, ext = os.path.splitext(rel_filename)
+            if (not options['image'] and ext.lower() in self.video_extensions) or options['video']:
+                logger.debug("Adding video file: %s" % rel_filename)
+                item = self.labeltool.addVideoFile(rel_filename)
+            else:
+                logger.debug("Adding image file: %s" % rel_filename)
+                item = self.labeltool.addImageFile(rel_filename)
+
             if options['unlabeled']:
                 item.setUnlabeled(True)
         self.labeltool.saveAnnotations(args[0])
