@@ -6,6 +6,8 @@ from pprint import pprint
 from sloth.core.cli import BaseCommand, CommandError
 from sloth.annotations.container import *
 from optparse import make_option
+import logging
+logger = logging.getLogger(__name__)
 
 class ConvertCommand(BaseCommand):
     """
