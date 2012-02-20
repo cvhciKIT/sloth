@@ -321,8 +321,11 @@ class LabelTool(QObject):
             self.currentImageChanged.emit()
 
     def getImage(self, item):
-        # TODO: Also handle video frames
-        return self._container.loadImage(item['filename'])
+        if item['class'] == 'frame':
+            video = item.parent()
+            return self._container.loadFrame(video['filename'], item['num'])
+        else:
+            return self._container.loadImage(item['filename'])
 
     def getAnnotationFilePatterns(self):
         return self._container_factory.patterns()
@@ -345,13 +348,17 @@ class LabelTool(QObject):
         # FIXME: OKAPI should provide a method to get all timestamps at once
         # FIXME: Some dialog should be displayed, telling the user that the
         # video is being loaded/indexed and that this might take a while
-        video = okv.FFMPEGIndexedVideoSource(fname)
+        LOG.info("Importing frames from %s. This may take a while..." % fname)
+        video = okv.createVideoSourceFromString(fname)
+        video = okv.toRandomAccessVideoSource(video)
         i = 0
         while video.getNextFrame():
+            LOG.debug("Adding frame %d" % i)
             ts = video.getTimestamp()
             frame = { 'annotations': [],
                       'num': i,
                       'timestamp': ts,
+                      'class': 'frame'
                     }
             fileitem['frames'].append(frame)
             i += 1

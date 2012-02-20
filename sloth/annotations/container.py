@@ -23,6 +23,7 @@ except:
     pass
 try:
     import okapy
+    import okapy.videoio as okv
     _use_pil = False
 except:
     try:
@@ -86,6 +87,7 @@ class AnnotationContainer:
     def clear(self):
         self._annotations = []
         self._filename = None
+        self._video_cache = {}
 
     def load(self, filename):
         """
@@ -165,12 +167,22 @@ class AnnotationContainer:
         ``frame_number``.  In the default implementation this will try to load
         the video from a path relative to the label files directory.
         """
-        fullpath = self._fullpath(filename)
+        fullpath = str(self._fullpath(filename))
         if not os.path.exists(fullpath):
             LOG.warn("Video file %s does not exists." % fullpath)
             return None
 
-        #TODO load video
+        # get video source from cache or load from file
+        if fullpath in self._video_cache:
+            vidsrc = self._video_cache[fullpath]
+        else:
+            vidsrc = okv.createVideoSourceFromString(fullpath)
+            vidsrc = okv.toRandomAccessVideoSource(vidsrc)
+            self._video_cache[fullpath] = vidsrc
+
+        # get requested frame
+        vidsrc.getFrame(frame_number)
+        return vidsrc.getImage()
 
 
 class PickleContainer(AnnotationContainer):
