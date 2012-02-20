@@ -3,7 +3,7 @@ The annotationmodel module contains the classes for the AnnotationModel.
 """
 from PyQt4.QtGui import QTreeView, QItemSelection, QItemSelectionModel, QSortFilterProxyModel, QBrush
 from PyQt4.QtCore import QModelIndex, QAbstractItemModel, Qt, pyqtSignal, QVariant
-import os.path
+import os.path, sys
 import copy
 from collections import MutableMapping
 import time
@@ -254,6 +254,7 @@ class RootModelItem(ModelItem):
 
     def appendFileItem(self, fileinfo):
         item = FileModelItem.create(fileinfo)
+        LOG.debug("created FileModelItem of type %s" % item.__class__.__name__)
         self.appendChild(item)
         return item
 
@@ -465,6 +466,7 @@ class VideoFileModelItem(FileModelItem):
             self.addChildSorted(FrameModelItem(frameinfo))
 
     def getAnnotations(self):
+        self._ensureAllLoaded()
         fi = KeyValueModelItem.getAnnotations(self)
         fi['frames'] = [child.getAnnotations() for child in self.children()]
         return fi
@@ -498,7 +500,8 @@ class FrameModelItem(ImageModelItem, KeyValueModelItem):
 
     def getAnnotations(self):
         fi = KeyValueModelItem.getAnnotations(self)
-        fi['annotations'] = [child.getAnnotations() for child in self.children()]
+        fi['annotations'] = [child.getAnnotations() for child in self.children()
+                             if hasattr(child, 'getAnnotations')]
         return fi
 
 class AnnotationModelItem(KeyValueModelItem):
