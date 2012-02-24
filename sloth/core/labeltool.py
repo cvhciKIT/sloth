@@ -148,11 +148,20 @@ class LabelTool(QObject):
             sys.exit(0)
 
         else:
-            # no command is matching, then -- if not empty --
-            # args must contain a labelfile filename to load
+            # Setup GUI
+            self._mainwindow = MainWindow(self)
+            self._mainwindow.show()
+
+            # Load plugins
+            self.loadPlugins(config.PLUGINS)
+
+            # check if args contain a labelfile filename to load
             if len(args) > 1:
                 try:
                     self.loadAnnotations(args[1], handleErrors=False)
+
+                    # goto to first image
+                    self.gotoNext()
                 except Exception as e:
                     LOG.fatal("Error loading annotations: %s" % e)
                     if (int(options.verbosity)) > 1:
@@ -162,12 +171,6 @@ class LabelTool(QObject):
             else:
                 self.clearAnnotations()
 
-            # Setup GUI
-            self._mainwindow = MainWindow(self)
-            self._mainwindow.show()
-
-            # Load plugins
-            self.loadPlugins(config.PLUGINS)
 
     def fetch_command(self, subcommand):
         """
