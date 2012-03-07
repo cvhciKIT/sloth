@@ -4,8 +4,7 @@ This is the core labeltool module.
 
 
 """
-
-import sys, os, logging
+import sys, os
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from sloth.annotations.model import *
