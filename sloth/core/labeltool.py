@@ -364,17 +364,27 @@ class LabelTool(QObject):
         LOG.info("Importing frames from %s. This may take a while..." % fname)
         video = okv.createVideoSourceFromString(fname)
         video = okv.toRandomAccessVideoSource(video)
-        i = 0
-        while video.getNextFrame():
-            LOG.debug("Adding frame %d" % i)
-            ts = video.getTimestamp()
-            frame = { 'annotations': [],
-                      'num': i,
-                      'timestamp': ts,
-                      'class': 'frame'
-                    }
-            fileitem['frames'].append(frame)
-            i += 1
+
+        # try to convert to iseq, getting all timestamps will be significantly faster
+        iseq = okv.toImageSeqReader(video)
+        if iseq is not None:
+            timestamps = iseq.getTimestamps()
+            LOG.debug("Adding %d frames" % len(timestamps))
+            fileitem['frames'] = [{'annotations': [], 'num': i,
+                                   'timestamp': ts, 'class': 'frame'}
+                                   for i, ts in enumerate(timestamps)]
+        else:
+            i = 0
+            while video.getNextFrame():
+                LOG.debug("Adding frame %d" % i)
+                ts = video.getTimestamp()
+                frame = { 'annotations': [],
+                          'num': i,
+                          'timestamp': ts,
+                          'class': 'frame'
+                        }
+                fileitem['frames'].append(frame)
+                i += 1
 
         self._model._root.appendFileItem(fileitem)
 
