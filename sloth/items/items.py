@@ -323,7 +323,7 @@ class RectItem(BaseItem):
                           float(model_item[self.prefix() + 'width']),
                           float(model_item[self.prefix() + 'height']))
         except KeyError as e:
-            LOG.error("PointItem: Could not find expected key in item: "
+            LOG.error("RectItem: Could not find expected key in item: "
                       + str(e) + ". Check your config!")
             self.setValid(False)
             return QRectF()
