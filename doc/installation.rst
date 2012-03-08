@@ -16,6 +16,17 @@ either `PIL`_ or okapy for image loading.
 .. _PyQt4:  http://www.riverbankcomputing.co.uk/software/pyqt/intro
 .. _PIL:    http://www.pythonware.com/products/pil/
 
+To use okapy, make sure to make it's modules known to python, e.g. add
+<okapibuild>/python/ to the PYTHONPATH environment variable::
+
+     export PYTHONPATH=<okapibuild>/python/:$PYTHONPATH
+
+For compiling the docs, `Python Sphinx`_ is needed.
+
+.. _Python Sphinx: http://pypi.python.org/pypi/Sphinx
+
+
+
 Installing Sloth
 ================
 
