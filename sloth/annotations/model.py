@@ -46,6 +46,9 @@ class ModelItem:
     def childHasChildren(self, row):
         return self.childAt(row).hasChildren()
 
+    def row(self):
+        return self._row
+
     def rowCount(self):
         return len(self._children)
 
@@ -91,15 +94,15 @@ class ModelItem:
         return self._children[pos]
 
     def getPreviousSibling(self):
-        if self._parent is not None:
-            if self._row > 0:
-                return self._parent.childAt(self._row-1)
-        return None
+        return self.getSibling(self._row-1)
 
     def getNextSibling(self):
+        return self.getSibling(self._row+1)
+
+    def getSibling(self, row):
         if self._parent is not None:
             try:
-                return self._parent.childAt(self._row+1)
+                return self._parent.childAt(row)
             except:
                 pass
         return None

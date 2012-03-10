@@ -281,6 +281,18 @@ class LabelTool(QObject):
     def model(self):
         return self._model
 
+    def gotoIndex(self, idx):
+        if self._model is None:
+            return
+
+        current = self._current_image
+        if current is None:
+            current = self._model.iterator(ImageModelItem).next()
+
+        next_image = current.getSibling(idx)
+        if next_image is not None:
+            self.setCurrentImage(next_image)
+
     def gotoNext(self, step=1):
         if self._model is not None:
             if self._current_image is not None:
