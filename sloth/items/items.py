@@ -302,6 +302,8 @@ class RectItem(BaseItem):
         self._resize = False
         self._resize_start = None
         self._resize_start_rect = None
+        self._upper_half_clicked = None
+        self._left_half_clicked = None
 
         self._updateRect(self._dataToRect(self._model_item))
         LOG.debug("Constructed rect %s for model item %s" %
@@ -367,6 +369,8 @@ class RectItem(BaseItem):
             self._resize = True
             self._resize_start = event.scenePos()
             self._resize_start_rect = QRectF(self._rect)
+            self._upper_half_clicked = (event.scenePos().y() < self._resize_start_rect.center().y())
+            self._left_half_clicked  = (event.scenePos().x() < self._resize_start_rect.center().x())
             event.accept()
         else:
             BaseItem.mousePressEvent(self, event)
@@ -374,9 +378,22 @@ class RectItem(BaseItem):
     def mouseMoveEvent(self, event):
         if self._resize:
             diff = event.scenePos() - self._resize_start
-            tl = self._resize_start_rect.topLeft()
-            br = self._resize_start_rect.bottomRight()
-            rect = QRectF(tl, br + diff).normalized()
+            if self._left_half_clicked:
+                x = self._resize_start_rect.x() + diff.x()
+                w = self._resize_start_rect.width() - diff.x()
+            else:
+                x = self._resize_start_rect.x()
+                w = self._resize_start_rect.width() + diff.x()
+
+            if self._upper_half_clicked:
+                y = self._resize_start_rect.y() + diff.y()
+                h = self._resize_start_rect.height() - diff.y()
+            else:
+                y = self._resize_start_rect.y()
+                h = self._resize_start_rect.height() + diff.y()
+
+            rect = QRectF(QPointF(x,y), QSizeF(w, h))
+
             self._updateRect(rect)
             self.updateModel()
             event.accept()
