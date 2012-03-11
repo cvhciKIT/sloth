@@ -392,7 +392,7 @@ class RectItem(BaseItem):
                 y = self._resize_start_rect.y()
                 h = self._resize_start_rect.height() + diff.y()
 
-            rect = QRectF(QPointF(x,y), QSizeF(w, h))
+            rect = QRectF(QPointF(x,y), QSizeF(w, h)).normalized()
 
             self._updateRect(rect)
             self.updateModel()
