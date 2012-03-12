@@ -93,11 +93,11 @@ class ModelItem:
         self._ensureLoaded(pos)
         return self._children[pos]
 
-    def getPreviousSibling(self):
-        return self.getSibling(self._row-1)
+    def getPreviousSibling(self, step=1):
+        return self.getSibling(self._row-step)
 
-    def getNextSibling(self):
-        return self.getSibling(self._row+1)
+    def getNextSibling(self, step=1):
+        return self.getSibling(self._row+step)
 
     def getSibling(self, row):
         if self._parent is not None:
