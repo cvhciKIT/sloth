@@ -429,6 +429,10 @@ class LabelTool(QObject):
     def selectPreviousAnnotation(self):
         if self._mainwindow is not None:
             return self._mainwindow.scene.selectNextItem(reverse=True)
+    
+    def selectAllAnnotations(self):
+        if self._mainwindow is not None:
+            return self._mainwindow.scene.selectAllItems()
 
     def deleteSelectedAnnotations(self):
         if self._mainwindow is not None:
