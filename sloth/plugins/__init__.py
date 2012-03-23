@@ -66,7 +66,7 @@ class CopyAnnotationsPlugin(QObject):
         for key in keys:
             if not self._prefix + key in annotation:
                 return None
-        return [annotation[key] for key in keys]
+        return [annotation[self._prefix + key] for key in keys]
 
     def overlap(self, r1, r2):
         ia = float(self.area(self.intersect(r1, r2)))
