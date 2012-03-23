@@ -287,7 +287,7 @@ class LabelTool(QObject):
 
         current = self._current_image
         if current is None:
-            current = self._model.iterator(ImageModelItem).next()
+            current = next(self._model.iterator(ImageModelItem))
 
         next_image = current.getSibling(idx)
         if next_image is not None:
@@ -298,7 +298,7 @@ class LabelTool(QObject):
             if self._current_image is not None:
                 next_image = self._current_image.getNextSibling(step)
             else:
-                next_image = self._model.iterator(ImageModelItem).next()
+                next_image = next(self._model.iterator(ImageModelItem))
                 if next_image is not None:
                     next_image = next_image.getNextSibling(step-1)
 
@@ -429,6 +429,10 @@ class LabelTool(QObject):
     def selectPreviousAnnotation(self):
         if self._mainwindow is not None:
             return self._mainwindow.scene.selectNextItem(reverse=True)
+    
+    def selectAllAnnotations(self):
+        if self._mainwindow is not None:
+            return self._mainwindow.scene.selectAllItems()
 
     def deleteSelectedAnnotations(self):
         if self._mainwindow is not None:

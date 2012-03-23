@@ -260,6 +260,10 @@ class AnnotationScene(QGraphicsScene):
                 item.setSelected(True)
                 break
 
+    def selectAllItems(self):
+        for item in self.items():
+            item.setSelected(True)
+
     def keyPressEvent(self, event):
         LOG.debug("keyPressEvent %s" % event)
 

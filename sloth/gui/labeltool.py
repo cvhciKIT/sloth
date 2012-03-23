@@ -48,10 +48,7 @@ class BackgroundLoader(QObject):
             self._message_displayed = True
         if self._level <= self._max_levels and self._rows > 0:
             try:
-                if hasattr(self._iterator, "next"):
-                    item = self._iterator.next()
-                else:
-                    item = next(self._iterator)
+                item = next(self._iterator)
                 self._next_rows += item.rowCount()
                 self._pos += 1
                 self._progress.setValue(int((float(self._pos) / float(self._rows) + self._level - 1) * 1000))
