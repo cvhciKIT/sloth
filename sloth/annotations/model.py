@@ -519,7 +519,11 @@ class AnnotationModelItem(KeyValueModelItem):
     def data(self, role=Qt.DisplayRole, column=0):
         if role == Qt.DisplayRole:
             if column == 0:
-                return self['class']
+                try:
+                    return self['class']
+                except KeyError:
+                    LOG.error('Could not find key class in annotation item. Please check your label file.')
+                    return '<error - no class set>'
             elif column == 1 and self.isUnconfirmed():
                 return '[unconfirmed]'
             else:

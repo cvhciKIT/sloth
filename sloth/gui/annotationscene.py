@@ -98,7 +98,11 @@ class AnnotationScene(QGraphicsScene):
             child = self._image_item.childAt(row)
             if not isinstance(child, AnnotationModelItem):
                 continue
-            label_class = child['class']
+            try:
+                label_class = child['class']
+            except KeyError:
+                LOG.error('Could not find key class in annotation item. Skipping this item. Please check your label file.')
+                continue
             item = self._itemfactory.create(label_class, child)
             if item is not None:
                 self.addItem(item)
