@@ -85,7 +85,7 @@ class AnnotationContainer:
         return self._filename
 
     def clear(self):
-        self._annotations = []
+        self._annotations = [] # TODO Why isn't this used? Annotations are passed as parameters instead. Let's have encapsulation.
         self._filename = None
         self._video_cache = {}
 
