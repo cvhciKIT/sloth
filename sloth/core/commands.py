@@ -117,6 +117,90 @@ class AppendFilesCommand(BaseCommand):
                 item.setUnlabeled(True)
         self.labeltool.saveAnnotations(args[0])
 
+class MergeFilesCommand(BaseCommand):
+    """
+    Merge annotations of two label files and create a new one from it.
+    Currently, only video annotation files are supported.
+    If both input files have annotations for the same frame number, the result
+    will contain the union of both annotations.
+    
+    Output format will be determined by the file suffix of output.
+    """
+    args = '<labelfile 1> <labelfile 2> <output>'
+    help = __doc__.strip()
+
+    def handle(self, *args, **options):
+        if len(args) != 3:
+            raise CommandError("Usage: %s" % self.args)
+
+        input1, input2, output = args[:]
+        logger.info("merging %s and %s into %s" % (input1, input2, output))
+        logger.debug("loading annotations from %s" % input1)
+        container1 = self.labeltool._container_factory.create(input1)
+        an1 = container1.load(input1)
+
+        logger.debug("loading annotations from %s" % input2)
+        container2 = self.labeltool._container_factory.create(input2)
+        an2 = container2.load(input2)
+
+        logger.debug("merging annotations of %s and %s" % (input1, input2))
+        an3 = self.merge_annotations(an1, an2)
+
+        logger.debug("saving annotations to %s" % output)
+        containerOut = self.labeltool._container_factory.create(output)
+        containerOut.save(an3, output)
+
+    
+    def merge_annotations(self, an1, an2):
+    
+        # I could also think of an implementation merging an1 and an2, and flattening the lists of lists
+        # that are obtained
+        assert(len(an1) == 1 and len(an2) == 1)
+        d1 = an1[0]
+        d2 = an2[0]
+        
+        if(d1['class'] != 'video'):
+            raise NotImplemented('mergefiles: Currently, only annotation files from video can be merged.')
+            
+        if(d2['class'] != d1['class']):
+            raise CommandError("mergefiles: Both annotation files have to be of the same type (%s vs. %s)." % (d1['class'], d2['class']))
+        
+        if(d1['filename'] != d2['filename']):
+            raise CommandError('mergefiles: Both annotation files must annotate the same video file.')
+
+        assert(d1['frames'] != None)
+        assert(d2['frames'] != None)
+        
+        
+        frames1 = d1['frames']
+        frames2 = d2['frames']
+        
+        # collect list of nums
+        frameNums1 = set()
+        for frame in frames1:
+            frameNums1.add(frame['num']) 
+            
+        # make frames2 accessible by frame number
+        frameNums2 = dict()
+        for frame in frames2:
+            frameNums2[frame['num']] = frame
+        
+        for frame in frames1:
+            num = frame['num']
+            # look for frame with same timestamp in frames2
+            if num in frameNums2:
+                # update annotations
+                frame['annotations'].extend(frameNums2[num]['annotations'])
+        
+        # append frames with nums only in frames2 to frames1        
+        numsOnlyIn2 = set(frameNums2.keys()) - frameNums1
+        for key in numsOnlyIn2:
+            frames1.append(frameNums2[key])
+        
+        from operator import itemgetter
+        frames1.sort(key=itemgetter('num'))        
+        
+        return an1
 
 def _make_writeable(filename):
     """
@@ -148,3 +232,4 @@ register_command('convert', ConvertCommand())
 register_command('createconfig', CreateConfigCommand())
 register_command('dumplabels', DumpLabelsCommand())
 register_command('appendfiles', AppendFilesCommand())
+register_command('mergefiles', MergeFilesCommand())
