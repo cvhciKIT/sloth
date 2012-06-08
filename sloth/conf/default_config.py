@@ -9,7 +9,7 @@
 # to specify a module path (as string) pointing to such a python callable.
 # It will then be automatically imported.
 
-# LABLES
+# LABELS
 #
 # List/tuple of dictionaries that defines the label classes
 # that are handled by sloth.  For each label, there should
@@ -31,6 +31,8 @@
 #   - 'attributes' : (optional) A dictionary that defines the
 #                    keys and possible values of this label
 #                    class.
+#
+#   - 'text' : (optional) A label for the item's GUI button.
 LABELS = (
     {
         'attributes': {
@@ -107,4 +109,5 @@ CONTAINERS = (
 # as string.
 PLUGINS = (
 )
+
 

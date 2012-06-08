@@ -156,15 +156,15 @@ annotations that extend over image boundaries::
 Extending default values
 ========================
 
-In the usual case one overrides the default when defining a setting
+In the usual case one overrides the default when defining a configuration
 variable.  In order to extend the default configuration and avoid overriding
 the default values, you can first import the default configuration and then
 append your custom mappings (remember that the configuration is a python
-module, you can basically execute any valid python code)::
+module, therefore you can execute any valid python code)::
 
     from sloth.conf.default_config import LABELS
 
-    MYLABLES = ({
+    MYLABELS = ({
        ...
     })
 
