@@ -135,6 +135,23 @@ PLUGINS
 Did not think to much about this yet.  This is rather for v2.0.  Could image to be able to define some kind of
 plugin that might do some preprocessing on an image, e.g. detect all faces and convert them into labels.
 
+.. _SCENE_BACKGROUND:
+
+SCENE_BACKGROUND
+----------------
+
+Default::
+
+    Qt.darkGray
+
+Allows to set the scene background to a custom color or pattern.  Expects a QBrush.  A more
+complex background could be a regular box pattern which might simplify the exact resizing of 
+annotations that extend over image boundaries::
+
+    from PyQt4.QtGui import QBrush
+    from PyQt4.QtCore import Qt
+    SCENE_BACKGROUND = QBrush(Qt.darkGray, Qt.CrossPattern)
+
 
 Extending default values
 ========================

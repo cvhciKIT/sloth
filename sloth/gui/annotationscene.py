@@ -5,6 +5,7 @@ from sloth.items import *
 from sloth.core.exceptions import InvalidArgumentException
 from sloth.annotations.model import AnnotationModelItem
 from sloth.utils import toQImage
+from sloth.conf import config
 import logging
 LOG = logging.getLogger(__name__)
 
@@ -23,7 +24,10 @@ class AnnotationScene(QGraphicsScene):
         self._itemfactory     = Factory(items)
         self._inserterfactory = Factory(inserters)
 
-        self.setBackgroundBrush(Qt.darkGray)
+        try:
+            self.setBackgroundBrush(config.SCENE_BACKGROUND)
+        except:
+            self.setBackgroundBrush(Qt.darkGray)
         self.reset()
 
     #
