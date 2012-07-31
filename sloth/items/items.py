@@ -532,17 +532,20 @@ class NPointFacePointItem(QGraphicsEllipseItem):
 
 class NPointFaceItem(GroupItem):
     items = [
-        (OccludablePointItem, "leoc"),
-        (OccludablePointItem, "lec"),
-        (OccludablePointItem, "leic"),
-        (OccludablePointItem, "reic"),
-        (OccludablePointItem, "rec"),
-        (OccludablePointItem, "reoc"),
-        (OccludablePointItem, "nt"),
-        (OccludablePointItem, "ulc"),
-        (OccludablePointItem, "mc"),
-        (OccludablePointItem, "lmc"),
-        (OccludablePointItem, "rmc"),
+        (OccludablePointItem, "leoc"), # left eye outer center
+        (OccludablePointItem, "lec"),  # left eye center
+        (OccludablePointItem, "leic"), # left eye inner center
+        (OccludablePointItem, "reic"), # right eye inner center
+        (OccludablePointItem, "rec"),  # right eye center
+        (OccludablePointItem, "reoc"), # right eye outer center
+        (OccludablePointItem, "nt"), # nose tip
+        (OccludablePointItem, "nl"), # nose left
+        (OccludablePointItem, "nr"), # nose right
+        (OccludablePointItem, "ulc"), # upper lip center
+        (OccludablePointItem, "llc"), # lower lip center
+        (OccludablePointItem, "mc"), # mouth center
+        (OccludablePointItem, "lmc"), # left mouth center
+        (OccludablePointItem, "rmc"), # right mouth center
     ]
 
     def __init__(self, model_item=None, prefix="", parent=None):
