@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>sloth</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="icons.qrc">
+    <normaloff>:/icons/sloth.svg</normaloff>:/icons/sloth.svg</iconset>
+  </property>
   <widget class="QWidget" name="centralWidget"/>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
