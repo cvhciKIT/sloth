@@ -101,7 +101,8 @@ class AppendFilesCommand(BaseCommand):
         for filename in args[1:]:
             rel_filename = filename
             try:
-                rel_filename = os.path.relpath(filename, os.path.dirname(args[0]))
+                if not os.path.isabs(filename):
+                    rel_filename = os.path.relpath(filename, os.path.dirname(args[0]))
             except:
                 pass
 
@@ -116,6 +117,7 @@ class AppendFilesCommand(BaseCommand):
             if options['unlabeled']:
                 item.setUnlabeled(True)
         self.labeltool.saveAnnotations(args[0])
+
 
 class MergeFilesCommand(BaseCommand):
     """
@@ -201,6 +203,7 @@ class MergeFilesCommand(BaseCommand):
         frames1.sort(key=itemgetter('num'))        
         
         return an1
+
 
 def _make_writeable(filename):
     """
