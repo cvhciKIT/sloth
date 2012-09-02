@@ -4,6 +4,52 @@ from PyQt4.Qt import *
 import logging
 LOG = logging.getLogger(__name__)
 
+# convenience functions for creating hotkey functions
+class cycleValue:
+    def __init__(self, itemkey, valuelist):
+        self.itemkey = itemkey
+        self.valuelist = valuelist
+
+    def __call__(self, item):
+        if isinstance(self.itemkey, IgnorePrefix):
+            key = self.itemkey.value
+        else:
+            key = item.prefix() + self.itemkey
+
+        if len(self.valuelist) > 0:
+            oldvalue = item._model_item.get(key, None)
+            if oldvalue is None:
+                nextindex = 0
+            else:
+                try:
+                    nextindex = self.valuelist.index(oldvalue) + 1
+                    nextindex %= len(self.valuelist)
+                except ValueError:
+                    nextindex = 0
+            newvalue = self.valuelist[nextindex]
+            if newvalue is None:
+                if oldvalue is not None:
+                    item._model_item.delete(key)
+            else:
+                item._model_item[key] = self.valuelist[nextindex]
+            item.dataChanged()
+
+def setValue(itemkey, newvalue):
+    return lambda self: _setValue(self, itemkey, newvalue)
+
+def _setValue(self, itemkey, newvalue):
+    if isinstance(itemkey, IgnorePrefix):
+        itemkey = itemkey.value
+    else:
+        itemkey = self.prefix() + itemkey
+    oldvalue = self._model_item.get(itemkey, None)
+    if newvalue is None:
+        if oldvalue is not None:
+            self._model_item.delete(itemkey)
+    elif newvalue != oldvalue:
+        self._model_item[itemkey] = newvalue
+    self.dataChanged()
+
 
 class IgnorePrefix:
     def __init__(self, value):
@@ -12,13 +58,13 @@ class IgnorePrefix:
     def __str__(self):
         return self.value
 
-
 class BaseItem(QAbstractGraphicsShapeItem):
     """
     Base class for visualization items.
     """
 
     cycleValuesOnKeypress = {}
+    hotkeys = {}
     defaultAutoTextKeys = []
 
     def __init__(self, model_item=None, prefix="", parent=None):
@@ -52,6 +98,9 @@ class BaseItem(QAbstractGraphicsShapeItem):
         self._text_item.setFlags(QGraphicsItem.ItemIgnoresTransformations)
         self._text_item.setHtml(self._compile_text())
         self._valid = True
+
+        if len(self.cycleValuesOnKeypress) > 0:
+            logging.warning("Uing cycleValueOnKeypress is deprecated and will be removed in the future. Set BaseItem.hotkeys instead with cycleValue()")
 
         self.changeColor()
 
@@ -201,12 +250,16 @@ class BaseItem(QAbstractGraphicsShapeItem):
                     except ValueError:
                         nextindex = 0
                 newvalue = valuelist[nextindex]
-                if newvalue is None and oldvalue is not None:
-                    self._model_item.delete(itemkey)
+                if newvalue is None:
+                    if oldvalue is not None:
+                        self._model_item.delete(itemkey)
                 else:
                     self._model_item[itemkey] = valuelist[nextindex]
                 self.dataChanged()
                 event.accept()
+        elif str(event.text()) in self.hotkeys:
+            self.hotkeys[str(event.text())](self)
+            event.accept()
 
 
 class PointItem(BaseItem):
