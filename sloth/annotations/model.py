@@ -340,6 +340,7 @@ class KeyValueModelItem(ModelItem, MutableMapping):
             if key not in self._hidden:
                 self._items[key] = KeyValueRowModelItem(key)
                 self.addChildSorted(self._items[key])
+            self._emitDataChanged(key)
         elif self._dict[key] != value:
             self._dict[key] = value
             # TODO: Emit for hidden key/values?
