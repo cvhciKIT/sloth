@@ -597,8 +597,8 @@ class NPointFaceItem(GroupItem):
         (OccludablePointItem, "ulc"), # upper lip center
         (OccludablePointItem, "llc"), # lower lip center
         (OccludablePointItem, "mc"), # mouth center
-        (OccludablePointItem, "lmc"), # left mouth center
-        (OccludablePointItem, "rmc"), # right mouth center
+        (OccludablePointItem, "lmc"), # left mouth corner
+        (OccludablePointItem, "rmc"), # right mouth corner
     ]
 
     def __init__(self, model_item=None, prefix="", parent=None):
