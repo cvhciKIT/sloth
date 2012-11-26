@@ -70,7 +70,8 @@ class CopyAnnotationsPlugin(QObject):
 
     def overlap(self, r1, r2):
         ia = float(self.area(self.intersect(r1, r2)))
-        return min(ia/self.area(r1), ia/self.area(r2))
+        union = self.area(r1) + self.area(r2) - ia
+        return ia / union
 
     def intersect(self, r1, r2):
         x = max(r1[0], r2[0])
