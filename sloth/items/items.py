@@ -530,10 +530,10 @@ class OccludablePointItem(PointItem):
 
 
 class IDRectItem(RectItem):
-    cycleValuesOnKeypress = dict(
-        [('i',    (IgnorePrefix('id'), range(36)))] +
-        [(str(i), (IgnorePrefix('id'), [i])) for i in range(10)] +
-        [(chr(i-10+65).lower(), (IgnorePrefix('id'), [i])) for i in range(10, 36)]
+    hotkeys = dict(
+        [('i',    cycleValue(IgnorePrefix('id'), range(36)))] +
+        [(str(i), cycleValue(IgnorePrefix('id'), [i])) for i in range(10)] +
+        [(chr(i-10+65).lower(), cycleValue(IgnorePrefix('id'), [i])) for i in range(10, 36)]
     )
     defaultAutoTextKeys = ['id']
 
