@@ -480,6 +480,72 @@ class RectItem(BaseItem):
             event.accept()
 
 
+class MultiPointItem(BaseItem):
+    def __init__(self, model_item=None, prefix="pointlist", parent=None):
+        BaseItem.__init__(self, model_item, prefix, parent)
+
+        # make it non-movable for now
+        self.setFlags(QGraphicsItem.ItemIsSelectable |
+                      QGraphicsItem.ItemSendsGeometryChanges |
+                      QGraphicsItem.ItemSendsScenePositionChanges)
+        self._points = None
+
+        self._updatePoints(self._dataToPoints(self._model_item))
+        LOG.debug("Constructed points %s for model item %s" %
+                  (self._points, model_item))
+
+    def __call__(self, model_item=None, parent=None):
+        item = MultiPointItem(model_item, parent)
+        item.setPen(self.pen())
+        item.setBrush(self.brush())
+        return item
+
+    def _dataToPoints(self, model_item):
+        if model_item is None:
+            return []
+
+        try:
+            return model_item[self.prefix()]
+        except KeyError as e:
+            LOG.error("MultiPointItem: Could not find expected key in item: "
+                      + str(e) + ". Check your config!")
+            self.setValid(False)
+            return QRectF()
+
+    def _updatePoints(self, points):
+        if points == self._points:
+            return
+
+        self.prepareGeometryChange()
+        self._points = points
+        self.setPos(QPointF(0, 0))
+
+    def updateModel(self):
+        pass
+
+    def boundingRect(self):
+        xmin = min(self._points[::2])
+        xmax = max(self._points[::2])
+        ymin = min(self._points[1::2])
+        ymax = max(self._points[1::2])
+        return QRectF(xmin, ymin, xmax - xmin, ymax - ymin)
+
+    def paint(self, painter, option, widget=None):
+        BaseItem.paint(self, painter, option, widget)
+
+        pen = self.pen()
+        if self.isSelected():
+            pen.setStyle(Qt.DashLine)
+        painter.setPen(pen)
+        for k in range(len(self._points)/2):
+            x, y = self._points[2*k:2*k+2]
+            painter.drawEllipse(QRectF(x-1, y-1, 2, 2))
+
+    def dataChange(self):
+        points = self._dataToPoints(self._model_item)
+        self._updateRect(points)
+
+
 class GroupItem(BaseItem):
     items = []
 
