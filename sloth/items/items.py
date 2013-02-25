@@ -100,7 +100,7 @@ class BaseItem(QAbstractGraphicsShapeItem):
         self._valid = True
 
         if len(self.cycleValuesOnKeypress) > 0:
-            logging.warning("Uing cycleValueOnKeypress is deprecated and will be removed in the future. Set BaseItem.hotkeys instead with cycleValue()")
+            logging.warning("cycleValueOnKeypress is deprecated and will be removed in the future. Set BaseItem.hotkeys instead with cycleValue()")
 
         self.changeColor()
 
@@ -576,8 +576,8 @@ class GroupItem(BaseItem):
 
 
 class OccludablePointItem(PointItem):
-    cycleValuesOnKeypress = {
-        'o': ('occluded', [True, False])
+    hotkeys = {
+        'o': cycleValue('occluded', [True, False])
     }
 
     def __init__(self, *args, **kwargs):
