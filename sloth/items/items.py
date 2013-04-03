@@ -306,7 +306,7 @@ class PointItem(BaseItem):
             point = QPointF(float(self._model_item[self.prefix() + 'x']),
                             float(self._model_item[self.prefix() + 'y']))
         except KeyError as e:
-            LOG.error("PointItem: Could not find expected key in item: "
+            LOG.debug("PointItem: Could not find expected key in item: "
                       + str(e) + ". Check your config!")
             self.setValid(False)
             self._point = None
@@ -378,7 +378,7 @@ class RectItem(BaseItem):
                           float(model_item[self.prefix() + 'width']),
                           float(model_item[self.prefix() + 'height']))
         except KeyError as e:
-            LOG.error("RectItem: Could not find expected key in item: "
+            LOG.debug("RectItem: Could not find expected key in item: "
                       + str(e) + ". Check your config!")
             self.setValid(False)
             return QRectF()
@@ -507,7 +507,7 @@ class MultiPointItem(BaseItem):
         try:
             return model_item[self.prefix()]
         except KeyError as e:
-            LOG.error("MultiPointItem: Could not find expected key in item: "
+            LOG.debug("MultiPointItem: Could not find expected key in item: "
                       + str(e) + ". Check your config!")
             self.setValid(False)
             return QRectF()
