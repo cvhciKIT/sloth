@@ -152,7 +152,7 @@ class AnnotationContainer:
         """
         fullpath = self._fullpath(filename)
         if not os.path.exists(fullpath):
-            LOG.warn("Image file %s does not exists." % fullpath)
+            LOG.warn("Image file %s does not exist." % fullpath)
             return None
 
         if _use_pil:
@@ -169,7 +169,7 @@ class AnnotationContainer:
         """
         fullpath = str(self._fullpath(filename))
         if not os.path.exists(fullpath):
-            LOG.warn("Video file %s does not exists." % fullpath)
+            LOG.warn("Video file %s does not exist." % fullpath)
             return None
 
         # get video source from cache or load from file
