@@ -105,13 +105,13 @@ class AnnotationScene(QGraphicsScene):
             try:
                 label_class = child['class']
             except KeyError:
-                LOG.error('Could not find key class in annotation item. Skipping this item. Please check your label file.')
+                LOG.debug('Could not find key class in annotation item. Skipping this item. Please check your label file.')
                 continue
             item = self._itemfactory.create(label_class, child)
             if item is not None:
                 self.addItem(item)
             else:
-                LOG.warn("Could not find item for annotation with class '%s'" % label_class)
+                LOG.debug("Could not find item for annotation with class '%s'" % label_class)
 
     def deleteSelectedItems(self):
         # some (graphics) items may share the same model item
