@@ -628,12 +628,8 @@ class AnnotationModel(QAbstractItemModel):
         if parent_idx.isValid() and parent_idx.column() > 0:
             return QModelIndex()
 
-        # Handle root item
-        if parent_idx == QModelIndex():
-            parent = self._root
-        # Handle normal items
-        else:
-            parent = self.itemFromIndex(parent_idx)
+        # Get parent. This returns the root if parent_idx is invalid.
+        parent = self.itemFromIndex(parent_idx)
         if row < 0 or row >= parent.rowCount():
             return QModelIndex()
         if column < 0 or column >= self.columnCount():
