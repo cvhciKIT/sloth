@@ -296,11 +296,14 @@ class KeyValueModelItem(ModelItem, MutableMapping):
         self._dict[None] = None
         if properties is not None:
             self._dict.update(properties)
+            items_to_add = []
             for key in self._dict.keys():
                 if key not in self._hidden:
                     item = KeyValueRowModelItem(key)
                     self._items[key] = item
-                    self.addChildSorted(item)
+                    items_to_add.append(item)
+            items_to_add.sort(key=lambda x: x.key())
+            self.appendChildren(items_to_add, False)
 
     def addChildSorted(self, item, signalModel=True):
         if isinstance(item, KeyValueRowModelItem):
@@ -412,8 +415,8 @@ class FileModelItem(KeyValueModelItem):
 class ImageModelItem(ModelItem):
     def __init__(self, annotations):
         ModelItem.__init__(self)
-        for ann in annotations:
-            self.addAnnotation(ann)
+        items_to_add = [AnnotationModelItem(ann) for ann in annotations]
+        self.appendChildren(items_to_add, False)
 
     def addAnnotation(self, ann, signalModel=True):
         self.addChildSorted(AnnotationModelItem(ann), signalModel=signalModel)
@@ -466,8 +469,8 @@ class VideoFileModelItem(FileModelItem):
             del fileinfo["frames"]
         FileModelItem.__init__(self, fileinfo)
 
-        for frameinfo in frameinfos:
-            self.addChildSorted(FrameModelItem(frameinfo))
+        items_to_add = [FrameModelItem(frameinfo) for frameinfo in frameinfos]
+        self.appendChildren(items_to_add, False)
 
     def getAnnotations(self):
         self._ensureAllLoaded()
@@ -510,11 +513,7 @@ class FrameModelItem(ImageModelItem, KeyValueModelItem):
 
 class AnnotationModelItem(KeyValueModelItem):
     def __init__(self, annotation):
-        KeyValueModelItem.__init__(self)
-        # dummy key/value so that pyqt does not convert the dict
-        # into a QVariantMap while communicating with the Views
-        self[None] = None
-        self.update(annotation)
+        KeyValueModelItem.__init__(self, properties=annotation)
 
     # Delegated from QAbstractItemModel
     def data(self, role=Qt.DisplayRole, column=0):
