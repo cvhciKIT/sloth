@@ -168,7 +168,7 @@ class AnnotationContainer:
         the video from a path relative to the label files directory.
         """
         fullpath = str(self._fullpath(filename))
-        if not os.path.exists(fullpath):
+        if not os.path.exists(fullpath) and not os.path.exists(fullpath.split('%')[0]):
             LOG.warn("Video file %s does not exist." % fullpath)
             return None
 
