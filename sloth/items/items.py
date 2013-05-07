@@ -682,9 +682,12 @@ class NPointFaceItem(GroupItem):
                 self._children.append(child)
 
     def boundingRect(self):
-        br = GroupItem.boundingRect(self)
-        offset = 0.2 * br.height()
-        return br.adjusted(-offset, -offset, +offset, +offset)
+        if 'x' in self._model_item and 'y' in self._model_item and 'w' in self._model_item and 'h' in self._model_item:
+            return QRectF(QPointF(self._model_item['x'], self._model_item['y']), QSizeF(self._model_item['w'], self._model_item['h']))
+        else:
+            br = GroupItem.boundingRect(self)
+            offset = 0.2 * br.height()
+            return br.adjusted(-offset, -offset, +offset, +offset)
 
     def paint(self, painter, option, widget=None):
         GroupItem.paint(self, painter, option, widget)
