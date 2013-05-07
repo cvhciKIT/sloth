@@ -651,24 +651,39 @@ class NPointFacePointItem(QGraphicsEllipseItem):
 
 class NPointFaceItem(GroupItem):
     items = [
+        # Eyes
         (OccludablePointItem, "leoc"), # left eye outer center
         (OccludablePointItem, "lec"),  # left eye center
         (OccludablePointItem, "leic"), # left eye inner center
         (OccludablePointItem, "reic"), # right eye inner center
         (OccludablePointItem, "rec"),  # right eye center
         (OccludablePointItem, "reoc"), # right eye outer center
-        (OccludablePointItem, "nt"), # nose tip
-        (OccludablePointItem, "nl"), # nose left
-        (OccludablePointItem, "nr"), # nose right
-        (OccludablePointItem, "nc"), # nose center
-        (OccludablePointItem, "ulc"), # upper lip center
-        (OccludablePointItem, "llc"), # lower lip center
-        (OccludablePointItem, "mc"), # mouth center
-        (OccludablePointItem, "lmc"), # left mouth corner
-        (OccludablePointItem, "rmc"), # right mouth corner
-        (OccludablePointItem, "le"), # left ear
-        (OccludablePointItem, "re"), # right ear
-        (OccludablePointItem, "cc"), # chin center
+
+        # Nose
+        (OccludablePointItem, "nt"),   # nose tip
+        (OccludablePointItem, "nl"),   # nose left
+        (OccludablePointItem, "nr"),   # nose right
+        (OccludablePointItem, "nc"),   # nose center
+
+        # Mouth
+        (OccludablePointItem, "ulc"),  # upper lip center
+        (OccludablePointItem, "llc"),  # lower lip center
+        (OccludablePointItem, "mc"),   # mouth center
+        (OccludablePointItem, "lmc"),  # left mouth corner
+        (OccludablePointItem, "rmc"),  # right mouth corner
+
+        # Ears
+        (OccludablePointItem, "le"),   # left ear
+        (OccludablePointItem, "re"),   # right ear
+
+        # Chin
+        (OccludablePointItem, "cc"),   # chin center
+
+        # Eyebrows
+        (OccludablePointItem, "lboc"), # left eyebrow outer center
+        (OccludablePointItem, "lbic"), # left eyebrow inner center
+        (OccludablePointItem, "rbic"), # right eyebrow inner center
+        (OccludablePointItem, "rboc"), # right eyebrow outer center
     ]
 
     def __init__(self, model_item=None, prefix="", parent=None):
