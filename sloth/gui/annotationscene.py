@@ -1,4 +1,4 @@
-"""Dies ist das AnnotationScene module"""
+"""This is the AnnotationScene module"""
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from sloth.items import *
@@ -292,13 +292,13 @@ class AnnotationScene(QGraphicsScene):
                 # deselect all selected items
                 for item in self.selectedItems():
                     item.setSelected(False)
+                event.accept()
 
             elif len(self.selectedItems()) > 0:
                 for item in self.selectedItems():
                     item.keyPressEvent(event)
 
         QGraphicsScene.keyPressEvent(self, event)
-        #event.ignore()
 
     #
     # slots for signals from the model
