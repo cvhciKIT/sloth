@@ -327,9 +327,9 @@ class KeyValueModelItem(ModelItem, MutableMapping):
     def __getitem__(self, key):
         return self._dict[key]
 
-    def _emitDataChanged(self, key):
+    def _emitDataChanged(self, key=None):
         if self.model() is not None:
-            if key in self._items:
+            if key is not None and key in self._items:
                 index_tl = self._items[key].index()
                 index_br = self._items[key].index(1)
             else:
@@ -337,22 +337,29 @@ class KeyValueModelItem(ModelItem, MutableMapping):
                 index_br = self.index(1)
             self.model().dataChanged.emit(index_tl, index_br)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value, signalModel=True):
         if key not in self._dict:
             self._dict[key] = value
             if key not in self._hidden:
                 self._items[key] = KeyValueRowModelItem(key)
-                self.addChildSorted(self._items[key])
-            self._emitDataChanged(key)
+                self.addChildSorted(self._items[key], signalModel=signalModel)
+            if signalModel:
+                self._emitDataChanged(key)
         elif self._dict[key] != value:
             self._dict[key] = value
             # TODO: Emit for hidden key/values?
-            self._emitDataChanged(key)
+            if signalModel:
+                self._emitDataChanged(key)
 
     def __delitem__(self, key):
         del self._dict[key]
         if key in self._items:
             self.deleteChild(self._items[key])
+
+    def update(self, kvs):
+        for key, value in kvs.iteritems():
+            self.__setitem__(key, value, False)
+        self._emitDataChanged()
 
     def has_key(self, key):
         return key in self._dict
