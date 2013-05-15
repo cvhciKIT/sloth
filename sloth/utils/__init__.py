@@ -1,6 +1,8 @@
 from sloth.core.exceptions import NotImplementedException
 from PyQt4.QtGui import QImage, qRgb
 import numpy as np
+import random
+import colorsys
 
 gray_color_table = [qRgb(i, i, i) for i in range(256)]
 def toQImage(im, copy=False):
@@ -22,4 +24,39 @@ def toQImage(im, copy=False):
                 return qim.copy() if copy else qim
 
     raise NotImplementedException
+
+
+def gen_colors(s=0.99, v=0.99, h=None, color_space='rgb', _golden_ratio_conjugate=0.618033988749895):
+    """A generator for random colors such that adjacent colors are as distinct as possible.
+
+    Parameters
+    ----------
+    s: float
+        saturation
+    v: float
+        value
+    h: float (optional, default: random)
+        initial hue
+    color_space: string (optional, default: "rgb")
+        the target color space, one of "rgb", "hsv"
+
+    Returns
+    -------
+    A generator for tuples of floats (c1, c2, c3).
+    """
+    # see http://martin.ankerl.com/2009/12/09/how-to-create-random-colors-programmatically/
+
+    if color_space.lower() == 'rgb':
+        cs_convert = colorsys.hsv_to_rgb
+    elif color_space.lower() == 'hsv':
+        cs_convert = lambda *args: args
+    else:
+        raise RuntimeError("invalid color_space parameter: %s" % color_space)
+
+    if h is None:
+        h = random.random()
+    while True:
+        h += _golden_ratio_conjugate
+        h %= 1
+        yield cs_convert(h, s, v)
 
