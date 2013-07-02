@@ -311,7 +311,7 @@ class JsonContainer(AnnotationContainer):
         """
         # TODO make all image filenames relative to the label file
         f = open(fname, "w")
-        json.dump(annotations, f, indent=4)
+        json.dump(annotations, f, indent=4, sort_keys=True)
 
 
 class YamlContainer(AnnotationContainer):
