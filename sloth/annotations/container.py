@@ -181,7 +181,10 @@ class AnnotationContainer:
             self._video_cache[fullpath] = vidsrc
 
         # get requested frame
-        vidsrc.getFrame(frame_number)
+        if not vidsrc.getFrame(frame_number):
+            LOG.warn("Frame %d could not be loaded from video source %s" % (frame_number, fullpath))
+            return None
+
         return vidsrc.getImage()
 
 
