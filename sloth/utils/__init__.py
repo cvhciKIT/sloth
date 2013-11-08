@@ -22,8 +22,7 @@ def toQImage(im, copy=False):
             elif im.shape[2] == 4:
                 qim = QImage(im.data, im.shape[1], im.shape[0], im.strides[0], QImage.Format_ARGB32);
                 return qim.copy() if copy else qim
-
-    raise NotImplementedException
+    raise NotImplementedException('no conversion to QImage implemented for given image type (depth: %s, shape: %s)' % (im.dtype, im.shape))
 
 
 def gen_colors(s=0.99, v=0.99, h=None, color_space='rgb', _golden_ratio_conjugate=0.618033988749895):
