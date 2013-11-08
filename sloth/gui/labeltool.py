@@ -130,6 +130,11 @@ class MainWindow(QMainWindow):
 
         img = self.labeltool.getImage(new_image)
 
+        if img == None:
+            self.controls.setFilename("")
+            self.selectionmodel.setCurrentIndex(new_image.index(), QItemSelectionModel.ClearAndSelect|QItemSelectionModel.Rows)
+            return
+
         h = img.shape[0]
         w = img.shape[1]
         self.image_resolution.setText("%dx%d" % (w, h))
