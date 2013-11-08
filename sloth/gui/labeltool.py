@@ -124,8 +124,7 @@ class MainWindow(QMainWindow):
     def onCurrentImageChanged(self):
         new_image = self.labeltool.currentImage()
         self.scene.setCurrentImage(new_image)
-        if self.options["Fit-to-window mode"].isChecked():
-            self.view.fitInView()
+        self.onFitToWindowModeChanged()
         self.treeview.scrollTo(new_image.index())
 
         img = self.labeltool.getImage(new_image)
@@ -146,6 +145,10 @@ class MainWindow(QMainWindow):
             self.controls.setFilename(os.path.basename(new_image['filename']))
 
         self.selectionmodel.setCurrentIndex(new_image.index(), QItemSelectionModel.ClearAndSelect|QItemSelectionModel.Rows)
+
+    def onFitToWindowModeChanged(self):
+        if self.options["Fit-to-window mode"].isChecked():
+            self.view.fitInView()
 
     def onScaleChanged(self, scale):
         self.zoominfo.setText("%.2f%%" % (100 * scale, ))
@@ -286,6 +289,9 @@ class MainWindow(QMainWindow):
         self.labeltool.statusMessage.      connect(self.onStatusMessage)
         self.labeltool.annotationsLoaded.  connect(self.onAnnotationsLoaded)
         self.labeltool.currentImageChanged.connect(self.onCurrentImageChanged)
+
+        ## options menu
+        self.options["Fit-to-window mode"].changed.connect(self.onFitToWindowModeChanged)
 
     def loadApplicationSettings(self):
         settings = QSettings()
