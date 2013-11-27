@@ -271,11 +271,9 @@ class RootModelItem(ModelItem):
         LOG.debug("Creation of ModelItems: %.2fs, addition to model: %.2fs" % (diff1, diff2))
 
     def numFiles(self):
-        return 0
         return len(self.children())
 
     def numAnnotations(self):
-        return 0
         count = 0
         for ann in self._model.iterator(AnnotationModelItem):
             count += 1
