@@ -1,0 +1,14 @@
+virtualenv:
+  system_site_packages: true
+language: python
+python:
+  - "2.7"
+
+# install dependencies and sloth
+install:
+  - sudo apt-get install python-imaging python-qt4 python-numpy python3-numpy
+  - pip install Pillow
+  - pip install .
+
+# run tests 
+script: py.test
