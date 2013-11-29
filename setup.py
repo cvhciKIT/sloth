@@ -2,6 +2,7 @@
 import sys, os
 from distutils.core import setup
 from distutils.command.install import INSTALL_SCHEMES
+import sloth
 
 # the following installation setup is based on django's setup.py
 def fullsplit(path, result=None):
@@ -44,11 +45,11 @@ for dirpath, dirnames, filenames in os.walk(sloth_dir):
         data_files.append([dirpath, [os.path.join(dirpath, f) for f in filenames]])
 
 setup(name='sloth',
-      version='0.1',
+      version=sloth.VERSION,
       description='The Sloth Labeling Tool',
       author='CV:HCI Research Group',
-      url='http://cvhci.anthropomatik.kit.edu',
-      requires=['importlib', 'okapy', 'PyQt4',],
+      url='http://sloth.readthedocs.org/',
+      requires=['importlib', 'PyQt4',],
       packages=packages,
       data_files=data_files,
       scripts=['sloth/bin/sloth']
