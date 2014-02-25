@@ -251,6 +251,8 @@ class LabelEditor(QScrollArea):
         for lc in self._label_classes:
             attributes |= set(self._editor.getLabelClassAttributes(lc))
 
+        attributes = list(attributes)
+        attributes.sort()
         for attr in attributes:
             handler = self._editor.getHandler(attr)
             if handler is not None:
