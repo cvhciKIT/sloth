@@ -211,17 +211,18 @@ class PickleContainer(AnnotationContainer):
 
 class OkapiAnnotationContainer(AnnotationContainer):
     """
-    Converts a AnnotationPropertiesMap to a dict
+    Simple container which writes the annotations to disk using okapy.AnnotationContainer.
     """
+
     def convertAnnotationPropertiesMapToDict(self, properties):
+        """
+        Converts a AnnotationPropertiesMap to a dict
+        """
         propdict = {}
         for k, v in properties.items():
             propdict[k] = v
         return propdict
 
-    """
-    Simple container which writes the annotations to disk using okapy.AnnotationContainer.
-    """
     def parseFromFile(self, filename):
         """
         Overwritten to read Okapi::Annotation files.
@@ -252,10 +253,10 @@ class OkapiAnnotationContainer(AnnotationContainer):
 
         return annotations
 
-    """
-    Converts a dict to a AnnotationPropertiesMap
-    """
     def convertDictToAnnotationPropertiesMap(self, annotation, propdict):
+        """
+        Converts a dict to a AnnotationPropertiesMap
+        """
         for k, v in propdict.items():
             if k != 'annotations' or k != 'frames':
                 annotation.set_str(k, str(v))
