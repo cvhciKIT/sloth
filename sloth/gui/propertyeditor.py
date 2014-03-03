@@ -1,23 +1,30 @@
+import time
+import logging
+from PyQt4.QtCore import pyqtSignal, QSize, Qt
+from PyQt4.QtGui import QWidget, QGroupBox, QVBoxLayout, QPushButton, QScrollArea, QLineEdit, QDoubleValidator, QIntValidator, QShortcut, QKeySequence
 from sloth.core.exceptions import ImproperlyConfigured
 from sloth.annotations.model import AnnotationModelItem
 from sloth.gui.floatinglayout import FloatingLayout
 from sloth.gui.utils import MyVBoxLayout
 from sloth.utils.bind import bind
-from PyQt4.QtCore import pyqtSignal, QSize, Qt
-from PyQt4.QtGui import QWidget, QGroupBox, QVBoxLayout, QPushButton, QScrollArea, QLineEdit, QDoubleValidator, QIntValidator, QShortcut, QKeySequence
-import time
-import logging
+
+
 LOG = logging.getLogger(__name__)
+
 
 class AbstractAttributeHandler:
     def defaults(self):
         return {}
+
     def updateValues(self, values):
         pass
+
     def setItems(self, items, showItemClasses=False):
         pass
+
     def autoAddEnabled(self):
         return False
+
 
 class AttributeHandlerFactory:
     def create(self, attribute, values):
@@ -36,17 +43,18 @@ class AttributeHandlerFactory:
         # Else, we create our own default handler
         return DefaultAttributeHandler(attribute, values)
 
+
 class DefaultAttributeHandler(QGroupBox, AbstractAttributeHandler):
     def __init__(self, attribute, values, parent=None):
         QGroupBox.__init__(self, attribute, parent)
-        self._attribute      = attribute
-        self._current_items  = []
-        self._defaults       = {}
-        self._inputField     = None
+        self._attribute = attribute
+        self._current_items = []
+        self._defaults = {}
+        self._inputField = None
         self._inputFieldType = None
-        self._insertIndex    = -1
-        self._insertAtEnd    = False
-        self._shortcuts      = {}
+        self._insertIndex = -1
+        self._insertAtEnd = False
+        self._shortcuts = {}
 
         # Setup GUI
         self._layout = FloatingLayout()
@@ -257,7 +265,8 @@ class LabelEditor(QScrollArea):
             handler = self._editor.getHandler(attr)
             if handler is not None:
                 if len(items) > 1:
-                    valid_items = [item for item in items if attr in self._editor.getLabelClassAttributes(item['class'])]
+                    valid_items = [item for item in items
+                                   if attr in self._editor.getLabelClassAttributes(item['class'])]
                     handler.setItems(valid_items, True)
                 else:
                     handler.setItems(items)
@@ -284,6 +293,7 @@ class LabelEditor(QScrollArea):
 
     def insertionMode(self):
         return self._insertion_mode
+
 
 class PropertyEditor(QWidget):
     # Signals

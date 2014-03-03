@@ -1,23 +1,25 @@
 """
 The annotationmodel module contains the classes for the AnnotationModel.
 """
-from PyQt4.QtGui import QTreeView, QItemSelection, QItemSelectionModel, QSortFilterProxyModel, QBrush
-from PyQt4.QtCore import QModelIndex, QAbstractItemModel, Qt, pyqtSignal, QVariant
-import os.path, sys
-import copy
-from collections import MutableMapping
+import os.path
 import time
 import logging
+import copy
+from collections import MutableMapping
+from PyQt4.QtGui import QTreeView, QItemSelection, QItemSelectionModel, QSortFilterProxyModel, QBrush
+from PyQt4.QtCore import QModelIndex, QAbstractItemModel, Qt, pyqtSignal, QVariant
+
 LOG = logging.getLogger(__name__)
 
 ItemRole, DataRole, ImageRole = [Qt.UserRole + i + 1 for i in range(3)]
 
+
 class ModelItem:
     def __init__(self):
-        self._loaded    = True
-        self._model     = None
-        self._parent    = None
-        self._row       = -1
+        self._loaded = True
+        self._model = None
+        self._parent = None
+        self._row = -1
         if not hasattr(self, "_children"):
             self._children = []
 
@@ -579,18 +581,21 @@ class KeyValueRowModelItem(ModelItem):
             return True
         return False
 
+
 class AnnotationModel(QAbstractItemModel):
     # signals
     dirtyChanged = pyqtSignal(bool, name='dirtyChanged')
 
     def __init__(self, annotations, parent=None):
         QAbstractItemModel.__init__(self, parent)
+
         start = time.time()
         self._annotations = annotations
-        self._dirty       = False
-        self._root        = RootModelItem(self, annotations)
+        self._dirty = False
+        self._root = RootModelItem(self, annotations)
         diff = time.time() - start
         LOG.info("Created AnnotationModel in %.2fs" % (diff, ))
+
         self.dataChanged.connect(self.onDataChanged)
         self.rowsInserted.connect(self.onDataChanged)
         self.rowsRemoved.connect(self.onDataChanged)
