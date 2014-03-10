@@ -97,6 +97,7 @@ HOTKEYS = (
 # to such a class.
 CONTAINERS = (
     ('*.json',       'sloth.annotations.container.JsonContainer'),
+    ('*.msgpack',    'sloth.annotations.container.MsgpackContainer'),
     ('*.yaml',       'sloth.annotations.container.YamlContainer'),
     ('*.pickle',     'sloth.annotations.container.PickleContainer'),
     ('*.sloth-init', 'sloth.annotations.container.FileNameListContainer'),

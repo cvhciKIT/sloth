@@ -318,6 +318,29 @@ class JsonContainer(AnnotationContainer):
         json.dump(annotations, f, indent=4, sort_keys=True)
 
 
+class MsgpackContainer(AnnotationContainer):
+    """
+    Simple container which writes the annotations to disk in Msgpack format.
+    """
+
+    def parseFromFile(self, fname):
+        """
+        Overwritten to read Msgpack files.
+        """
+        import msgpack
+        f = open(fname, "r")
+        return msgpack.load(f)
+
+    def serializeToFile(self, fname, annotations):
+        """
+        Overwritten to write Msgpack files.
+        """
+        # TODO make all image filenames relative to the label file
+        import msgpack
+        f = open(fname, "w")
+        msgpack.dump(annotations, f)
+
+
 class YamlContainer(AnnotationContainer):
     """
     Simple container which writes the annotations to disk in YAML format.
