@@ -741,6 +741,8 @@ class NPointFaceItem(GroupItem):
             if prefix + 'x' in self._model_item and \
                prefix + 'y' in self._model_item:
                 child = callable_(self._model_item, prefix, self)
+                if hasattr(child, 'setToolTip'):
+                    child.setToolTip(prefix)
                 self._children.append(child)
 
     def boundingRect(self):
