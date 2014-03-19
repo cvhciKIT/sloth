@@ -11,14 +11,12 @@ class ItemInserter(QObject):
     annotationFinished = pyqtSignal()
     inserterFinished = pyqtSignal()
 
-    def __init__(self, labeltool, scene, default_properties={},
+    def __init__(self, labeltool, scene, default_properties=None,
                  prefix="", commit=True):
         QObject.__init__(self)
         self._labeltool = labeltool
         self._scene = scene
-        self._default_properties = default_properties
-        if self._default_properties is None:
-            self._default_properties = {}
+        self._default_properties = default_properties or {}
         self._prefix = prefix
         self._ann = {}
         self._commit = commit
@@ -79,7 +77,7 @@ class PointItemInserter(ItemInserter):
 
 
 class RectItemInserter(ItemInserter):
-    def __init__(self, labeltool, scene, default_properties={},
+    def __init__(self, labeltool, scene, default_properties=None,
                  prefix="", commit=True):
         ItemInserter.__init__(self, labeltool, scene, default_properties,
                               prefix, commit)
@@ -132,7 +130,7 @@ class RectItemInserter(ItemInserter):
 
 
 class FixedRatioRectItemInserter(RectItemInserter):
-    def __init__(self, labeltool, scene, default_properties={},
+    def __init__(self, labeltool, scene, default_properties=None,
                  prefix="", commit=True):
         RectItemInserter.__init__(self, labeltool, scene, default_properties,
                                   prefix, commit)
@@ -159,7 +157,7 @@ class FixedRatioRectItemInserter(RectItemInserter):
 class SequenceItemInserter(ItemInserter):
     inserters = []
 
-    def __init__(self, labeltool, scene, default_properties={},
+    def __init__(self, labeltool, scene, default_properties=None,
                  prefix="", commit=True):
         ItemInserter.__init__(self, labeltool, scene, default_properties,
                               prefix, commit)
@@ -260,8 +258,7 @@ class BBoxFaceInserter(SequenceItemInserter):
         if event.key() == Qt.Key_O and self._state > 0:
             self.toggleOccludedForCurrentInserter()
             return
-        elif Qt.Key_0 <= event.key() <= Qt.Key_9 or \
-             Qt.Key_A <= event.key() <= Qt.Key_Z:
+        elif Qt.Key_0 <= event.key() <= Qt.Key_9 or Qt.Key_A <= event.key() <= Qt.Key_Z:
             if Qt.Key_0 <= event.key() <= Qt.Key_9:
                 self._ann['id'] = int(str(event.text()))
             else:

@@ -165,12 +165,12 @@ class BaseItem(QAbstractGraphicsShapeItem):
         """
         return self._text_bg_brush
 
-    def setAutoTextKeys(self, keys=[]):
+    def setAutoTextKeys(self, keys=None):
         """
         Sets the keys for which the values from the annotations
         are displayed automatically as text.
         """
-        self._auto_text_keys = keys
+        self._auto_text_keys = keys or []
         self._text_item.setHtml(self._compile_text())
 
     def autoTextKeys(self):
