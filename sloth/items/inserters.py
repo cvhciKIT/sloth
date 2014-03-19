@@ -1,6 +1,6 @@
+import math
 from PyQt4.QtGui import *
 from PyQt4.Qt import *
-import math
 
 
 class ItemInserter(QObject):

@@ -1,8 +1,10 @@
+import logging
 from PyQt4.QtGui import *
 from PyQt4.Qt import *
 
-import logging
+
 LOG = logging.getLogger(__name__)
+
 
 # convenience functions for creating hotkey functions
 class cycleValue:
@@ -34,8 +36,10 @@ class cycleValue:
                 item._model_item[key] = self.valuelist[nextindex]
             item.dataChanged()
 
+
 def setValue(itemkey, newvalue):
     return lambda self: _setValue(self, itemkey, newvalue)
+
 
 def _setValue(self, itemkey, newvalue):
     if isinstance(itemkey, IgnorePrefix):
@@ -58,6 +62,7 @@ class IgnorePrefix:
     def __str__(self):
         return self.value
 
+
 class BaseItem(QAbstractGraphicsShapeItem):
     """
     Base class for visualization items.
@@ -70,12 +75,6 @@ class BaseItem(QAbstractGraphicsShapeItem):
     def __init__(self, model_item=None, prefix="", parent=None):
         """
         Creates a visualization item.
-
-        Parameters
-        ==========
-        index :
-        data :
-        parent :
         """
         QAbstractGraphicsShapeItem.__init__(self, parent)
         self.setFlags(QGraphicsItem.ItemIsSelectable |
@@ -520,9 +519,6 @@ class MultiPointItem(BaseItem):
         self._points = points
         self.setPos(QPointF(0, 0))
 
-    def updateModel(self):
-        pass
-
     def boundingRect(self):
         xmin = min(self._points[::2])
         xmax = max(self._points[::2])
@@ -652,48 +648,48 @@ class NPointFacePointItem(QGraphicsEllipseItem):
 class NPointFaceItem(GroupItem):
     items = [
         # Eyebrows
-        (OccludablePointItem, "lboc"),  # left eyebrow outer center
-        (OccludablePointItem, "lbu75"), # left eyebrow upper contour 75%
-        (OccludablePointItem, "lbu50"), # left eyebrow upper contour 50%
-        (OccludablePointItem, "lbu25"), # left eyebrow upper contour 25%
-        (OccludablePointItem, "lbic"),  # left eyebrow inner center
+        (OccludablePointItem, "lboc"),   # left eyebrow outer center
+        (OccludablePointItem, "lbu75"),  # left eyebrow upper contour 75%
+        (OccludablePointItem, "lbu50"),  # left eyebrow upper contour 50%
+        (OccludablePointItem, "lbu25"),  # left eyebrow upper contour 25%
+        (OccludablePointItem, "lbic"),   # left eyebrow inner center
 
-        (OccludablePointItem, "rbic"),  # right eyebrow inner center
-        (OccludablePointItem, "rbu25"), # right eyebrow upper contour 25%
-        (OccludablePointItem, "rbu50"), # right eyebrow upper contour 50%
-        (OccludablePointItem, "rbu75"), # right eyebrow upper contour 75%
-        (OccludablePointItem, "rboc"),  # right eyebrow outer center
+        (OccludablePointItem, "rbic"),   # right eyebrow inner center
+        (OccludablePointItem, "rbu25"),  # right eyebrow upper contour 25%
+        (OccludablePointItem, "rbu50"),  # right eyebrow upper contour 50%
+        (OccludablePointItem, "rbu75"),  # right eyebrow upper contour 75%
+        (OccludablePointItem, "rboc"),   # right eyebrow outer center
 
         # Eyes
-        (OccludablePointItem, "leoc"),  # left eye outer center
-        (OccludablePointItem, "leu67"), # left eye upper countour 67%
-        (OccludablePointItem, "leu33"), # left eye upper countour 33%
-        (OccludablePointItem, "leic"),  # left eye inner center
-        (OccludablePointItem, "lel33"), # left eye lower countour 33%
-        (OccludablePointItem, "lel67"), # left eye lower countour 67%
+        (OccludablePointItem, "leoc"),   # left eye outer center
+        (OccludablePointItem, "leu67"),  # left eye upper countour 67%
+        (OccludablePointItem, "leu33"),  # left eye upper countour 33%
+        (OccludablePointItem, "leic"),   # left eye inner center
+        (OccludablePointItem, "lel33"),  # left eye lower countour 33%
+        (OccludablePointItem, "lel67"),  # left eye lower countour 67%
 
-        (OccludablePointItem, "reic"),  # right eye inner center
-        (OccludablePointItem, "reu33"), # left eye upper countour 33%
-        (OccludablePointItem, "reu67"), # left eye upper countour 67%
-        (OccludablePointItem, "reoc"),  # right eye outer center
-        (OccludablePointItem, "rel67"), # left eye lower countour 67%
-        (OccludablePointItem, "rel33"), # left eye lower countour 33%
+        (OccludablePointItem, "reic"),   # right eye inner center
+        (OccludablePointItem, "reu33"),  # left eye upper countour 33%
+        (OccludablePointItem, "reu67"),  # left eye upper countour 67%
+        (OccludablePointItem, "reoc"),   # right eye outer center
+        (OccludablePointItem, "rel67"),  # left eye lower countour 67%
+        (OccludablePointItem, "rel33"),  # left eye lower countour 33%
 
-        (OccludablePointItem, "lec"),   # left eye center
+        (OccludablePointItem, "lec"),    # left eye center
 
-        (OccludablePointItem, "rec"),   # right eye center
+        (OccludablePointItem, "rec"),    # right eye center
 
         # Nose
-        (OccludablePointItem, "nr100"), # nose ridge 100%
-        (OccludablePointItem, "nr67"),  # nose ridge 67%
-        (OccludablePointItem, "nr33"),  # nose ridge 33%
-        (OccludablePointItem, "nt"),    # nose tip
+        (OccludablePointItem, "nr100"),  # nose ridge 100%
+        (OccludablePointItem, "nr67"),   # nose ridge 67%
+        (OccludablePointItem, "nr33"),   # nose ridge 33%
+        (OccludablePointItem, "nt"),     # nose tip
 
-        (OccludablePointItem, "nl"),    # nose left
-        (OccludablePointItem, "nbl50"), # nose base left 50%
-        (OccludablePointItem, "nc"),    # nose center
-        (OccludablePointItem, "nbr50"), # nose base right 50%
-        (OccludablePointItem, "nr"),    # nose right
+        (OccludablePointItem, "nl"),     # nose left
+        (OccludablePointItem, "nbl50"),  # nose base left 50%
+        (OccludablePointItem, "nc"),     # nose center
+        (OccludablePointItem, "nbr50"),  # nose base right 50%
+        (OccludablePointItem, "nr"),     # nose right
 
         # Mouth
         (OccludablePointItem, "mollc"),
@@ -730,7 +726,6 @@ class NPointFaceItem(GroupItem):
 
         # Chin
         (OccludablePointItem, "cc"),   # chin center
-
     ]
 
     def __init__(self, model_item=None, prefix="", parent=None):
