@@ -1,8 +1,8 @@
-#!/usr/bin/python
 """
 This is the core labeltool module.
 """
 import os
+import sys
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from sloth.annotations.model import *
