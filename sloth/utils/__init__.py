@@ -1,8 +1,9 @@
-from sloth.core.exceptions import NotImplementedException
-from PyQt4.QtGui import QImage, qRgb
 import numpy as np
 import random
 import colorsys
+from PyQt4.QtGui import QImage, qRgb
+from sloth.core.exceptions import NotImplementedException
+
 
 gray_color_table = [qRgb(i, i, i) for i in range(256)]
 
@@ -61,4 +62,3 @@ def gen_colors(s=0.99, v=0.99, h=None, color_space='rgb', _golden_ratio_conjugat
         h += _golden_ratio_conjugate
         h %= 1
         yield cs_convert(h, s, v)
-

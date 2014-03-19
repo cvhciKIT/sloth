@@ -37,7 +37,7 @@ LABELS = (
     {
         'attributes': {
             'class':      'Face',
-         },
+        },
         'inserter': 'sloth.items.RectItemInserter',
         'item':     'sloth.items.RectItem',
         'hotkey':   'f',
@@ -46,7 +46,7 @@ LABELS = (
     {
         'attributes': {
             'class':      'rect',
-         },
+        },
         'inserter': 'sloth.items.RectItemInserter',
         'item':     'sloth.items.RectItem',
         'hotkey':   'r',

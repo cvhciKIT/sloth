@@ -6,17 +6,8 @@ class MockupContainer:
 
 
 def someFileAnnotations(i):
-    annotations = []
-    annotations.append({'type': 'rect',
-                        'x': 10 * i,
-                        'y': '20',
-                        'w': '40',
-                        'h': '60'})
-    annotations.append({'type': 'rect',
-                        'x': '80',
-                        'y': 20 * i,
-                        'w': '40',
-                        'h': '60'})
+    annotations = [{'type': 'rect', 'x': 10 * i, 'y': '20', 'w': '40', 'h': '60'},
+                   {'type': 'rect', 'x': '80', 'y': 20 * i, 'w': '40', 'h': '60'}]
     for k in range(i):
         annotations.append({'type': 'point',
                             'x': 30 * k,
@@ -27,12 +18,12 @@ def someFileAnnotations(i):
 def someAnnotations():
     annotations = []
     for i in range(5):
-        file = {
+        ann = {
             'filename': 'file%d.png' % i,
             'type': 'image',
             'annotations': someFileAnnotations(i)
         }
-        annotations.append(file)
+        annotations.append(ann)
     return annotations
 
 

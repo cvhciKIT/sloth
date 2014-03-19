@@ -1,5 +1,4 @@
 import os
-import sys
 import fnmatch
 import time
 import numpy as np
@@ -11,21 +10,21 @@ LOG = logging.getLogger(__name__)
 
 try:
     import cPickle as pickle
-except:
+except ImportError:
     import pickle
 try:
     import json
-except:
+except ImportError:
     pass
 try:
     import yaml
-except:
+except ImportError:
     pass
 try:
     import okapy
     import okapy.videoio as okv
     _use_pil = False
-except:
+except ImportError:
     try:
         from PIL import Image
         _use_pil = True
@@ -85,7 +84,7 @@ class AnnotationContainer:
         return self._filename
 
     def clear(self):
-        self._annotations = [] # TODO Why isn't this used? Annotations are passed as parameters instead. Let's have encapsulation.
+        self._annotations = []  # TODO Why isn't this used? Annotations are passed as parameters instead. Let's have encapsulation.
         self._filename = None
         self._video_cache = {}
 
@@ -375,8 +374,8 @@ class FileNameListContainer(AnnotationContainer):
         for line in f:
             line = line.strip()
             fileitem = {
-                'filename':    line,
-                'class':        'image',
+                'filename': line,
+                'class': 'image',
                 'annotations': [],
             }
             annotations.append(fileitem)
@@ -384,8 +383,7 @@ class FileNameListContainer(AnnotationContainer):
         return annotations
 
     def serializeToFile(self, filename, annotations):
-        raise NotImplemented(
-                "FileNameListContainer.save() is not implemented yet.")
+        raise NotImplemented("FileNameListContainer.save() is not implemented yet.")
 
 
 class FeretContainer(AnnotationContainer):
@@ -405,15 +403,12 @@ class FeretContainer(AnnotationContainer):
             fileitem = {
                 'filename': s[0] + ".bmp",
                 'class': 'image',
+                'annotations': [
+                    {'class': 'left_eye',  'x': int(s[1]), 'y': int(s[2])},
+                    {'class': 'right_eye', 'x': int(s[3]), 'y': int(s[4])},
+                    {'class': 'mouth',     'x': int(s[5]), 'y': int(s[6])}
+                ]
             }
-            fileitem['annotations'] = [
-                {'class': 'left_eye',
-                 'x': int(s[1]), 'y': int(s[2])},
-                {'class': 'right_eye',
-                 'x': int(s[3]), 'y': int(s[4])},
-                {'class': 'mouth',
-                 'x': int(s[5]), 'y': int(s[6])}
-            ]
             annotations.append(fileitem)
 
         return annotations

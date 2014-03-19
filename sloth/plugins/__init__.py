@@ -1,7 +1,10 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import logging
+
+
 LOG = logging.getLogger(__name__)
+
 
 class CopyAnnotationsPlugin(QObject):
     def __init__(self, labeltool, class_filter=None, frame_range=1, overlap_threshold=None, prefix=''):
@@ -14,7 +17,7 @@ class CopyAnnotationsPlugin(QObject):
 
         self._labeltool = labeltool
         self._wnd = labeltool.mainWindow()
-        self._sc  = QAction("Copy labels from previous image/frame", self._wnd)
+        self._sc = QAction("Copy labels from previous image/frame", self._wnd)
         self._sc.triggered.connect(self.copy)
 
     def copy(self):
@@ -53,11 +56,8 @@ class CopyAnnotationsPlugin(QObject):
         for annotation in image_item.getAnnotations()['annotations']:
             # check class filter
             if self._class_filter is not None:
-                if 'class' not in annotation:
-                    continue # do not copy
-                if annotation['class'] not in self._class_filter:
-                    log
-                    continue # do not copy
+                if annotation.get('class', None) not in self._class_filter:
+                    continue  # do not copy
             annotations.append(annotation)
         return annotations
 
