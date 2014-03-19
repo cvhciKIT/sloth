@@ -1,7 +1,8 @@
-from sloth.conf import default_config
-from sloth.utils import importlib
-import sys
 import os
+import sys
+import importlib
+from sloth.conf import default_config
+
 
 class Config:
     def __init__(self):
