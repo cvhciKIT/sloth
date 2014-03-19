@@ -1,7 +1,9 @@
 from sloth.annotations.container import *
 
+
 class MockupContainer:
     pass
+
 
 def someFileAnnotations(i):
     annotations = []
@@ -21,6 +23,7 @@ def someFileAnnotations(i):
                             'y': 30 * k})
     return annotations
 
+
 def someAnnotations():
     annotations = []
     for i in range(5):
@@ -31,6 +34,7 @@ def someAnnotations():
         }
         annotations.append(file)
     return annotations
+
 
 def common_container_test(filename, container):
     original_anns = someAnnotations()
@@ -50,21 +54,25 @@ def common_container_test(filename, container):
     assert container.filename() == filename
     assert len(container.annotations()) == len(original_anns)
 
+
 def test_import_callable():
     containers = (('*', 'container_test.MockupContainer'),)
     factory = AnnotationContainerFactory(containers)
     item = factory.create('test')
     assert isinstance(item, MockupContainer)
 
+
 def test_PickleContainer(tmpdir):
     filename = os.path.join(str(tmpdir), "test_PickleContainer.pickle")
     container = PickleContainer()
     common_container_test(filename, container)
 
+
 def test_JsonContainer(tmpdir):
     filename = os.path.join(str(tmpdir), "test_JsonContainer.json")
     container = JsonContainer()
     common_container_test(filename, container)
+
 
 def test_YamlContainer(tmpdir):
     filename = os.path.join(str(tmpdir), "test_YamlContainer.yaml")
