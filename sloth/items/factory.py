@@ -52,10 +52,10 @@ class Factory:
             Type for which the mapping should be removed.  If None, all
             mappings will be removed.
         """
-        _type = str(_type)
         if _type is None:
             self._items = {}
         else:
+            _type = str(_type)
             if _type in self._items:
                 del self._items[_type]
 
