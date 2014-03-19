@@ -30,20 +30,15 @@ def someAnnotations():
 def common_container_test(filename, container):
     original_anns = someAnnotations()
 
-    container.setAnnotations(original_anns)
-    assert len(container.annotations()) == len(original_anns)
-
-    container.save(filename)
+    container.save(original_anns, filename)
     assert container.filename() == filename
     assert os.path.exists(filename)
 
     container.clear()
     assert container.filename() is None
-    assert len(container.annotations()) == 0
 
     container.load(filename)
     assert container.filename() == filename
-    assert len(container.annotations()) == len(original_anns)
 
 
 def test_import_callable():
