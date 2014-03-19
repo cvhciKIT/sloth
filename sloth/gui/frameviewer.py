@@ -1,27 +1,27 @@
-#!/usr/bin/python
 import math
 from PyQt4.QtCore import *
-from PyQt4.QtGui  import *
+from PyQt4.QtGui import *
 try:
     import okapy.videoio
-except:
+except ImportError:
     pass
 
 videos = []
 scenes = []
 
+
 class GraphicsView(QGraphicsView):
     # Signals
     scaleChanged = pyqtSignal(float)
-    focusIn      = pyqtSignal()
+    focusIn = pyqtSignal()
 
     def __init__(self, parent=None):
         QGraphicsView.__init__(self, parent)
         self.setDragMode(QGraphicsView.RubberBandDrag)
         #self.setDragMode(QGraphicsView.ScrollHandDrag)
         self.setMouseTracking(True)
-        self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform | QPainter.TextAntialiasing);
-        self.setStyleSheet("QFrame { border: 3px solid black }");
+        self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform | QPainter.TextAntialiasing)
+        self.setStyleSheet("QFrame { border: 3px solid black }")
         self._active = False
         self._pan = False
         self._panStartX = -1
@@ -58,14 +58,14 @@ class GraphicsView(QGraphicsView):
         if not self._active:
             self._active = True
             self.setFocus(Qt.OtherFocusReason)
-            self.setStyleSheet("QFrame { border: 3px solid red }");
+            self.setStyleSheet("QFrame { border: 3px solid red }")
             self.update()
 
     def deactivate(self):
         if self._active:
             self._active = False
             self.clearFocus()
-            self.setStyleSheet("QFrame { border: 3px solid black }");
+            self.setStyleSheet("QFrame { border: 3px solid black }")
             self.update()
 
     def getMinScale(self):
@@ -125,7 +125,7 @@ class GraphicsView(QGraphicsView):
     def mouseMoveEvent(self, event):
         if self._pan:
             self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() - (event.x() - self._panStartX))
-            self.verticalScrollBar()  .setValue(self.verticalScrollBar().value()   - (event.y() - self._panStartY));
+            self.verticalScrollBar().setValue(self.verticalScrollBar().value() - (event.y() - self._panStartY))
             self._panStartX = event.x()
             self._panStartY = event.y()
             event.accept()
@@ -138,7 +138,7 @@ class FrameViewer(QWidget):
     activeSceneViewChanged = pyqtSignal(GraphicsView)
 
     def __init__(self, parent=None):
-        QMainWindow.__init__(self, parent)
+        QWidget.__init__(self, parent)
 
     def getActiveSceneView(self):
         pass
@@ -188,7 +188,7 @@ class MultiFrameEqualViewer(FrameViewer):
         n_cols = math.ceil(len(self.scenes) / n_rows)
         self.layout = QGridLayout(self)
         for i, scene_view in enumerate(self.scene_views):
-            self.layout.addWidget(scene_view, i/n_cols, i%n_cols)
+            self.layout.addWidget(scene_view, i/n_cols, i % n_cols)
         self.setLayout(self.layout)
         self.activateSceneView(0)
 
@@ -208,4 +208,3 @@ class MultiFrameEqualViewer(FrameViewer):
 
     def getActiveSceneView(self):
         return self.scene_views[self.active_scene_view]
-
