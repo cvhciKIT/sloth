@@ -1,5 +1,6 @@
 from sloth.core.utils import import_callable
 
+
 class Factory:
     """
     A generic factory for both items and inserters.
@@ -34,8 +35,8 @@ class Factory:
         """
         _type = str(_type)
         if _type in self._items and not replace:
-            raise Exception("Type %s already has an item: %s" % \
-                             (_type, str(self._items[_type])))
+            raise Exception("Type %s already has an item: %s" %
+                            (_type, str(self._items[_type])))
         else:
             if type(item) == str:
                 item = import_callable(item)
@@ -53,7 +54,7 @@ class Factory:
         """
         _type = str(_type)
         if _type is None:
-            self._items     = {}
+            self._items = {}
         else:
             if _type in self._items:
                 del self._items[_type]
@@ -82,4 +83,3 @@ class Factory:
         if item is None:
             return None
         return item(*args, **kwargs)
-

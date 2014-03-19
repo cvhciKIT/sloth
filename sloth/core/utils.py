@@ -1,6 +1,7 @@
 from sloth.core import exceptions
 from sloth.utils import importlib
 
+
 def import_callable(module_path_name):
     """
     Import the callable given by ``module_path_name``.

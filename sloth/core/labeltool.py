@@ -1,10 +1,8 @@
 #!/usr/bin/python
 """
 This is the core labeltool module.
-
-
 """
-import sys, os
+import os
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from sloth.annotations.model import *
@@ -16,12 +14,14 @@ from sloth import VERSION
 from sloth.core.commands import get_commands
 from sloth.gui import MainWindow
 import logging
+
 LOG = logging.getLogger(__name__)
 
 try:
     import okapy.videoio as okv
-except:
+except ImportError:
     pass
+
 
 class LabelTool(QObject):
     """
@@ -43,9 +43,9 @@ class LabelTool(QObject):
                 "Type '%s help <subcommand>' for help on a specific subcommand.\n\n"
 
     # Signals
-    statusMessage       = pyqtSignal(str)
-    annotationsLoaded   = pyqtSignal()
-    pluginLoaded        = pyqtSignal(QAction)
+    statusMessage = pyqtSignal(str)
+    annotationsLoaded = pyqtSignal()
+    pluginLoaded = pyqtSignal(QAction)
     # This still emits a QModelIndex, because Qt cannot handle emiting
     # a derived class instead of a base class, i.e. ImageFileModelItem
     # instead of ModelItem
@@ -105,7 +105,8 @@ class LabelTool(QObject):
 
         # Initialize logging
         loglevel = (logging.CRITICAL, logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG)[int(options.verbosity)]
-        logging.basicConfig(level=loglevel, format='%(asctime)s %(levelname)-8s %(name)-30s %(message)s') #, datefmt='%H:%M:%S.%m')
+        logging.basicConfig(level=loglevel,
+                            format='%(asctime)s %(levelname)-8s %(name)-30s %(message)s')  #, datefmt='%H:%M:%S.%m')
 
         # Disable PyQt log messages
         logging.getLogger("PyQt4").setLevel(logging.WARNING)
@@ -170,7 +171,6 @@ class LabelTool(QObject):
             else:
                 self.clearAnnotations()
 
-
     def fetch_command(self, subcommand):
         """
         Tries to fetch the given subcommand, printing a message with the
@@ -179,8 +179,8 @@ class LabelTool(QObject):
         try:
             app_name = get_commands()[subcommand]
         except KeyError:
-            sys.stderr.write("Unknown command: %r\nType '%s help' for usage.\n" % \
-                (subcommand, self.prog_name))
+            sys.stderr.write("Unknown command: %r\nType '%s help' for usage.\n" %
+                             (subcommand, self.prog_name))
             sys.exit(1)
         if isinstance(app_name, BaseCommand):
             # If the command is already loaded, use it directly.
@@ -221,13 +221,13 @@ class LabelTool(QObject):
     ### Annoation file handling
     ###___________________________________________________________________________________________
     def loadAnnotations(self, fname, handleErrors=True):
-        fname = str(fname) # convert from QString
+        fname = str(fname)  # convert from QString
 
         try:
             self._container = self._container_factory.create(fname)
             self._model = AnnotationModel(self._container.load(fname))
             msg = "Successfully loaded %s (%d files, %d annotations)" % \
-                    (fname, self._model.root().numFiles(), self._model.root().numAnnotations())
+                  (fname, self._model.root().numFiles(), self._model.root().numAnnotations())
         except Exception as e:
             if handleErrors:
                 msg = "Error: Loading failed (%s)" % str(e)
@@ -247,7 +247,6 @@ class LabelTool(QObject):
         try:
             # create new container if the filename is different
             if fname != self._container.filename():
-                # TODO: skip if it is the same class
                 self._container = self._container_factory.create(fname)
 
             # Get annotations dict
@@ -256,7 +255,7 @@ class LabelTool(QObject):
             self._container.save(ann, fname)
             #self._model.writeback() # write back changes that are cached in the model itself, e.g. mask updates
             msg = "Successfully saved %s (%d files, %d annotations)" % \
-                    (fname, self._model.root().numFiles(), self._model.root().numAnnotations())
+                  (fname, self._model.root().numFiles(), self._model.root().numAnnotations())
             success = True
             self._model.setDirty(False)
         except Exception as e:
@@ -300,7 +299,7 @@ class LabelTool(QObject):
             else:
                 next_image = next(self._model.iterator(ImageModelItem))
                 if next_image is not None:
-                    next_image = next_image.getNextSibling(step-1)
+                    next_image = next_image.getNextSibling(step - 1)
 
             if next_image is not None:
                 self.setCurrentImage(next_image)
@@ -349,18 +348,18 @@ class LabelTool(QObject):
 
     def addImageFile(self, fname):
         fileitem = {
-                'filename': fname,
-                'class': 'image',
-                'annotations': [ ],
-            }
+            'filename': fname,
+            'class': 'image',
+            'annotations': [],
+        }
         return self._model._root.appendFileItem(fileitem)
 
     def addVideoFile(self, fname):
         fileitem = {
-                'filename': fname,
-                'class': 'video',
-                'frames': [ ],
-            }
+            'filename': fname,
+            'class': 'video',
+            'frames': [],
+        }
 
         # FIXME: OKAPI should provide a method to get all timestamps at once
         # FIXME: Some dialog should be displayed, telling the user that the
@@ -376,17 +375,17 @@ class LabelTool(QObject):
             LOG.debug("Adding %d frames" % len(timestamps))
             fileitem['frames'] = [{'annotations': [], 'num': i,
                                    'timestamp': ts, 'class': 'frame'}
-                                   for i, ts in enumerate(timestamps)]
+                                  for i, ts in enumerate(timestamps)]
         else:
             i = 0
             while video.getNextFrame():
                 LOG.debug("Adding frame %d" % i)
                 ts = video.getTimestamp()
-                frame = { 'annotations': [],
-                          'num': i,
-                          'timestamp': ts,
-                          'class': 'frame'
-                        }
+                frame = {'annotations': [],
+                         'num': i,
+                         'timestamp': ts,
+                         'class': 'frame'
+                }
                 fileitem['frames'].append(frame)
                 i += 1
 
@@ -429,7 +428,7 @@ class LabelTool(QObject):
     def selectPreviousAnnotation(self):
         if self._mainwindow is not None:
             return self._mainwindow.scene.selectNextItem(reverse=True)
-    
+
     def selectAllAnnotations(self):
         if self._mainwindow is not None:
             return self._mainwindow.scene.selectAllItems()
@@ -450,4 +449,3 @@ class LabelTool(QObject):
             return None
         else:
             return self._mainwindow.treeview
-

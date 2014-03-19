@@ -1,5 +1,3 @@
-import sys
-import os
 import sloth
 import shutil
 from pprint import pprint
@@ -7,7 +5,10 @@ from sloth.core.cli import BaseCommand, CommandError
 from sloth.annotations.container import *
 from optparse import make_option
 import logging
+
+
 logger = logging.getLogger(__name__)
+
 
 class ConvertCommand(BaseCommand):
     """
@@ -152,7 +153,6 @@ class MergeFilesCommand(BaseCommand):
         containerOut = self.labeltool._container_factory.create(output)
         containerOut.save(an3, output)
 
-    
     def merge_annotations(self, an1, an2):
     
         # I could also think of an implementation merging an1 and an2, and flattening the lists of lists
@@ -172,7 +172,6 @@ class MergeFilesCommand(BaseCommand):
 
         assert(d1['frames'] != None)
         assert(d2['frames'] != None)
-        
         
         frames1 = d1['frames']
         frames2 = d2['frames']
@@ -222,9 +221,11 @@ def _make_writeable(filename):
 # command dictionary str -> Command
 _commands = {}
 
+
 def register_command(name, command):
     global _commands
     _commands[name] = command
+
 
 def get_commands():
     global _commands

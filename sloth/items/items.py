@@ -1,5 +1,4 @@
 import logging
-from PyQt4.QtGui import *
 from PyQt4.Qt import *
 
 
@@ -99,7 +98,8 @@ class BaseItem(QAbstractGraphicsShapeItem):
         self._valid = True
 
         if len(self.cycleValuesOnKeypress) > 0:
-            logging.warning("cycleValueOnKeypress is deprecated and will be removed in the future. Set BaseItem.hotkeys instead with cycleValue()")
+            logging.warning("cycleValueOnKeypress is deprecated and will be removed in the future. " +
+                            "Set BaseItem.hotkeys instead with cycleValue()")
 
         self.changeColor()
 
