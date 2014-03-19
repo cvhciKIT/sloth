@@ -6,7 +6,7 @@ python:
 
 # install dependencies and sloth
 install:
-  - sudo apt-get install python-imaging python-qt4 python-numpy python3-numpy
+  - sudo apt-get install python-imaging python-qt4 python-numpy python3-numpy python-yaml msgpack-python
   - pip install Pillow
   - pip install .
 
