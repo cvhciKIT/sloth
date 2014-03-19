@@ -3,7 +3,9 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from sloth.gui.floatinglayout import FloatingLayout
 import logging
+
 LOG = logging.getLogger(__name__)
+
 
 def unique_list(seq):
     seen = {}
@@ -13,6 +15,7 @@ def unique_list(seq):
         seen[item] = 1
         result.append(item)
     return result
+
 
 class ButtonListWidget(QGroupBox):
     selectionChanged = pyqtSignal(object)
@@ -196,8 +199,10 @@ class ButtonArea(QWidget):
         if button is not None:
             self.label_button_list.toggleChecked(button)
 
+
 def main():
     from conf import config
+
     config.update("example_config")
 
     app = QApplication(sys.argv)
@@ -205,6 +210,7 @@ def main():
     ba.show()
 
     return app.exec_()
+
 
 if __name__ == '__main__':
     sys.exit(main())

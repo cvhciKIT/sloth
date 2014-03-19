@@ -11,7 +11,7 @@ from PyQt4.QtCore import QModelIndex, QAbstractItemModel, Qt, pyqtSignal, QVaria
 
 LOG = logging.getLogger(__name__)
 
-ItemRole, DataRole, ImageRole = [Qt.UserRole + i + 1 for i in range(3)]
+ItemRole, DataRole, ImageRole = [Qt.UserRole + ur + 1 for ur in range(3)]
 
 
 class ModelItem:
@@ -172,7 +172,7 @@ class ModelItem:
 
         for i, item in enumerate(items):
             item._parent = self
-            item._row    = next_row + i
+            item._row = next_row + i
             self._children.append(item)
 
         if self._model is not None:
@@ -221,11 +221,12 @@ class ModelItem:
     def getColor(self):
         return None
 
+
 class RootModelItem(ModelItem):
     def __init__(self, model, files):
         ModelItem.__init__(self)
         self._model = model
-        self._toload   = []
+        self._toload = []
         for f in files:
             self._toload.append(f)
             self._children.append(f)
@@ -251,9 +252,9 @@ class RootModelItem(ModelItem):
         else:
             return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
-    def appendChild(self, item):
+    def appendChild(self, item, signalModel=True):
         if isinstance(item, FileModelItem):
-            ModelItem.appendChild(self, item)
+            ModelItem.appendChild(self, item, signalModel=signalModel)
         else:
             raise TypeError("Only FileModelItems can be attached to RootModelItem")
 
@@ -284,6 +285,7 @@ class RootModelItem(ModelItem):
     def getAnnotations(self):
         return [child.getAnnotations() for child in self.children()
                 if hasattr(child, 'getAnnotations')]
+
 
 class KeyValueModelItem(ModelItem, MutableMapping):
     def __init__(self, hidden=None, properties=None):
@@ -397,6 +399,7 @@ class KeyValueModelItem(ModelItem, MutableMapping):
                 del self['unconfirmed']
                 self._emitDataChanged('unconfirmed')
 
+
 class FileModelItem(KeyValueModelItem):
     def __init__(self, fileinfo, hidden=None):
         if not hidden: hidden = ['filename']
@@ -422,6 +425,7 @@ class FileModelItem(KeyValueModelItem):
         elif fileinfo['class'] == 'video':
             return VideoFileModelItem(fileinfo)
 
+
 class ImageModelItem(ModelItem):
     def __init__(self, annotations):
         ModelItem.__init__(self)
@@ -439,6 +443,7 @@ class ImageModelItem(ModelItem):
     def confirmAll(self):
         for ann in self.annotations():
             ann.setUnconfirmed(False)
+
 
 class ImageFileModelItem(FileModelItem, ImageModelItem):
     def __init__(self, fileinfo):
@@ -472,6 +477,7 @@ class ImageFileModelItem(FileModelItem, ImageModelItem):
                              if hasattr(child, 'getAnnotations')]
         return fi
 
+
 class VideoFileModelItem(FileModelItem):
     def __init__(self, fileinfo):
         frameinfos = fileinfo.get("frames", [])
@@ -487,6 +493,7 @@ class VideoFileModelItem(FileModelItem):
         fi = KeyValueModelItem.getAnnotations(self)
         fi['frames'] = [child.getAnnotations() for child in self.children()]
         return fi
+
 
 class FrameModelItem(ImageModelItem, KeyValueModelItem):
     def __init__(self, frameinfo):
@@ -521,6 +528,7 @@ class FrameModelItem(ImageModelItem, KeyValueModelItem):
                              if hasattr(child, 'getAnnotations')]
         return fi
 
+
 class AnnotationModelItem(KeyValueModelItem):
     def __init__(self, annotation):
         KeyValueModelItem.__init__(self, properties=annotation)
@@ -546,6 +554,7 @@ class AnnotationModelItem(KeyValueModelItem):
         if self.isUnconfirmed():
             return Qt.red
         return None
+
 
 class KeyValueRowModelItem(ModelItem):
     def __init__(self, key, read_only=True):
@@ -668,8 +677,10 @@ class AnnotationModel(QAbstractItemModel):
 
     def headerData(self, section, orientation, role):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            if section == 0:   return "File/Type/Key"
-            elif section == 1: return "Value"
+            if section == 0:
+                return "File/Type/Key"
+            elif section == 1:
+                return "Value"
         return None
 
     # Own methods
