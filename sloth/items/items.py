@@ -138,8 +138,9 @@ class BaseItem(QAbstractGraphicsShapeItem):
         return self._prefix
 
     def setPen(self, pen):
+        pen = QPen(pen)  # convert to pen if argument is a QColor
         QAbstractGraphicsShapeItem.setPen(self, pen)
-        self._text_item.setDefaultTextColor(pen)
+        self._text_item.setDefaultTextColor(pen.color())
 
     def setText(self, text=""):
         """
