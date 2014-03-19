@@ -141,9 +141,9 @@ class ButtonArea(QWidget):
             else:
                 button_list.hide()
 
-    def add_label(self, label_name, properties = {}):
+    def add_label(self, label_name, properties=None):
         self.label_names.append(label_name)
-        self.label_properties[label_name] = properties
+        self.label_properties[label_name] = properties or {}
         for key, value in properties.items():
             if key in self.properties:
                 self.properties[key] = unique_list(self.properties[key] + value)

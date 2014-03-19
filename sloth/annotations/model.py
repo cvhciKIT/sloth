@@ -286,11 +286,13 @@ class RootModelItem(ModelItem):
                 if hasattr(child, 'getAnnotations')]
 
 class KeyValueModelItem(ModelItem, MutableMapping):
-    def __init__(self, hidden=[], properties=None):
+    def __init__(self, hidden=None, properties=None):
         ModelItem.__init__(self)
-        self._dict   = {}
-        self._items  = {}
-        self._hidden = hidden + [None, 'class', 'unlabeled', 'unconfirmed']
+        self._dict = {}
+        self._items = {}
+        self._hidden = set(hidden or [])
+        self._hidden.update({None, 'class', 'unlabeled', 'unconfirmed'})
+
         # dummy key/value so that pyqt does not convert the dict
         # into a QVariantMap while communicating with the Views
         self._dict[None] = None
@@ -396,7 +398,8 @@ class KeyValueModelItem(ModelItem, MutableMapping):
                 self._emitDataChanged('unconfirmed')
 
 class FileModelItem(KeyValueModelItem):
-    def __init__(self, fileinfo, hidden=['filename']):
+    def __init__(self, fileinfo, hidden=None):
+        if not hidden: hidden = ['filename']
         KeyValueModelItem.__init__(self, hidden=hidden, properties=fileinfo)
 
     def data(self, role=Qt.DisplayRole, column=0):
