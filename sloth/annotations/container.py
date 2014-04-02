@@ -203,7 +203,6 @@ class PickleContainer(AnnotationContainer):
         """
         Overwritten to write pickle files.
         """
-        # TODO make all image filenames relative to the label file
         f = open(fname, "wb")
         pickle.dump(annotations, f)
 
@@ -292,7 +291,6 @@ class OkapiAnnotationContainer(AnnotationContainer):
                         fileitem.frames().push_back(frameitem)
             container.files().push_back(fileitem)
 
-        # TODO make all image filenames relative to the label file
         container.WriteToFile(fname)
 
 
@@ -312,7 +310,6 @@ class JsonContainer(AnnotationContainer):
         """
         Overwritten to write JSON files.
         """
-        # TODO make all image filenames relative to the label file
         f = open(fname, "w")
         json.dump(annotations, f, indent=4, separators=(',', ': '), sort_keys=True)
 
@@ -356,7 +353,6 @@ class YamlContainer(AnnotationContainer):
         """
         Overwritten to write YAML files.
         """
-        # TODO make all image filenames relative to the label file
         f = open(fname, "w")
         yaml.dump(annotations, f)
 
@@ -417,8 +413,6 @@ class FeretContainer(AnnotationContainer):
         """
         Not implemented yet.
         """
-        # TODO make sure the image paths are
-        # relative to the label file's directory
         raise NotImplemented(
             "FeretContainer.serializeToFile() is not implemented yet."
         )
