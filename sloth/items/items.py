@@ -759,8 +759,7 @@ class NPointFaceItem(GroupItem):
         painter.drawRect(self.boundingRect())
 
 class PolygonItem(BaseItem):
-    # XXX prefix="pointlist"
-    def __init__(self, model_item=None, prefix="pointlist", parent=None):
+    def __init__(self, model_item=None, prefix="", parent=None):
         BaseItem.__init__(self, model_item, prefix, parent)
 
         # Make it non-movable for now
