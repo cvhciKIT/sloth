@@ -378,7 +378,6 @@ class PolygonItemInserter(ItemInserter):
                 image_item.addAnnotation(self._ann)
             self._scene.removeItem(self._item)
             self.annotationFinished.emit()
-            self._init_pos = None
             self._item = None
             self._scene.clearMessage()
 
