@@ -330,12 +330,12 @@ class PolygonItemInserter(ItemInserter):
 
     def mousePressEvent(self, event, image_item):
         pos = event.scenePos()
+
         if self._item is None:
             item = QGraphicsPolygonItem(QPolygonF([pos]))
             self._item = item
             self._item.setPen(self.pen())
             self._scene.addItem(item)
-            self._current_image_item = image_item
 
             self._scene.setMessage("Press Enter to finish the polygon.")
 
@@ -375,12 +375,11 @@ class PolygonItemInserter(ItemInserter):
                                   ";".join([str(p.y()) for p in polygon])})
             self._ann.update(self._default_properties)
             if self._commit:
-                self._current_image_item.addAnnotation(self._ann)
+                image_item.addAnnotation(self._ann)
             self._scene.removeItem(self._item)
             self.annotationFinished.emit()
             self._init_pos = None
             self._item = None
-            self._current_image_item = None
             self._scene.clearMessage()
 
         self.inserterFinished.emit()
