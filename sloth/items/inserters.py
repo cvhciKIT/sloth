@@ -407,7 +407,7 @@ class PolygonItemInserter(ItemInserter):
             self._item = None
             self._scene.clearMessage()
 
-        self.inserterFinished.emit()
+            self.inserterFinished.emit()
 
     def abort(self):
         if self._item is not None:
