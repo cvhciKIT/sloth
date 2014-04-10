@@ -38,6 +38,9 @@ class ItemInserter(QObject):
     def mousePressEvent(self, event, image_item):
         event.accept()
 
+    def mouseDoubleClickEvent(self, event, image_item):
+        event.accept()
+
     def mouseReleaseEvent(self, event, image_item):
         event.accept()
 
@@ -345,6 +348,32 @@ class PolygonItemInserter(ItemInserter):
 
         event.accept()
 
+    def mouseDoubleClickEvent(self, event, image_item):
+        """Finish the polygon when the user double clicks."""
+
+        # No need to add the position of the click, as a single mouse
+        # press event added the point already.
+        # Even then, the last point of the polygon is duplicate as it would be
+        # shortly after a single mouse press. At this point, we want to throw it
+        # away.
+        polygon = self._item.polygon()
+        polygon.remove(polygon.size()-1)
+        assert polygon.size() > 0
+        self._item.setPolygon(polygon)
+
+        self._updateAnnotation()
+        if self._commit:
+            image_item.addAnnotation(self._ann)
+        self._scene.removeItem(self._item)
+        self.annotationFinished.emit()
+        self._item = None
+        self._scene.clearMessage()
+
+        self.inserterFinished.emit()
+
+        event.accept()
+
+
     def mouseMoveEvent(self, event, image_item):
         if self._item is not None:
             pos = event.scenePos()
@@ -368,12 +397,9 @@ class PolygonItemInserter(ItemInserter):
             # we want to throw it away.
             polygon.remove(polygon.size()-1)
             assert polygon.size() > 0
+            self._item.setPolygon(polygon)
 
-            self._ann.update({self._prefix + 'xn':
-                                  ";".join([str(p.x()) for p in polygon]),
-                              self._prefix + 'yn':
-                                  ";".join([str(p.y()) for p in polygon])})
-            self._ann.update(self._default_properties)
+            self._updateAnnotation()
             if self._commit:
                 image_item.addAnnotation(self._ann)
             self._scene.removeItem(self._item)
@@ -389,3 +415,11 @@ class PolygonItemInserter(ItemInserter):
             self._item = None
             self._scene.clearMessage()
         ItemInserter.abort(self)
+
+    def _updateAnnotation(self):
+        polygon = self._item.polygon()
+        self._ann.update({self._prefix + 'xn':
+                              ";".join([str(p.x()) for p in polygon]),
+                          self._prefix + 'yn':
+                              ";".join([str(p.y()) for p in polygon])})
+        self._ann.update(self._default_properties)
