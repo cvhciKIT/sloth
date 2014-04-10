@@ -336,6 +336,8 @@ class PolygonItemInserter(ItemInserter):
             self._item.setPen(self.pen())
             self._scene.addItem(item)
             self._current_image_item = image_item
+
+            self._scene.setMessage("Press Enter to finish the polygon.")
         else:
             polygon = self._item.polygon()
             polygon.append(pos)
@@ -353,9 +355,11 @@ class PolygonItemInserter(ItemInserter):
 
         event.accept()
 
-    def abort(self):
-        # XXX Is it abuse to handle the end of inserting here in abort()?
-        if self._item is not None:
+    def keyPressEvent(self, event, image_item):
+        """
+        When the user presses Enter, the polygon is finished.
+        """
+        if event.key() == Qt.Key_Return and self._item is not None:
             polygon = self._item.polygon()
             assert polygon.size() > 0
 
@@ -377,5 +381,6 @@ class PolygonItemInserter(ItemInserter):
             self._init_pos = None
             self._item = None
             self._current_image_item = None
+            self._scene.clearMessage()
 
         self.inserterFinished.emit()
