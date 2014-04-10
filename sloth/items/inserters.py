@@ -321,31 +321,61 @@ class NPointFaceInserter(SequenceItemInserter):
                                    "Now at: " + self.inserters[self._state][2])
 
 
-# TODO
 class PolygonItemInserter(ItemInserter):
-    def __init__(self, scene, mode=None):
-        ItemInserter.__init__(self, scene, mode)
-        self._current_item = None
+    def __init__(self, labeltool, scene, default_properties=None,
+                 prefix="", commit=True):
+        ItemInserter.__init__(self, labeltool, scene, default_properties,
+                              prefix, commit)
+        self._item = None
 
     def mousePressEvent(self, event, image_item):
         pos = event.scenePos()
-        if self._current_item is None:
+        if self._item is None:
             item = QGraphicsPolygonItem(QPolygonF([pos]))
-            self._current_item = item
+            self._item = item
+            self._item.setPen(self.pen())
             self._scene.addItem(item)
+            self._current_image_item = image_item
         else:
-            polygon = self._current_item.polygon()
+            polygon = self._item.polygon()
             polygon.append(pos)
-            self._current_item.setPolygon(polygon)
+            self._item.setPolygon(polygon)
 
         event.accept()
 
     def mouseMoveEvent(self, event, image_item):
-        if self._current_item is not None:
+        if self._item is not None:
             pos = event.scenePos()
-            polygon = self._current_item.polygon()
+            polygon = self._item.polygon()
             assert polygon.size() > 0
             polygon[-1] = pos
-            self._current_item.setPolygon(polygon)
+            self._item.setPolygon(polygon)
 
         event.accept()
+
+    def abort(self):
+        # XXX Is it abuse to handle the end of inserting here in abort()?
+        if self._item is not None:
+            polygon = self._item.polygon()
+            assert polygon.size() > 0
+
+            # The last point of the polygon is the point the user would add
+            # to the polygon when pressing the mouse button. At this point,
+            # we want to throw it away.
+            polygon.remove(polygon.size()-1)
+            assert polygon.size() > 0
+
+            self._ann.update({self._prefix + 'xn':
+                                  ";".join([str(p.x()) for p in polygon]),
+                              self._prefix + 'yn':
+                                  ";".join([str(p.y()) for p in polygon])})
+            self._ann.update(self._default_properties)
+            if self._commit:
+                self._current_image_item.addAnnotation(self._ann)
+            self._scene.removeItem(self._item)
+            self.annotationFinished.emit()
+            self._init_pos = None
+            self._item = None
+            self._current_image_item = None
+
+        self.inserterFinished.emit()
