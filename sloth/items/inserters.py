@@ -338,10 +338,10 @@ class PolygonItemInserter(ItemInserter):
             self._current_image_item = image_item
 
             self._scene.setMessage("Press Enter to finish the polygon.")
-        else:
-            polygon = self._item.polygon()
-            polygon.append(pos)
-            self._item.setPolygon(polygon)
+
+        polygon = self._item.polygon()
+        polygon.append(pos)
+        self._item.setPolygon(polygon)
 
         event.accept()
 
