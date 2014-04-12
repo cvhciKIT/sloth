@@ -61,6 +61,15 @@ LABELS = (
         'hotkey':   'p',
         'text':     'Point',
     },
+    {
+        'attributes': {
+            'class':    'polygon',
+        },
+        'inserter': 'sloth.items.PolygonItemInserter',
+        'item':     'sloth.items.PolygonItem',
+        'hotkey':   'o',
+        'text':     'Polygon',
+    },
 )
 
 # HOTKEYS

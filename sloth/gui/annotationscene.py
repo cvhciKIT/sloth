@@ -185,6 +185,19 @@ class AnnotationScene(QGraphicsScene):
             # selection mode
             QGraphicsScene.mousePressEvent(self, event)
 
+    def mouseDoubleClickEvent(self, event):
+        LOG.debug("mouseDoubleClickEvent %s %s" % (self.sceneRect().contains(event.scenePos()), event.scenePos()))
+        if self._inserter is not None:
+            if not self.sceneRect().contains(event.scenePos()) and \
+                    not self._inserter.allowOutOfSceneEvents():
+                # ignore events outside the scene rect
+                return
+            # insert mode
+            self._inserter.mouseDoubleClickEvent(event, self._image_item)
+        else:
+            # selection mode
+            QGraphicsScene.mouseDoubleClickEvent(self, event)
+
     def mouseReleaseEvent(self, event):
         LOG.debug("mouseReleaseEvent %s %s" % (self.sceneRect().contains(event.scenePos()), event.scenePos()))
         if self._inserter is not None:

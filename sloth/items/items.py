@@ -757,3 +757,76 @@ class NPointFaceItem(GroupItem):
             pen.setStyle(Qt.DashLine)
         painter.setPen(pen)
         painter.drawRect(self.boundingRect())
+
+class PolygonItem(BaseItem):
+    def __init__(self, model_item=None, prefix="", parent=None):
+        BaseItem.__init__(self, model_item, prefix, parent)
+
+        # Make it non-movable for now
+        self.setFlags(QGraphicsItem.ItemIsSelectable |
+                      QGraphicsItem.ItemSendsGeometryChanges |
+                      QGraphicsItem.ItemSendsScenePositionChanges)
+        self._polygon = None
+
+        self._updatePolygon(self._dataToPolygon(self._model_item))
+        LOG.debug("Constructed polygon %s for model item %s" %
+                  (self._polygon, model_item))
+
+    def __call__(self, model_item=None, parent=None):
+        item = PolygonItem(model_item, parent)
+        item.setPen(self.pen())
+        item.setBrush(self.brush())
+        return item
+
+    def _dataToPolygon(self, model_item):
+        if model_item is None:
+            return QPolygonF()
+
+        try:
+            polygon = QPolygonF()
+            xn = [float(x) for x in model_item["xn"].split(";")]
+            yn = [float(y) for y in model_item["yn"].split(";")]
+            for x, y in zip(xn, yn):
+              polygon.append(QPointF(x, y))
+
+            return polygon
+
+        except KeyError as e:
+            LOG.debug("PolygonItem: Could not find expected key in item: "
+                      + str(e) + ". Check your config!")
+            self.setValid(False)
+            return QPolygonF()
+
+    def _updatePolygon(self, polygon):
+        if polygon == self._polygon:
+            return
+
+        self.prepareGeometryChange()
+        self._polygon = polygon
+        self.setPos(QPointF(0, 0))
+
+    def boundingRect(self):
+        xn = [p.x() for p in self._polygon]
+        yn = [p.y() for p in self._polygon]
+        xmin = min(xn)
+        xmax = max(xn)
+        ymin = min(yn)
+        ymax = max(yn)
+        return QRectF(xmin, ymin, xmax - xmin, ymax - ymin)
+
+    def paint(self, painter, option, widget=None):
+        BaseItem.paint(self, painter, option, widget)
+
+        pen = self.pen()
+        if self.isSelected():
+            pen.setStyle(Qt.DashLine)
+        painter.setPen(pen)
+
+        for k in range(-1, len(self._polygon)-1):
+            p1 = self._polygon[k]
+            p2 = self._polygon[k+1]
+            painter.drawLine(p1, p2)
+
+    def dataChange(self):
+        polygon = self._dataToPolygon(self._model_item)
+        self._updatePolygon(polygon)

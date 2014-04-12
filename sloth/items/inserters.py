@@ -38,6 +38,9 @@ class ItemInserter(QObject):
     def mousePressEvent(self, event, image_item):
         event.accept()
 
+    def mouseDoubleClickEvent(self, event, image_item):
+        event.accept()
+
     def mouseReleaseEvent(self, event, image_item):
         event.accept()
 
@@ -321,31 +324,102 @@ class NPointFaceInserter(SequenceItemInserter):
                                    "Now at: " + self.inserters[self._state][2])
 
 
-# TODO
 class PolygonItemInserter(ItemInserter):
-    def __init__(self, scene, mode=None):
-        ItemInserter.__init__(self, scene, mode)
-        self._current_item = None
+    def __init__(self, labeltool, scene, default_properties=None,
+                 prefix="", commit=True):
+        ItemInserter.__init__(self, labeltool, scene, default_properties,
+                              prefix, commit)
+        self._item = None
 
     def mousePressEvent(self, event, image_item):
         pos = event.scenePos()
-        if self._current_item is None:
+
+        if self._item is None:
             item = QGraphicsPolygonItem(QPolygonF([pos]))
-            self._current_item = item
+            self._item = item
+            self._item.setPen(self.pen())
             self._scene.addItem(item)
-        else:
-            polygon = self._current_item.polygon()
-            polygon.append(pos)
-            self._current_item.setPolygon(polygon)
+
+            self._scene.setMessage("Press Enter to finish the polygon.")
+
+        polygon = self._item.polygon()
+        polygon.append(pos)
+        self._item.setPolygon(polygon)
 
         event.accept()
+
+    def mouseDoubleClickEvent(self, event, image_item):
+        """Finish the polygon when the user double clicks."""
+
+        # No need to add the position of the click, as a single mouse
+        # press event added the point already.
+        # Even then, the last point of the polygon is duplicate as it would be
+        # shortly after a single mouse press. At this point, we want to throw it
+        # away.
+        polygon = self._item.polygon()
+        polygon.remove(polygon.size()-1)
+        assert polygon.size() > 0
+        self._item.setPolygon(polygon)
+
+        self._updateAnnotation()
+        if self._commit:
+            image_item.addAnnotation(self._ann)
+        self._scene.removeItem(self._item)
+        self.annotationFinished.emit()
+        self._item = None
+        self._scene.clearMessage()
+
+        self.inserterFinished.emit()
+
+        event.accept()
+
 
     def mouseMoveEvent(self, event, image_item):
-        if self._current_item is not None:
+        if self._item is not None:
             pos = event.scenePos()
-            polygon = self._current_item.polygon()
+            polygon = self._item.polygon()
             assert polygon.size() > 0
             polygon[-1] = pos
-            self._current_item.setPolygon(polygon)
+            self._item.setPolygon(polygon)
 
         event.accept()
+
+    def keyPressEvent(self, event, image_item):
+        """
+        When the user presses Enter, the polygon is finished.
+        """
+        if event.key() == Qt.Key_Return and self._item is not None:
+            polygon = self._item.polygon()
+            assert polygon.size() > 0
+
+            # The last point of the polygon is the point the user would add
+            # to the polygon when pressing the mouse button. At this point,
+            # we want to throw it away.
+            polygon.remove(polygon.size()-1)
+            assert polygon.size() > 0
+            self._item.setPolygon(polygon)
+
+            self._updateAnnotation()
+            if self._commit:
+                image_item.addAnnotation(self._ann)
+            self._scene.removeItem(self._item)
+            self.annotationFinished.emit()
+            self._item = None
+            self._scene.clearMessage()
+
+            self.inserterFinished.emit()
+
+    def abort(self):
+        if self._item is not None:
+            self._scene.removeItem(self._item)
+            self._item = None
+            self._scene.clearMessage()
+        ItemInserter.abort(self)
+
+    def _updateAnnotation(self):
+        polygon = self._item.polygon()
+        self._ann.update({self._prefix + 'xn':
+                              ";".join([str(p.x()) for p in polygon]),
+                          self._prefix + 'yn':
+                              ";".join([str(p.y()) for p in polygon])})
+        self._ann.update(self._default_properties)
