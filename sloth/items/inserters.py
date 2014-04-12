@@ -331,6 +331,22 @@ class PolygonItemInserter(ItemInserter):
                               prefix, commit)
         self._item = None
 
+    def _removeLastPointAndFinish(self, image_item):
+        polygon = self._item.polygon()
+        polygon.remove(polygon.size()-1)
+        assert polygon.size() > 0
+        self._item.setPolygon(polygon)
+
+        self._updateAnnotation()
+        if self._commit:
+            image_item.addAnnotation(self._ann)
+        self._scene.removeItem(self._item)
+        self.annotationFinished.emit()
+        self._item = None
+        self._scene.clearMessage()
+
+        self.inserterFinished.emit()
+
     def mousePressEvent(self, event, image_item):
         pos = event.scenePos()
 
@@ -356,20 +372,7 @@ class PolygonItemInserter(ItemInserter):
         # Even then, the last point of the polygon is duplicate as it would be
         # shortly after a single mouse press. At this point, we want to throw it
         # away.
-        polygon = self._item.polygon()
-        polygon.remove(polygon.size()-1)
-        assert polygon.size() > 0
-        self._item.setPolygon(polygon)
-
-        self._updateAnnotation()
-        if self._commit:
-            image_item.addAnnotation(self._ann)
-        self._scene.removeItem(self._item)
-        self.annotationFinished.emit()
-        self._item = None
-        self._scene.clearMessage()
-
-        self.inserterFinished.emit()
+        self._removeLastPointAndFinish(image_item)
 
         event.accept()
 
@@ -389,25 +392,10 @@ class PolygonItemInserter(ItemInserter):
         When the user presses Enter, the polygon is finished.
         """
         if event.key() == Qt.Key_Return and self._item is not None:
-            polygon = self._item.polygon()
-            assert polygon.size() > 0
-
             # The last point of the polygon is the point the user would add
             # to the polygon when pressing the mouse button. At this point,
             # we want to throw it away.
-            polygon.remove(polygon.size()-1)
-            assert polygon.size() > 0
-            self._item.setPolygon(polygon)
-
-            self._updateAnnotation()
-            if self._commit:
-                image_item.addAnnotation(self._ann)
-            self._scene.removeItem(self._item)
-            self.annotationFinished.emit()
-            self._item = None
-            self._scene.clearMessage()
-
-            self.inserterFinished.emit()
+            self._removeLastPointAndFinish(image_item)
 
     def abort(self):
         if self._item is not None:
