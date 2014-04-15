@@ -1,8 +1,9 @@
 #!/usr/bin/env python
-import sys, os
+import os
 from distutils.core import setup
 from distutils.command.install import INSTALL_SCHEMES
 import sloth
+
 
 # the following installation setup is based on django's setup.py
 def fullsplit(path, result=None):
@@ -49,7 +50,7 @@ setup(name='sloth',
       description='The Sloth Labeling Tool',
       author='CV:HCI Research Group',
       url='http://sloth.readthedocs.org/',
-      requires=['importlib', 'PyQt4',],
+      requires=['importlib', 'PyQt4', 'numpy'],
       packages=packages,
       data_files=data_files,
       scripts=['sloth/bin/sloth']
