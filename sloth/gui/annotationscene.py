@@ -1,6 +1,4 @@
 """This is the AnnotationScene module"""
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
 from sloth.items import *
 from sloth.core.exceptions import InvalidArgumentException
 from sloth.annotations.model import AnnotationModelItem
@@ -9,19 +7,20 @@ from sloth.conf import config
 import logging
 LOG = logging.getLogger(__name__)
 
+
 class AnnotationScene(QGraphicsScene):
     mousePositionChanged = pyqtSignal(float, float)
     def __init__(self, labeltool, items=None, inserters=None, parent=None):
         super(AnnotationScene, self).__init__(parent)
 
-        self._model      = None
+        self._model = None
         self._image_item = None
-        self._inserter   = None
+        self._inserter = None
         self._scene_item = None
-        self._message    = ""
-        self._labeltool  = labeltool
+        self._message = ""
+        self._labeltool = labeltool
 
-        self._itemfactory     = Factory(items)
+        self._itemfactory = Factory(items)
         self._inserterfactory = Factory(inserters)
 
         try:
@@ -268,7 +267,7 @@ class AnnotationScene(QGraphicsScene):
             found = False
 
         items = [item for item in self.items()
-                      if item.flags() & QGraphicsItem.ItemIsSelectable] * 2
+                 if item.flags() & QGraphicsItem.ItemIsSelectable] * 2
         if reverse:
             items.reverse()
 

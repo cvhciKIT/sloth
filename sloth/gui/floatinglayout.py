@@ -1,6 +1,7 @@
 from PyQt4.QtCore import Qt, QRect, QSize, QPoint
 from PyQt4.QtGui  import QLayout, QSizePolicy, QWidgetItem
 
+
 class FloatingLayout(QLayout):
     def __init__(self, parent=None):
         QLayout.__init__(self, parent)

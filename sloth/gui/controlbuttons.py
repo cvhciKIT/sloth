@@ -1,6 +1,6 @@
-import sys, os
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
+
 
 class Label(QLabel):
     
@@ -11,6 +11,7 @@ class Label(QLabel):
         menu = QMenu(self)
         menu.addActions(self.actions())
         menu.exec_(ev.globalPos())
+
 
 class ControlButtonWidget(QWidget):
     def __init__(self, parent=None):

@@ -11,7 +11,8 @@ def unique_list(seq):
     seen = {}
     result = []
     for item in seq:
-        if item in seen: continue
+        if item in seen:
+            continue
         seen[item] = 1
         result.append(item)
     return result
@@ -186,7 +187,7 @@ class ButtonArea(QWidget):
     def clickedLabelButton(self, label_name):
         #button = self.get_checked_label_button()
         #print button
-        if label_name != None:
+        if label_name is not None:
             LOG.debug("ButtonArea: %s" % label_name)
             self.show_only_label_properties(label_name)
         else:
