@@ -1,6 +1,14 @@
+sloth
+=====
+
+|TravisCI|_
+
+.. |TravisCI| image:: https://api.travis-ci.org/cvhciKIT/sloth.png
+.. _TravisCI: https://travis-ci.org/cvhciKIT/sloth
+
 sloth is a tool for labeling image and video data for computer vision research.
 
-The documentation can be found at http://sloth.readthedocs.org/
+The documentation can be found at http://sloth.readthedocs.org/ .
 
 Latest Releases
 ===============
