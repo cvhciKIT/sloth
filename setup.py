@@ -1,4 +1,12 @@
-#!/usr/bin/env python
+"""
+sloth
+-----
+
+sloth is a tool for labeling image and video data for computer vision research.
+
+The documentation can be found at http://sloth.readthedocs.org/ .
+
+"""
 import os
 from distutils.core import setup
 from distutils.command.install import INSTALL_SCHEMES
