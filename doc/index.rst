@@ -25,7 +25,7 @@ Feedback
 
 *Please* provide feedback to us on this document and Sloth in general!  We won't be able
 to incorporate your required features if you do not talk to us.  Also, use the bug tracker
-at https://github.com/cvhciKIT/sloth/issues.  Of course, similarly welcome are patches!
+at https://github.com/cvhciKIT/sloth/issues.  Of course, pull requests are always welcome!
 
 Contents
 ========
@@ -34,8 +34,8 @@ Contents
    :maxdepth: 2
 
    installation
-   concepts
    first_steps
+   concepts
    configuration
    items
    inserters

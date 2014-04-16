@@ -23,10 +23,20 @@ The label tool comes with a few predefined visualization items:
 
 - ``items.PolygonItem``
 
-    Draws a rectangle.  Expects the label to have keys ``xn`` and ``yn``, which are ``;``-separated
+    Draws a polygon.  Expects the label to have keys ``xn`` and ``yn``, which are ``;``-separated
     lists of point coordinates.
 
-The predefined items can be used in different ways.  If you give the class name in
+- ``items.IDRectItem``
+
+    Extends ``RectItem``. Displays the value of ``id`` within the rectangle as text.
+    When an item is selected, the hotkey ``i`` can be used to cycle between numerical id values.
+
+- ``items.OccludablePointItem``
+
+    Extends ``PointItems``. Draws the point in a different color (red) when the value of ``occluded`` is ``True``.
+    The hotkey ``o`` is defined to toggle the ``occluded`` property.
+
+The predefined items can be used in different ways.  If you specify the class name in
 the configuration, the constructor will be called for initializing the item.  However,
 you can also create and instance of the item, configure for example the color, and then
 use this instance in the configuration.  The predefined items have their ``__call__`` operator
@@ -88,7 +98,7 @@ set the graphics items flags to allow interactive modfications of the item::
                   QGraphicsItem.ItemSendsGeometryChanges | \
                   QGraphicsItem.ItemSendsScenePositionChanges)
 
-Then we catch the notifications about item changes by overriding ``ìtemChange``. We especially need
+By overriding ``ìtemChange`` we get notified about item changes, such as a position change. Especially, we need
 to inform the model about the modification::
 
     def itemChange(self, change, value):

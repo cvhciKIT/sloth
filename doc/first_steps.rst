@@ -117,7 +117,7 @@ Writing a custom configuration
 ==============================
 
 We already briefly touch the subject of configuration.  Sloth can be easily
-tailored to once labeling needs by using different label types, adding own
+tailored to ones labeling needs by using different label types, adding own
 visualization items and container formats.  All of this can be specified in the
 configuration file.  The configuration file is a python module where the
 module-level variables represent the settings.  The most important variable is
@@ -175,7 +175,7 @@ different keys of the dictionary in detail:
 
 * ``attributes`` has three purposes:
   1. It defines which key-values pairs are inserted into a new annotation directly.
-     This can either be a fixed key-value pair.  Or, if the value is a list of
+     This can either be a fixed key-value pair.  If the value is a list of
      items, the user can choose interactively in the Properties dock which one
      of the values he wants to use for a new label.  The current state is then
      passed to the inserter.
@@ -200,23 +200,25 @@ pass it to Sloth with the ``--config`` command line parameter::
 
     sloth --config myconfig.py examples/example1_labels.json
 
-You can now start labeling head locations and eye positions.  You'll see that for each 
-depending on the chosen annotation, you can either insert a rectangle (this is internally
+You can now start labeling head locations and eye positions.  You'll see that --
+depending on the chosen annotation -- you can either insert a rectangle (this is internally
 done by the ``RectItemInserter``) or points (using the ``PointItemInserter``).  For
-each annotation you can choose an identity between the two supplied options.
+each annotation you can choose an identity from the two supplied options.
 
-There are more possibilities to configure the labels, e.g. defining hotkeys, which we
-have not touched here.  Refer to :ref:`LABELS` for the full documentation.
+There are more possibilities to configure the labels, which we have not touched here.
+For example, hotkeys can be defined to quick access to often used label types.
+Refer to :ref:`LABELS` for the full documentation.
 
 Apart from defining the supported labels in the configuration, other parts of Sloth's
-behaviour can be configured there as well, e.g. for supporting own label formats with
-custom containers.  See :doc:`Configuration <configuration>` for the full
+behaviour can be configured there as well, e.g. for supporting custom label formats (using
+custom containers).  See :doc:`Configuration <configuration>` for the full
 reference of all configuration options.
 
 Next steps
 ==========
 
-You can now continue by reading about :doc:`all available configuration options <configuration>`,
+You should quickly familiarize yourself with the :doc:`basic concepts and conventions <concepts>` in Sloth.
+Continue then by reading about :doc:`all available configuration options <configuration>`,
 how to write your own :doc:`visualization items <items>`, :doc:`custom inserters <inserters>` or
 :doc:`custom label containers <containers>`.
 

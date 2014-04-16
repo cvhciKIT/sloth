@@ -78,7 +78,6 @@ different keys of the dictionary in detail:
        * the value for one of keys matches and the other key is not present in
          either ``attributes`` or the annotation.
 
-
 Note that the comma at the end of the first tuple is mandatory.  Otherwise the
 outer tuple will not be recognized as one (it will be only parentheses around
 an object, which will alone not be translated into a tuple object.  This
@@ -101,7 +100,7 @@ Default::
     )
 
 Defines global keyboard shortcuts.  Each hotkey is defined by a tuple with at
-least 2 entries, where the first entry is the hotkey (sequence), and the second
+least two entries, where the first entry is the hotkey (sequence), and the second
 entry is the function that is called.  The function should expect a single
 parameter, the labeltool object.  The optional third entry -- if present -- is
 expected to be a string describing the action.
@@ -113,11 +112,13 @@ CONTAINERS
 
 Default::
 
-    {
-     '*.txt':    'annotations.container.SimpleOneLinerTextContainer',
-     '*.yaml':   'annotations.container.YamlContainer',
-     '*.pickle': 'annotations.container.PickleContainer',
-    }
+    (
+        ('*.json',       'sloth.annotations.container.JsonContainer'),
+        ('*.msgpack',    'sloth.annotations.container.MsgpackContainer'),
+        ('*.yaml',       'sloth.annotations.container.YamlContainer'),
+        ('*.pickle',     'sloth.annotations.container.PickleContainer'),
+        ('*.sloth-init', 'sloth.annotations.container.FileNameListContainer'),
+    )
 
 Defines a mapping of which container should be used for loading a label file
 matching the given filename pattern.  This can of course also be a user defined
@@ -132,25 +133,14 @@ container.  You can also define the class directly (instead of a module path)::
 PLUGINS
 -------
 
-Did not think to much about this yet.  This is rather for v2.0.  Could image to be able to define some kind of
-plugin that might do some preprocessing on an image, e.g. detect all faces and convert them into labels.
-
-.. _SCENE_BACKGROUND:
-
-SCENE_BACKGROUND
-----------------
+A list/tuple of classes implementing the sloth plugin interface.  The
+classes can either be given directly or their module path be specified as string.
+By default, no plugins are active.
 
 Default::
 
-    Qt.darkGray
+    ()
 
-Allows to set the scene background to a custom color or pattern.  Expects a QBrush.  A more
-complex background could be a regular box pattern which might simplify the exact resizing of 
-annotations that extend over image boundaries::
-
-    from PyQt4.QtGui import QBrush
-    from PyQt4.QtCore import Qt
-    SCENE_BACKGROUND = QBrush(Qt.darkGray, Qt.CrossPattern)
 
 
 Extending default values

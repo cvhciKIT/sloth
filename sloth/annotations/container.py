@@ -81,6 +81,7 @@ class AnnotationContainer:
         self.clear()
 
     def filename(self):
+        """The current filename."""
         return self._filename
 
     def clear(self):

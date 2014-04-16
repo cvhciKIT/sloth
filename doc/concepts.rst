@@ -4,7 +4,7 @@
 Concepts
 ========
 
-In this section, we will introduce some high-level concepts of Sloth.
+We start by introducing some high-level concepts of Sloth.
 
 
 Labels
@@ -15,25 +15,25 @@ can contain any number of labels.  Each label is a set of key-value pairs,
 for example::
 
     {
-        class:  "rect",
-        id:     "Martin",
-        x:      10,
-        y:      30,
-        width:  40,
-        height: 50,
+        "class":  "rect",
+        "id":     "Martin",
+        "x":      10,
+        "y":      30,
+        "width":  40,
+        "height": 50,
     }
 
-The only required key a label *has* to have is the "class" key.  It will be used by the label tool
+The only required key a label *has* to have is the "class" key.  By convention, the value of "class" is used
 to determine the appropriate visualization for this label (in our example it will draw a rectangle).
-You will later see, how you can customize the mapping between class and visualization and how to
-write your own visualizations.
+We will later see, how the mapping between class and visualization can be customized and how custom visualizations
+can be added.
 
 
 Label type conventions
 ----------------------
 
-Sloth provides support for a range of standard shape labels (for example `rect`, `point`, `polygon` etc.).
-In order for the label tool to correctly visualize these labels, the labels have to follow
+Sloth provides support for a range of standard shape labels (for example rectangles, points and polygons).
+In order for Sloth to correctly visualize these labels, the labels have to follow
 a convention, which keys represent the `x`- and `y`-coordinates, `width` and `height` and so on.
 
 The following simple geometric classes are supported out of the box, i.e.
@@ -76,7 +76,7 @@ Polygon
 User defined labels
 -------------------
 
-In many cases, it will not be sufficient for your labeling needs to stick to those simple classes.  Or,
+In many cases, labeling requirements extend beyond those simple classes.  Or,
 you might want to add further information.  Since each label is just a set of key-value pairs, this
 is easily possible by adding more key-value pairs that carry additional information.
 For example you can add a key ``type`` that differentiates point labels to be either the label
@@ -85,12 +85,12 @@ for the left or the right eye of a face::
     {
         "class": "point",
         "type":  "left_eye",
-        x: 50, y: 40,
+        "x": 50, "y": 40,
     },
     {
         "class": "point",
         "type":  "right_eye",
-        x: 70, y: 40,
+        "x": 70, "y": 40,
     }
 
 Of course, you can also create new classes::
@@ -116,7 +116,7 @@ Of course, you can also create new classes::
 You see in the second example, that the label does not necessarily have to name
 a geometric form of any sort.  Neither do the key-value pairs have to denote
 only coordinates or attributes.  It can be anything you like.  However, if you
-create your own classes you will need to tell the label tool in the
+create your own classes you will need to tell the Sloth in the
 configuration how to display this label class.  See section :doc:`configuration` on how to do that.
 
 

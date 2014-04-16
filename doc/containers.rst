@@ -34,8 +34,8 @@ A container is expected to implement (at least) these five functions:
     ``frame_number``.
 
 The container base class ``AnnotationContainer`` provides default
-implementations for all five function.  It however deferes the 
-parsing and serialization of the labels from/to disk to the to functions
+implementations for all five function.  It however defers the
+parsing and serialization of the labels from/to disk to the two functions
 
 .. py:function:: parseFromFile(self, filename)
 
@@ -50,9 +50,9 @@ provide implementations for those two functions.
 Default Containers
 ==================
 
-A few containers are included in sloth.  They can be found in the module
+A few containers are included in Sloth.  They can be found in the module
 ``sloth.annotations.container``.  In the default configuration, these
-containers are included for their respective default filename patter.
+containers are included for their respective default filename pattern.
 
 JsonContainer
 -------------
@@ -62,13 +62,20 @@ Default pattern: ``*.json``
 Writes and reads annotations in JSON format (needs the python module ``json``
 to be installed).
 
-
 YamlContainer
 -------------
 
 Default pattern: ``*.yaml``
 
 Writes and reads annotations in YAML format (needs the python module ``yaml``
+to be installed).
+
+MsgpackContainer
+----------------
+
+Default pattern: ``*.msgpack``
+
+Writes and reads annotations in Msgpack format (needs the python module ``msgpack``
 to be installed).
 
 PickleContainer
@@ -87,8 +94,8 @@ Default pattern: ``*.sloth-init``
 A simple container that reads one image filename per line.  No annotations
 are supported.  This container can be used for example for initializing 
 a labeling session.  After adding labels, another container should be 
-used for saving though, otherwise the labels will be lost. (write support 
-not implemented yet anyway)
+used for saving though, otherwise the labels will be lost (write support
+is not implemented).
 
 FeretContainer
 --------------
