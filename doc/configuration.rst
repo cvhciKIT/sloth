@@ -59,6 +59,7 @@ different keys of the dictionary in detail:
   current state of the button area.
 
 * ``attributes`` has three functions:
+
   1. It defines how a new annotation can be initialized.  Fixed
      key-value pairs are used directly.  If the value is a list of items, the
      user can choose interactively which one of the values he wants to use for

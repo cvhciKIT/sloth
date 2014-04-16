@@ -165,8 +165,8 @@ different keys of the dictionary in detail:
   ``sloth.items.RectItem`` class is used, which will draw a rectangle as given by the
   coordinates in the annotation.  Sloth comes with several predefined
   visualization classes, such as ``sloth.items.RectItem`` and
-  ``sloth.items.PointItem`` (see :ref:`items` for a full list).  However, it is
-  also very easy to define your own visualization class (see :ref:`items`).
+  ``sloth.items.PointItem`` (see :doc:`items` for a full list).  However, it is
+  also very easy to define your own visualization class (see :ref:`CUSTOM_ITEMS`).
 
 * ``inserter`` specifies which class is responsible for creating new
   annotations based on user input.  When the user enters insert-mode with a
@@ -174,6 +174,7 @@ different keys of the dictionary in detail:
   user input and takes care of the creation of a new annotation.
 
 * ``attributes`` has three purposes:
+
   1. It defines which key-values pairs are inserted into a new annotation directly.
      This can either be a fixed key-value pair.  If the value is a list of
      items, the user can choose interactively in the Properties dock which one
