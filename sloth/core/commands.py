@@ -123,6 +123,7 @@ class AppendFilesCommand(BaseCommand):
             else:
                 logger.debug("Adding image file: %s" % rel_filename)
                 item = self.labeltool.addImageFile(rel_filename)
+            present_filenames.add(rel_filename)
 
             if options['unlabeled']:
                 item.setUnlabeled(True)
