@@ -80,8 +80,9 @@ class DumpLabelsCommand(BaseCommand):
 
 class AppendFilesCommand(BaseCommand):
     """
-    Append image or video files to a label file.  Creates the label
-    file if it does not exist before.
+    Append image or video files to a label file.  Creates the label file if it
+    does not exist before.  If the image or video file is already in the label
+    file, it will not be appended again.
     """
     args = '<labelfile> <file1> [<file2> ...]'
     help = __doc__.strip()
@@ -101,6 +102,8 @@ class AppendFilesCommand(BaseCommand):
             raise CommandError("Expect at least 2 arguments.")
 
         self.labeltool.loadAnnotations(args[0])
+        present_filenames = {a["filename"] for a in self.labeltool.annotations()}
+
         for filename in args[1:]:
             rel_filename = filename
             try:
@@ -109,6 +112,10 @@ class AppendFilesCommand(BaseCommand):
             except:
                 pass
 
+            if rel_filename in present_filenames:
+                logger.info("Not adding file again: %s" % rel_filename)
+                continue
+
             _, ext = os.path.splitext(rel_filename)
             if (not options['image'] and ext.lower() in self.video_extensions) or options['video']:
                 logger.debug("Adding video file: %s" % rel_filename)
@@ -116,6 +123,7 @@ class AppendFilesCommand(BaseCommand):
             else:
                 logger.debug("Adding image file: %s" % rel_filename)
                 item = self.labeltool.addImageFile(rel_filename)
+            present_filenames.add(rel_filename)
 
             if options['unlabeled']:
                 item.setUnlabeled(True)
