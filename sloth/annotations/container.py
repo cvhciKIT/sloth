@@ -313,6 +313,7 @@ class JsonContainer(AnnotationContainer):
         """
         f = open(fname, "w")
         json.dump(annotations, f, indent=4, separators=(',', ': '), sort_keys=True)
+        f.write("\n")
 
 
 class MsgpackContainer(AnnotationContainer):
