@@ -377,21 +377,26 @@ class MainWindow(QMainWindow):
         image_types = [ '*.jpg', '*.bmp', '*.png', '*.pgm', '*.ppm', '*.ppm', '*.tif', '*.gif' ]
         video_types = [ '*.mp4', '*.mpg', '*.mpeg', '*.avi', '*.mov', '*.vob' ]
         format_str = ' '.join(image_types + video_types)
-        fname = QFileDialog.getOpenFileName(self, "%s - Add Media File" % APP_NAME, path, "Media files (%s)" % (format_str, ))
+        fnames = QFileDialog.getOpenFileNames(self, "%s - Add Media File" % APP_NAME, path, "Media files (%s)" % (format_str, ))
 
-        if len(str(fname)) == 0:
-            return
+        item = None
+        for fname in fnames:
+            if len(str(fname)) == 0:
+                continue
 
-        fname = str(fname)
+            fname = str(fname)
 
-        if os.path.isabs(fname):
-            fname = os.path.relpath(fname, str(path))
+            if os.path.isabs(fname):
+                fname = os.path.relpath(fname, str(path))
 
-        for pattern in image_types:
-            if fnmatch.fnmatch(fname, pattern):
-                return self.labeltool.addImageFile(fname)
+            for pattern in image_types:
+                if fnmatch.fnmatch(fname, pattern):
+                    item = self.labeltool.addImageFile(fname)
 
-        return self.labeltool.addVideoFile(fname)
+        if item is None:
+            return self.labeltool.addVideoFile(fname)
+
+        return item
 
     def onViewsLockedChanged(self, checked):
         features = QDockWidget.AllDockWidgetFeatures
