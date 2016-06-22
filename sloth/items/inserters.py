@@ -84,9 +84,17 @@ class RectItemInserter(ItemInserter):
                  prefix="", commit=True):
         ItemInserter.__init__(self, labeltool, scene, default_properties,
                               prefix, commit)
+        self._aiming = True
+        self._helpLines = None
+        self._helpLinesPen = QPen(Qt.green, 2, Qt.DashLine)
         self._init_pos = None
 
     def mousePressEvent(self, event, image_item):
+        self._aiming = False
+        if self._helpLines is not None:
+            self._scene.removeItem(self._helpLines)
+            self._helpLines = None
+
         pos = event.scenePos()
         self._init_pos = pos
         self._item = QGraphicsRectItem(QRectF(pos.x(), pos.y(), 0, 0))
@@ -95,10 +103,28 @@ class RectItemInserter(ItemInserter):
         event.accept()
 
     def mouseMoveEvent(self, event, image_item):
-        if self._item is not None:
-            assert self._init_pos is not None
-            rect = QRectF(self._init_pos, event.scenePos()).normalized()
-            self._item.setRect(rect)
+        if self._aiming:
+            if self._helpLines is not None:
+                self._scene.removeItem(self._helpLines)
+
+            self._helpLines = QGraphicsItemGroup()
+            group = self._helpLines
+
+            verticalHelpLine = QGraphicsLineItem(event.scenePos().x(), 0, event.scenePos().x(), self._scene.height())
+            horizontalHelpLine = QGraphicsLineItem(0, event.scenePos().y(), self._scene.width(), event.scenePos().y())
+
+            horizontalHelpLine.setPen(self._helpLinesPen)
+            verticalHelpLine.setPen(self._helpLinesPen)
+
+            group.addToGroup(verticalHelpLine);
+            group.addToGroup(horizontalHelpLine);
+
+            self._scene.addItem(self._helpLines)
+        else:
+            if self._item is not None:
+                assert self._init_pos is not None
+                rect = QRectF(self._init_pos, event.scenePos()).normalized()
+                self._item.setRect(rect)
 
         event.accept()
 
@@ -119,12 +145,17 @@ class RectItemInserter(ItemInserter):
             self._init_pos = None
             self._item = None
 
+        self._aiming = True
         event.accept()
 
     def allowOutOfSceneEvents(self):
         return True
 
     def abort(self):
+        if self._helpLines is not None:
+            self._scene.removeItem(self._helpLines)
+            self._helpLines = None
+
         if self._item is not None:
             self._scene.removeItem(self._item)
             self._item = None
