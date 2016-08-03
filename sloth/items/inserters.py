@@ -146,6 +146,7 @@ class RectItemInserter(ItemInserter):
             self._item = None
 
         self._aiming = True
+        self._scene.views()[0].viewport().setCursor(Qt.CrossCursor)
         event.accept()
 
     def allowOutOfSceneEvents(self):

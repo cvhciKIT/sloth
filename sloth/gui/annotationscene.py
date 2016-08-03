@@ -142,10 +142,14 @@ class AnnotationScene(QGraphicsScene):
         self._labeltool.currentImageChanged.connect(inserter.imageChange)
         self._inserter = inserter
         LOG.debug("Created inserter for class '%s' with default properties '%s'" % (label_class, default_properties))
+        # Change cursor to cross
+        self.views()[0].viewport().setCursor(Qt.CrossCursor)
+
 
     def onInsertionModeEnded(self):
         if self._inserter is not None:
             self._inserter.abort()
+        self.views()[0].viewport().setCursor(Qt.ArrowCursor)
 
     #
     # common methods

@@ -27,6 +27,11 @@ class GraphicsView(QGraphicsView):
         self._panStartX = -1
         self._panStartY = -1
 
+        # Windows photo viewer like controls
+        self.setRenderHints(QPainter.Antialiasing|QPainter.SmoothPixmapTransform)
+        self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
+        self.setDragMode(QGraphicsView.ScrollHandDrag)
+
     def fitInView(self):
         if self.scene() is None:
             return
