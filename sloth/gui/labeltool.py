@@ -305,7 +305,8 @@ class MainWindow(QMainWindow):
         if isinstance(locked, QVariant): locked = locked.toBool()
         self.resize(size)
         self.move(pos)
-        self.restoreState(state)
+        if state is not None:
+                self.restoreState(state)
         self.ui.actionLocked.setChecked(bool(locked))
 
     def saveApplicationSettings(self):
