@@ -362,7 +362,7 @@ class KeyValueModelItem(ModelItem, MutableMapping):
             self.deleteChild(self._items[key])
 
     def update(self, kvs):
-        for key, value in kvs.iteritems():
+        for key, value in kvs.items():
             self.__setitem__(key, value, False)
         self._emitDataChanged()
 

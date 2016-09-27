@@ -401,6 +401,8 @@ class MainWindow(QMainWindow):
         if item is None:
             return self.labeltool.addVideoFile(fname)
 
+        progress_bar.close()
+        
         return item
 
     def onViewsLockedChanged(self, checked):
