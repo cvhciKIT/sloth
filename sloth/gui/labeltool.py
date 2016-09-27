@@ -4,7 +4,7 @@ import functools
 import fnmatch
 from PyQt4.QtGui import QMainWindow, QSizePolicy, QWidget, QVBoxLayout, QAction,\
         QKeySequence, QLabel, QItemSelectionModel, QMessageBox, QFileDialog, QFrame, \
-        QDockWidget, QProgressBar
+        QDockWidget, QProgressBar, QProgressDialog
 from PyQt4.QtCore import SIGNAL, QSettings, QSize, QPoint, QVariant, QFileInfo, QTimer, pyqtSignal, QObject
 import PyQt4.uic as uic
 from sloth.gui import qrc_icons  # needed for toolbar icons
@@ -381,7 +381,9 @@ class MainWindow(QMainWindow):
         fnames = QFileDialog.getOpenFileNames(self, "%s - Add Media File" % APP_NAME, path, "Media files (%s)" % (format_str, ))
 
         item = None
-        for fname in fnames:
+        numFiles = len(fnames)
+        progress_bar = QProgressDialog('Importing files...', 'Cancel import', 0, numFiles, self)
+        for fname,c in zip(fnames, range(numFiles)):
             if len(str(fname)) == 0:
                 continue
 
@@ -393,6 +395,8 @@ class MainWindow(QMainWindow):
             for pattern in image_types:
                 if fnmatch.fnmatch(fname, pattern):
                     item = self.labeltool.addImageFile(fname)
+            
+            progress_bar.setValue(c)
 
         if item is None:
             return self.labeltool.addVideoFile(fname)
