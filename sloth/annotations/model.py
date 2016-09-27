@@ -294,6 +294,7 @@ class KeyValueModelItem(ModelItem, MutableMapping):
         self._items = {}
         self._hidden = set(hidden or [])
         self._hidden.update({None, 'class', 'unlabeled', 'unconfirmed'})
+        self._seen = False
 
         # dummy key/value so that pyqt does not convert the dict
         # into a QVariantMap while communicating with the Views
@@ -408,7 +409,7 @@ class FileModelItem(KeyValueModelItem):
     def data(self, role=Qt.DisplayRole, column=0):
         if role == Qt.DisplayRole:
             if column == 0:
-                return os.path.basename(self['filename'])
+                return ('* ' if not self._seen else '') + os.path.basename(self['filename'])
             elif column == 1 and self.isUnlabeled():
                 return '[unlabeled]'
         return ModelItem.data(self, role, column)
@@ -456,7 +457,7 @@ class ImageFileModelItem(FileModelItem, ImageModelItem):
         for ann in self._annotation_data:
             self._children.append(ann)
             self._toload.append(ann)
-        self._loaded = False
+        self._loaded = False        
 
     def _load(self, index):
         self._toload.remove(self._children[index])
