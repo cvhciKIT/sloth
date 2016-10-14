@@ -45,11 +45,12 @@ You can make use of this in the configuration to for example specify the color o
 created rectangles, maybe even different kinds for different label types::
 
     # this your custom configuration module
+    from PyQt4.Qt import *
 
     RedRectItem = items.RectItem()
-    RedRectItem.setColor(Qt.Red)
+    RedRectItem.setColor(Qt.red)
     GreenRectItem = items.RectItem()
-    GreenRectItem.setColor(Qt.Green)
+    GreenRectItem.setColor(Qt.green)
 
     ITEMS = {
         "rect" : RedRectItem,
@@ -134,7 +135,7 @@ Example::
     class MyRectItem(BaseItem):
         def __init__(self, index, data):
             BaseItem.__init__(self, index, data)
-            self.color_ = Qt.Red
+            self.color_ = Qt.red
 
         def setColor(self, color):
             self.color_ = color
