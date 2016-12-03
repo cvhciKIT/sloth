@@ -906,3 +906,144 @@ class CopyAnnotations(QObject):
 
     def area(self, r):
         return r[2]*r[3]
+
+# interpolate annotations between two annotated images
+class InterpolateRange(QObject):
+    def __init__(self, labeltool):
+        QObject.__init__(self)
+
+        self._lt = labeltool
+        self._overwrite_funcs = [self.defaultOverwriteCheck] 
+        self._interp_func = self.interpolate
+
+        self._wnd = labeltool.mainWindow()
+
+    def getStrNumType(self, test):
+        vtype = None
+        try:
+            float(test)
+            vtype = float
+        except:
+            pass
+        try:
+            int(test)
+            vtype = int
+        except:
+            pass
+        return vtype
+
+    def defaultOverwriteCheck(self, annotations):
+        if 'interpolated' in annotations and annotations['interpolated'] == True:
+            return True
+        if 'unlabeled' in annotations and annotations['unlabeled'] == True:
+            return True
+        return False
+
+    def interpolate(self, p1, p2, step, steps):
+        xr = p2 - p1
+        xnew = p1+(xr/(steps+1))*step
+        return xnew
+
+    def overwrite(self, annotation):
+        for f in self._overwrite_funcs:
+            if not f(annotation):
+                return False
+        return True
+
+    def interpolateRange(self):
+        last = self._lt.currentImage()
+        first = None
+
+        if self.overwrite(last):
+            LOG.info("Error: cannot interpolate, curren't frame is still unlabeled=True")
+            return False
+
+        # find first previous labeled frame as first
+        # make list of frames toInterp(olate)
+        prev = last.getPreviousSibling()
+        toInterp = [prev]
+        steps = 1
+        while self.overwrite(prev):
+            steps += 1
+            prev = prev.getPreviousSibling()
+            # only one "roundtrip", as first frame in set wraps to last
+            if steps > len(self._lt.annotations())+1:
+                LOG.info("Couldn't find previous labeled frame")
+                return False
+            toInterp.append(prev)
+
+        first = prev
+        toInterp.reverse()
+        toInterp = toInterp[1:]
+
+        # TODO: make fuzzy matcher to match annotation objects together...
+        fann = first.getAnnotations()['annotations']
+        lann = last.getAnnotations()['annotations']
+        if len(fann) != len(lann): # TODO needed?
+            LOG.error("Error: Annotation count differs in first and last labeled frames, aborting")
+            return False
+        steps = len(toInterp)
+        # create list of annotations to inject into each in-between frame
+        toInterpAnns = []
+        for i in toInterp:
+            toInterpAnns.append(copy.deepcopy(fann))
+
+        for i in range(len(fann)):
+            LOG.debug("trying annotation %s at idx %s"%(fann[i], i))
+            # find which "last annotation" matches a certain first
+            lannIdx = None
+            for l in range(len(lann)):
+                if lann[l]['type'] == fann[i]['type'] and lann[l]['class'] == fann[i]['class']:
+                    lannIdx = l
+            if lannIdx == None:
+                LOG.error("Error: could not find matching label, skipping")
+                continue
+
+            for attr in fann[i].keys():
+                firstV = None; lastV = None
+                if type(fann[i][attr]) in [type(float()), type(int())]:
+                    firstV = fann[i][attr]
+                    lastV = lann[lannIdx][attr]
+                    for j in range(len(toInterpAnns)):
+                        interp = self._interp_func(firstV, lastV, j+1, steps)
+                        toInterpAnns[j][i][attr] = interp
+
+                if type(fann[i][attr])==type(str()) and ";" in fann[i][attr]: # assume its a multi-value list?
+                    frawVals = fann[i][attr].split(";")
+                    lrawVals = lann[lannIdx][attr].split(";")
+                    if len(frawVals) != len(lrawVals):
+                        LOG.error("Error: multi-value objects on first/last frame differ, aborting")
+                        return False
+
+                    test = frawVals[0]
+                    vtype = getStrNumType(test)
+                    if not vtype:
+                        LOG.error("Error, unknown type in multi-value label field, neither int nor float, aborting")
+                        return False
+
+                    fVals = []
+                    lVals = []
+                    for v in range(len(frawVals)):
+                        fVals.append( vtype(frawVals[v]) )
+                        lVals.append( vtype(lrawVals[v]) )
+
+                    # write back to toInterpAnns
+                    for j in range(len(toInterpAnns)):
+                        resVal = ""
+                        for v in range(len(frawVals)):
+                            interp = self._interp_func(fVals[v], lVals[v], j+1, steps)
+                            resVal += "%s;"%interp
+                        resVal = resVal[:-1]
+                        toInterpAnns[j][i][attr] = resVal
+
+        for i in range(len(toInterp)):
+            # first clear existing annotations, as our overwrite check allowed us to
+            toInterp[i].deleteAllChildren()
+            # then add new ones
+            for ann in toInterpAnns[i]:
+                toInterp[i].addAnnotation(ann)
+
+        return True
+
+
+
