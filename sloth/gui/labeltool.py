@@ -150,6 +150,14 @@ class MainWindow(QMainWindow):
         if self.options["Fit-to-window mode"].isChecked():
             self.view.fitInView()
 
+    def onEnumerateCornersModeChanged(self):
+        if self.options["Enumerate-corners mode"].isChecked():
+            self.scene.enumerateCorners()
+            self.onCurrentImageChanged()
+        else:
+            self.scene.removeCorners()
+            self.onCurrentImageChanged()
+
     def onCopyAnnotationsModeChanged(self):
         if self.annotationMenu["Copy from previous"].isChecked():
             self.copyAnnotations.copy()
@@ -189,6 +197,12 @@ class MainWindow(QMainWindow):
     def initOptions(self):
         self.options = {}
         for o in ["Fit-to-window mode"]:
+            action = QAction(o, self)
+            action.setCheckable(True)
+            self.ui.menuOptions.addAction(action)
+            self.options[o] = action
+
+        for o in ["Enumerate-corners mode"]:
             action = QAction(o, self)
             action.setCheckable(True)
             self.ui.menuOptions.addAction(action)
@@ -323,6 +337,7 @@ class MainWindow(QMainWindow):
 
         ## options menu
         self.options["Fit-to-window mode"].changed.connect(self.onFitToWindowModeChanged)
+        self.options["Enumerate-corners mode"].changed.connect(self.onEnumerateCornersModeChanged)
 
         ## annotation menu
         self.annotationMenu["Copy from previous"].changed.connect(self.onCopyAnnotationsModeChanged)
