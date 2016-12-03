@@ -14,7 +14,7 @@ from sloth.gui.frameviewer import GraphicsView
 from sloth.gui.controlbuttons import ControlButtonWidget
 from sloth.conf import config
 from sloth.core.utils import import_callable
-from sloth.annotations.model import AnnotationTreeView, FrameModelItem, ImageFileModelItem, CopyAnnotations
+from sloth.annotations.model import AnnotationTreeView, FrameModelItem, ImageFileModelItem, CopyAnnotations, InterpolateRange
 from sloth import APP_NAME, ORGANIZATION_DOMAIN
 from sloth.utils.bind import bind, compose_noargs
 
@@ -155,6 +155,11 @@ class MainWindow(QMainWindow):
             self.copyAnnotations.copy()
             self.annotationMenu["Copy from previous"].setChecked(False)
 
+    def onInterpolateRangeModeChanged(self):
+        if self.annotationMenu["Interpolate range"].isChecked():
+            self.interpolateRange.interpolateRange()
+            self.annotationMenu["Interpolate range"].setChecked(False)
+
     def onScaleChanged(self, scale):
         self.zoominfo.setText("%.2f%%" % (100 * scale, ))
 
@@ -196,6 +201,14 @@ class MainWindow(QMainWindow):
             action.setCheckable(True)
             self.ui.menuAnnotation.addAction(action)
             self.annotationMenu[a] = action
+
+        for a in ["Interpolate range"]:
+            action = QAction(a, self)
+            action.setCheckable(True)
+            self.ui.menuAnnotation.addAction(action)
+            self.annotationMenu[a] = action
+
+
 
     ###
     ### GUI/Application setup
@@ -269,8 +282,9 @@ class MainWindow(QMainWindow):
         self.ui.menu_Views.addAction(self.ui.dockProperties.toggleViewAction())
         self.ui.menu_Views.addAction(self.ui.dockAnnotations.toggleViewAction())
 
-        # Annotations menu
+        # Annotation menu
         self.copyAnnotations = CopyAnnotations(self.labeltool)
+        self.interpolateRange = InterpolateRange(self.labeltool)
 
         # Show the UI.  It is important that this comes *after* the above 
         # adding of custom widgets, especially the central widget.  Otherwise the
@@ -312,6 +326,7 @@ class MainWindow(QMainWindow):
 
         ## annotation menu
         self.annotationMenu["Copy from previous"].changed.connect(self.onCopyAnnotationsModeChanged)
+        self.annotationMenu["Interpolate range"].changed.connect(self.onInterpolateRangeModeChanged)
 
     def loadApplicationSettings(self):
         settings = QSettings()
