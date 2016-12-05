@@ -14,7 +14,7 @@ from sloth.gui.frameviewer import GraphicsView
 from sloth.gui.controlbuttons import ControlButtonWidget
 from sloth.conf import config
 from sloth.core.utils import import_callable
-from sloth.annotations.model import AnnotationTreeView, FrameModelItem, ImageFileModelItem
+from sloth.annotations.model import AnnotationTreeView, FrameModelItem, ImageFileModelItem, CopyAnnotations, InterpolateRange
 from sloth import APP_NAME, ORGANIZATION_DOMAIN
 from sloth.utils.bind import bind, compose_noargs
 
@@ -150,6 +150,24 @@ class MainWindow(QMainWindow):
         if self.options["Fit-to-window mode"].isChecked():
             self.view.fitInView()
 
+    def onEnumerateCornersModeChanged(self):
+        if self.options["Enumerate-corners mode"].isChecked():
+            self.scene.enumerateCorners()
+            self.onCurrentImageChanged()
+        else:
+            self.scene.removeCorners()
+            self.onCurrentImageChanged()
+
+    def onCopyAnnotationsModeChanged(self):
+        if self.annotationMenu["Copy from previous"].isChecked():
+            self.copyAnnotations.copy()
+            self.annotationMenu["Copy from previous"].setChecked(False)
+
+    def onInterpolateRangeModeChanged(self):
+        if self.annotationMenu["Interpolate range"].isChecked():
+            self.interpolateRange.interpolateRange()
+            self.annotationMenu["Interpolate range"].setChecked(False)
+
     def onScaleChanged(self, scale):
         self.zoominfo.setText("%.2f%%" % (100 * scale, ))
 
@@ -183,6 +201,28 @@ class MainWindow(QMainWindow):
             action.setCheckable(True)
             self.ui.menuOptions.addAction(action)
             self.options[o] = action
+
+        for o in ["Enumerate-corners mode"]:
+            action = QAction(o, self)
+            action.setCheckable(True)
+            self.ui.menuOptions.addAction(action)
+            self.options[o] = action
+
+    def initAnnotationMenu(self):
+        self.annotationMenu = {}
+        for a in ["Copy from previous"]:
+            action = QAction(a, self)
+            action.setCheckable(True)
+            self.ui.menuAnnotation.addAction(action)
+            self.annotationMenu[a] = action
+
+        for a in ["Interpolate range"]:
+            action = QAction(a, self)
+            action.setCheckable(True)
+            self.ui.menuAnnotation.addAction(action)
+            self.annotationMenu[a] = action
+
+
 
     ###
     ### GUI/Application setup
@@ -226,6 +266,7 @@ class MainWindow(QMainWindow):
 
         self.initShortcuts(config.HOTKEYS)
         self.initOptions()
+        self.initAnnotationMenu()
 
         self.treeview = AnnotationTreeView()
         self.treeview.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
@@ -254,6 +295,10 @@ class MainWindow(QMainWindow):
         # View menu
         self.ui.menu_Views.addAction(self.ui.dockProperties.toggleViewAction())
         self.ui.menu_Views.addAction(self.ui.dockAnnotations.toggleViewAction())
+
+        # Annotation menu
+        self.copyAnnotations = CopyAnnotations(self.labeltool)
+        self.interpolateRange = InterpolateRange(self.labeltool)
 
         # Show the UI.  It is important that this comes *after* the above 
         # adding of custom widgets, especially the central widget.  Otherwise the
@@ -292,6 +337,11 @@ class MainWindow(QMainWindow):
 
         ## options menu
         self.options["Fit-to-window mode"].changed.connect(self.onFitToWindowModeChanged)
+        self.options["Enumerate-corners mode"].changed.connect(self.onEnumerateCornersModeChanged)
+
+        ## annotation menu
+        self.annotationMenu["Copy from previous"].changed.connect(self.onCopyAnnotationsModeChanged)
+        self.annotationMenu["Interpolate range"].changed.connect(self.onInterpolateRangeModeChanged)
 
     def loadApplicationSettings(self):
         settings = QSettings()

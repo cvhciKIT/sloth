@@ -5,6 +5,7 @@ from sloth.annotations.model import AnnotationModelItem
 from sloth.utils import toQImage
 from sloth.conf import config
 import logging
+import functools
 LOG = logging.getLogger(__name__)
 
 
@@ -31,7 +32,7 @@ class AnnotationScene(QGraphicsScene):
 
     #
     # getters/setters
-    #______________________________________________________________________________________________________
+    #
     def setModel(self, model):
         if model == self._model:
             # same model as the current one
@@ -154,7 +155,7 @@ class AnnotationScene(QGraphicsScene):
 
     #
     # common methods
-    #______________________________________________________________________________________________________
+    #
     def reset(self):
         self.clear()
         self.setCurrentImage(None)
@@ -175,7 +176,7 @@ class AnnotationScene(QGraphicsScene):
 
     #
     # mouse event handlers
-    #______________________________________________________________________________________________________
+    #
     def mousePressEvent(self, event):
         LOG.debug("mousePressEvent %s %s" % (self.sceneRect().contains(event.scenePos()), event.scenePos()))
         if self._inserter is not None:
@@ -253,7 +254,7 @@ class AnnotationScene(QGraphicsScene):
 
     #
     # key event handlers
-    #______________________________________________________________________________________________________
+    #
     def selectNextItem(self, reverse=False):
         # disable inserting
         # TODO: forward this to the ButtonArea
@@ -320,7 +321,7 @@ class AnnotationScene(QGraphicsScene):
     #
     # slots for signals from the model
     # this is the implemenation of the scene as a view of the model
-    #______________________________________________________________________________________________________
+    #
     def dataChanged(self, indexFrom, indexTo):
         if self._image_item is None or self._image_item.index() != indexFrom.parent().parent():
             return
@@ -371,7 +372,7 @@ class AnnotationScene(QGraphicsScene):
 
     #
     # message handling and displaying
-    #______________________________________________________________________________________________________
+    #
     def setMessage(self, message):
         if self._message is not None:
             self.clearMessage()
@@ -408,4 +409,86 @@ class AnnotationScene(QGraphicsScene):
             painter.setPen(QPen(QColor('black'), 1))
 
             self._message_text_item.paint(painter, QStyleOptionGraphicsItem(), None)
+
+    # 
+    # utility functions
+    #
+
+    # enumerate polygon annotation corners and rectangle annotation corners
+    def enumerateCorners(self):
+        # calculate font size
+        fontsize = (self._pixmap.width()+self._pixmap.height())/150
+
+        # decorate the paint() method with our enumerating paint
+        self.enumeratePolygonItems(fontsize)
+        self.enumerateRectItems(fontsize)
+
+        self.reset()
+
+    def enumeratePolygonItems(self, fontsize):
+        oldpaint = PolygonItem.paint
+
+        def paint(self, painter, option, widget=None):
+            oldpaint(self, painter, option, widget)
+            painter.setFont(QFont("Arial", fontsize))
+            for i, p in enumerate(self._polygon):
+                painter.drawText(p, str(i))
+
+        functools.update_wrapper(paint, oldpaint)
+        PolygonItem.paint = paint
+
+    def enumerateRectItems(self, fontsize):
+        oldpaint = RectItem.paint
+
+        def paint(self, painter, option, widget=None):
+            oldpaint(self, painter, option, widget)
+            painter.setFont(QFont("Arial", fontsize))
+            painter.drawText(0-fontsize, 0, str(0))
+            painter.drawText(self._rect.width()+fontsize/2, 0, str(1))
+            painter.drawText(self._rect.width()+fontsize/2, self._rect.height(), str(2))
+            painter.drawText(0-fontsize, self._rect.height(), str(3))
+
+        functools.update_wrapper(paint, oldpaint)
+        RectItem.paint = paint
+
+    # disable annotation corners enumeration
+    def removeCorners(self):
+        self.removePolygonEnumeration()
+        self.removeRectEnumeration()
+
+        self.reset()
+
+    def removePolygonEnumeration(self):
+        oldpaint = PolygonItem.paint
+
+        def paint(self, painter, option, widget=None):
+            BaseItem.paint(self, painter, option, widget)
+
+            pen = self.pen()
+            if self.isSelected():
+                pen.setStyle(Qt.DashLine)
+            painter.setPen(pen)
+
+            for k in range(-1, len(self._polygon)-1):
+                p1 = self._polygon[k]
+                p2 = self._polygon[k+1]
+                painter.drawLine(p1, p2)
+
+        functools.update_wrapper(paint, oldpaint)
+        PolygonItem.paint = paint
+
+    def removeRectEnumeration(self):
+        oldpaint = RectItem.paint
+
+        def paint(self, painter, option, widget=None):
+            BaseItem.paint(self, painter, option, widget)
+
+            pen = self.pen()
+            if self.isSelected():
+                pen.setStyle(Qt.DashLine)
+            painter.setPen(pen)
+            painter.drawRect(self.boundingRect())
+
+        functools.update_wrapper(paint, oldpaint)
+        RectItem.paint = paint
 
