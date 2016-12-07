@@ -71,11 +71,17 @@
      <string>&amp;Options</string>
     </property>
    </widget>
+   <widget class="QMenu" name="menuAnnotation">
+    <property name="title">
+     <string>&amp;Annotation</string>
+    </property>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menu_Edit"/>
    <addaction name="menuShortcuts"/>
    <addaction name="menu_Views"/>
    <addaction name="menuOptions"/>
+   <addaction name="menuAnnotation"/>
    <addaction name="menuPlugins"/>
    <addaction name="menu_Help"/>
   </widget>
