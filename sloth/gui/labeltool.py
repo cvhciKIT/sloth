@@ -443,7 +443,7 @@ class MainWindow(QMainWindow):
                 fname = os.path.relpath(fname, str(path))
 
             for pattern in image_types:
-                if fnmatch.fnmatch(fname, pattern):
+                if fnmatch.fnmatch(fname.lower(), pattern):
                     item = self.labeltool.addImageFile(fname)
             
             progress_bar.setValue(c)
