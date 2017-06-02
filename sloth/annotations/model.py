@@ -96,7 +96,11 @@ class ModelItem:
         return self._children[pos]
 
     def getPreviousSibling(self, step=1):
-        return self.getSibling(self._row-step)
+        # clip, instead of wrap around
+        if self._row - step < 0:
+            return self.getSibling(self._row)
+        else:
+            return self.getSibling(self._row-step)
 
     def getNextSibling(self, step=1):
         return self.getSibling(self._row+step)

@@ -256,8 +256,9 @@ class MainWindow(QMainWindow):
         self.central_widget = QWidget()
         self.central_layout = QVBoxLayout()
         self.controls = ControlButtonWidget()
-        self.controls.back_button.clicked.connect(self.labeltool.gotoPrevious)
-        self.controls.forward_button.clicked.connect(self.labeltool.gotoNext)
+        #give functions as lambdas, or else they will be called with a bool as parameter
+        self.controls.back_button.clicked.connect(lambda lt: self.labeltool.gotoPrevious())
+        self.controls.forward_button.clicked.connect(lambda lt: self.labeltool.gotoNext())
 
         self.central_layout.addWidget(self.controls)
         self.central_layout.addWidget(self.view)
