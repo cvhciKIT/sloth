@@ -353,7 +353,8 @@ class PropertyEditor(QWidget):
         self.parseConfiguration(label_class, label_config)
 
         # Add label class button
-        button = QPushButton(label_class, self)
+        button_text = label_config['text']
+        button = QPushButton(button_text, self)
         button.setCheckable(True)
         button.setFlat(True)
         button.clicked.connect(bind(self.onClassButtonPressed, label_class))
